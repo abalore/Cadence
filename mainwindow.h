@@ -20,13 +20,15 @@ public:
 protected:
     void timerEvent(QTimerEvent *event) override;
 private slots:
+    void onRunClicked();
+    void onPauseClicked();
     void on_pushButton_clicked();
     void onEmulatorPaused();
     void onStepOverClicked();
     void onStepOutClicked();
     void onRenderClicked();
 private:
-    void DisableDebugButtons();
+    void SetDebugState(bool state);
     void EnableDebugButtons();
     Ui::MainWindow *ui;
     QGraphicsScene *scene;

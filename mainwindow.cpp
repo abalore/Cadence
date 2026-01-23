@@ -2,8 +2,8 @@
 #include "ui_mainwindow.h"
 #include "EmulatorWorkerThread.h"
 #include "Emulator/Headers/CRTScreen.h"
-
 #include <QFrame>
+#include <QKeyEvent>
 
 // #include <mutex>
 
@@ -14,10 +14,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->btnRun, &QPushButton::clicked, this,&MainWindow::onRunClicked);
+    connect(ui->btnPause, &QPushButton::clicked, this,&MainWindow::onPauseClicked);
     connect(ui->btnStepIn, &QPushButton::clicked, this,&MainWindow::on_pushButton_clicked);
     connect(ui->btnStepOver, &QPushButton::clicked, this,&MainWindow::onStepOverClicked);
     connect(ui->btnStepOut, &QPushButton::clicked, this,&MainWindow::onStepOutClicked);
-    connect(ui->btnRender, &QPushButton::clicked, this,&MainWindow::onRenderClicked);
 
     scene = new QGraphicsScene(this);
     scene->setSceneRect(0, 0, 1024, 312*2);
@@ -28,8 +29,9 @@ MainWindow::MainWindow(QWidget *parent)
     EmulatorWorkerThread *workerThread = new EmulatorWorkerThread(NULL);
     connect(workerThread, &EmulatorWorkerThread::OnPause, this, &MainWindow::onEmulatorPaused);
     workerThread->start();
+    workerThread->setPriority(QThread::HighPriority);
 
-    startTimer(20, Qt::PreciseTimer);
+    startTimer(17, Qt::PreciseTimer);
 }
 
 MainWindow::~MainWindow()
@@ -37,18 +39,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::DisableDebugButtons()
+void MainWindow::SetDebugState(bool state)
 {
-    ui->btnStepIn->setEnabled(false);
-    ui->btnStepOver->setEnabled(false);
-    ui->btnStepOut->setEnabled(false);
-}
-
-void MainWindow::EnableDebugButtons()
-{
-    ui->btnStepIn->setEnabled(true);
-    ui->btnStepOver->setEnabled(true);
-    ui->btnStepOut->setEnabled(true);
+    ui->btnStepIn->setEnabled(state);
+    ui->btnStepOver->setEnabled(state);
+    ui->btnStepOut->setEnabled(state);
+    ui->btnRun->setEnabled(state);
 }
 
 void MainWindow::onEmulatorPaused()
@@ -59,31 +55,44 @@ void MainWindow::onEmulatorPaused()
     ui->lblDisassembler->setText(EmulatorWorkerThread::debugStringDisassembler.data());
     ui->lblCRTC->setText(EmulatorWorkerThread::debugStringCRTC.data());
     ui->lblGateArray->setText(EmulatorWorkerThread::debugStringGateArray.data());
-    EnableDebugButtons();
+    SetDebugState(true);
 
     //Z80::debugStringLock.unlock();
+}
+
+void MainWindow::onRunClicked()
+{
+    EmulatorWorkerThread::Run();
+    SetDebugState(false);
+}
+
+void MainWindow::onPauseClicked()
+{
+    EmulatorWorkerThread::Pause();
+    SetDebugState(true);
 }
 
 void MainWindow::on_pushButton_clicked()
 {
     EmulatorWorkerThread::StepIn();
-    DisableDebugButtons();
+    SetDebugState(false);
 }
 
 void MainWindow::onStepOverClicked()
 {
     EmulatorWorkerThread::StepOver();
-    DisableDebugButtons();
+    SetDebugState(false);
 }
 
 void MainWindow::onStepOutClicked()
 {
     EmulatorWorkerThread::StepOut();
-    DisableDebugButtons();
+    SetDebugState(false);
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
+    event->accept();
     onRenderClicked();
 }
 
@@ -93,4 +102,9 @@ void MainWindow::onRenderClicked()
     QImage *image = new QImage(&CRTScreen::Pixels[0], 1024, 624, QImage::Format_RGB888);
     QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
+    EmulatorWorkerThread::measures++;
+    EmulatorWorkerThread::total += EmulatorWorkerThread::iteration;
+    EmulatorWorkerThread::iteration = 0;
+    ui->label->setText(QString::number(EmulatorWorkerThread::total / EmulatorWorkerThread::measures, 10));
+
 }

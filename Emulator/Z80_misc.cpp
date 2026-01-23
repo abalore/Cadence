@@ -52,7 +52,6 @@ void Z80::Step_misc()
             /////////////////////////////////////////////////////////
             break;
         case 0xE: // IM 0
-            FinishInstruction();
             /////////////////////////////////////////////////////////
             break;
         case 0xF: // LD R,A
@@ -250,9 +249,6 @@ void Z80::Step_misc()
         case 0xB: // OUTD
             //////////////////////////////////////
             break;
-        default:
-            idMode = IDMode::BASIC;
-            break;
         }
         break;
     case 0xB:
@@ -282,14 +278,9 @@ void Z80::Step_misc()
         case 0xB: // OUTDR
             //////////////////////////////////////
             break;
-        default:
-            idMode = IDMode::BASIC;
-            break;          }
-        break;
-    default:
-        idMode = IDMode::BASIC;
+        }
         break;
     }
-    if (mCycleType == MCycleType::FETCH && idMode == IDMode::MISC)
+    if (mCycleType == MCycleType::FETCH)
         idMode = IDMode::BASIC;
 }

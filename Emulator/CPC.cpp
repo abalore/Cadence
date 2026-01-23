@@ -2,6 +2,8 @@
 #include "Headers/ROM.h"
 #include "Headers/CRTScreen.h"
 #include "Headers/GateArray.h"
+#include "Headers/Keyboard.h"
+#include <QElapsedTimer>
 
 word CPC::AddressBUS;
 BYTE CPC::DataBUS;
@@ -27,6 +29,8 @@ void CPC::Init()
     InternalRAM = new RAM();
     LoROM = new ROM(0x0000);
     HiROM = new ROM(0xC000);
+    GateArray::Init();
+    Keyboard::Init();
 }
 
 void CPC::Clock()

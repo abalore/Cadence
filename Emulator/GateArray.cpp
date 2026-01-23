@@ -3,6 +3,8 @@
 #include "Headers/CRTC.h"
 #include "Headers/Z80.h"
 #include "Headers/PPI.h"
+#include "Headers/PSG.h"
+
 
 BYTE GateArray::Color[3];
 BYTE GateArray::INK[16];
@@ -16,9 +18,9 @@ BYTE GateArray::currentByte = 0;
 BYTE GateArray::pixelIndex = 0;
 BYTE GateArray::videoPen = 0;
 BYTE GateArray::clockDividerCounter = 0;
-bool GateArray::CLK = false;
 bool GateArray::CCLK = false;
-
+bool GateArray::lastHSYNC = false;
+BYTE GateArray::hsyncCounter = 0;
 bool GateArray::ROMEN()
 {
     if (Z80::MREQ || Z80::RD) return true;
@@ -70,29 +72,51 @@ void GateArray::Init()
     CCLK = false;
     currentByte = 0;
     pixelIndex = 0x80;
+    PPI::Init();
+    PSG::Init();
 }
 
 void GateArray::Clock()
 {
     // 8 Mhz
-    if ((clockDividerCounter % 2) == 0)
+    if ((clockDividerCounter & 0x01) == 0)
     {
-        CLK = !CLK;
-        Z80::ClockEdge(CLK);
+        Z80::CLK = !Z80::CLK;
+        Z80::ClockEdge();
     }
+
     // 4 Mhz
-    if ((clockDividerCounter % 4) == 0)
+    if ((clockDividerCounter % 16) == 7)
     {
         IO_Clock();
-        CPC::InternalRAM->Clock();
-        CPC::ActiveROM()->Clock();
         CRTC::IOClock();
         PPI::IOClock();
+        CPC::ActiveROM()->Clock();
+        CPC::InternalRAM->Clock();
     }
+
+    if ((clockDividerCounter % 16) == 0)
+    {
+        PSG::Clock();
+    }
+
     // 1Mhz
     if ((clockDividerCounter % 16) == 0)
     {
         CRTC::CRTClock();
+        if (lastHSYNC != CRTC::HSYNC)
+        {
+            lastHSYNC = CRTC::HSYNC;
+            if (lastHSYNC)
+            {
+                hsyncCounter++;
+                if (hsyncCounter == 52 || (hsyncCounter >=32 && CRTC::VSYNC))
+                {
+                    hsyncCounter = 0;
+                    Z80::InterruptRequest = false;
+                }
+            }
+        }
     }
     // 2 Mhz
     if ((clockDividerCounter % 8) == 0)
@@ -119,21 +143,19 @@ void GateArray::SetPixel()
     {
     case 0:
         pi = pixelIndex >> 2;
-        videoPen = ((currentByte & (0x80 >> pi)) >> (4 - pi))
-                   + ((currentByte & (0x20 >> pi)) >> (3 - pi))
-                   + ((currentByte & (0x08 >> pi)) >> (2 - pi))
-                   + ((currentByte & (0x02 >> pi)) >> (1 - pi));
+        videoPen = ((currentByte & (0x80 >> pi)) > 0) +
+                   ((currentByte & (0x20 >> pi)) > 0) * 2 +
+                   ((currentByte & (0x08 >> pi)) > 0) * 4 +
+                   ((currentByte & (0x02 >> pi)) > 0) * 8;
         break;
     case 1:
         pi = pixelIndex >> 1;
-        videoPen = currentByte & (0x88 >> pi);
-        videoPen >>= 3 - pi;
-        videoPen <<= 1;
-        videoPen = (videoPen & 0x02) + (videoPen >> 5);
+        videoPen = ((currentByte & (0x80 >> pi)) > 0) +
+                   ((currentByte & (0x08 >> pi)) > 0) * 2;
         break;
     case 2:
         pi = pixelIndex;
-        videoPen = (currentByte & (0x80 >> pi )) >> (7 - pi);
+        videoPen = (currentByte & (0x80 >> pi )) > 0;
         break;
     case 3:
         pi = pixelIndex >> 2;
@@ -155,10 +177,6 @@ void GateArray::ReadByte()
     videoAddress += (CRTC::RA & 0x07) << 11;
     videoAddress += (CRTC::MA & 0x3000) << 2;
     videoAddress += CCLK ? 1 : 0;
-    if (videoAddress == 0xC852)
-    {
-        CCLK = CCLK;
-    }
     currentByte = CPC::InternalRAM->MEM[videoAddress];
 }
 

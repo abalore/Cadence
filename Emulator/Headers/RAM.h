@@ -8,7 +8,7 @@ class RAM
 public:
     RAM();
     void Clock();
-    BYTE *MEM;
+    BYTE MEM[65536];
 };
 
 #endif // RAM_H

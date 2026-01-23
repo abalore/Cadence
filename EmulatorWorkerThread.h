@@ -16,12 +16,17 @@ public:
     static string debugStringDisassembler;
     static string debugStringCRTC;
     static string debugStringGateArray;
+    static void Run();
+    static void Pause();
     static void StepIn();
     static void StepOut();
     static void StepOver();
     static volatile bool running;
     static volatile ushort stopPoint;
     static volatile bool stepByStep;
+    static volatile int iteration;
+    static volatile int measures;
+    static volatile int total;
 signals:
     void OnPause();
 protected:
