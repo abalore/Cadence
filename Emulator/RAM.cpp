@@ -4,9 +4,11 @@
 #include "Headers/GateArray.h"
 #include <cstring>
 
+//BYTE RAM::MEM[65536];
+
 RAM::RAM()
 {
-    MEM = new BYTE[65536];
+    //MEM = new BYTE[65536];
 }
 
 void RAM::Clock()

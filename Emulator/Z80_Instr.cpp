@@ -5,7 +5,7 @@ void Z80::INC_R(BYTE &reg)
     fH.Set((reg & 0xF) == 0xF);
     fP.Set(reg == 0x7F);
     reg++;
-    fS.Set((reg & 0x80) > 0);
+    fS.Set(reg & 0x80);
     fZ.Set(reg == 0);
     fN.Set(false);
 }
@@ -15,7 +15,7 @@ void Z80::DEC_R(BYTE &reg)
     fH.Set((reg & 0xF) == 0x0);
     fP.Set(reg == 0x80);
     reg--;
-    fS.Set((reg & 0x80) > 0);
+    fS.Set(reg & 0x80);
     fZ.Set(reg == 0);
     fN.Set(true);
 }
@@ -42,14 +42,7 @@ void Z80::JR(bool condition)
         break;
     }
 }
-/*
-void Z80::LD_RR_addr(Reg16 reg)
-{
-    ReadNN();
-    *reg.H = ReadMEM(t16.Get());
-    *reg.L = ReadMEM(t16.Get() + 1);
-}
-*/
+
 void Z80::LD_Ind_RR(Reg16 reg)
 {
     switch(mCycle)
@@ -274,17 +267,6 @@ void Z80::LD_Ind_RR_A(Reg16 reg)
         FinishInstruction();
         break;
     }
-}
-
-void Z80::ReadNN()
-{
-    *t16.L = ReadMEMPCInc();
-    *t16.H = ReadMEMPCInc();
-}
-
-void Z80::ReadN()
-{
-    t8 = ReadMEMPCInc();
 }
 
 void Z80::PUSH_RR(Reg16 reg)
@@ -1205,7 +1187,8 @@ void Z80::LDI(bool R)
         fP.Set(BC.Get() != 0);
         fH.Set(false);
         fN.Set(false);
-        if (!R || BC.Get() == 0) FinishInstruction();
+        if (!R || BC.Get() == 0)
+            FinishInstruction();
         break;
     case 5:
         PC -= 2;

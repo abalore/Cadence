@@ -12,14 +12,14 @@ public:
     static bool RAMRD();
     static bool MWE();
     static BYTE Color[3];
-    static bool CLK;
     static BYTE INK[16];
     static BYTE BORDER;
     static BYTE currentPen;
     static const BYTE cH = 255;
-    static const BYTE cM = 127;
+    static const BYTE cM = 128;
     static const BYTE cL = 0;
     static BYTE RMR;
+    static BYTE hsyncCounter;
     constexpr static const BYTE Palette[3 * 32] =
         {
             cM, cM, cM, // White
@@ -69,6 +69,7 @@ private:
     static BYTE videoPen;
     static BYTE clockDividerCounter;
     static bool CCLK;
+    static bool lastHSYNC;
 };
 
 #endif // GATEARRAY_H

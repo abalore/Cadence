@@ -11,7 +11,9 @@ CONFIG += qt
 
 SOURCES += \
     Emulator/CRTScreen.cpp \
+    Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
+    Emulator/PSG.cpp \
     Emulator/Z80_IDX_3.cpp \
     EmulatorWorkerThread.cpp \
     main.cpp \
@@ -42,13 +44,16 @@ HEADERS += \
     Emulator/Headers/Emulator.h \
     Emulator/Headers/Flag.h \
     Emulator/Headers/GateArray.h \
+    Emulator/Headers/Keyboard.h \
     Emulator/Headers/PPI.h \
+    Emulator/Headers/PSG.h \
     Emulator/Headers/RAM.h \
     Emulator/Headers/ROM.h \
     Emulator/Headers/Reg16.h \
     Emulator/Headers/Z80.h \
     Emulator/Headers/defs.h \
     EmulatorWorkerThread.h \
+    KeyPressFilter.h \
     mainwindow.h
 
 FORMS += \

@@ -210,7 +210,20 @@
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="btnRender">
+   <widget class="QPushButton" name="btnRun">
+    <property name="geometry">
+     <rect>
+      <x>1470</x>
+      <y>330</y>
+      <width>81</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Run</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnPause">
     <property name="geometry">
      <rect>
       <x>1080</x>
@@ -220,7 +233,20 @@
      </rect>
     </property>
     <property name="text">
-     <string>Render</string>
+     <string>Pause</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>1090</x>
+      <y>560</y>
+      <width>66</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>TextLabel</string>
     </property>
    </widget>
   </widget>

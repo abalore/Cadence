@@ -7,9 +7,12 @@
 #include "Emulator/Headers/Disassembler.h"
 
 volatile bool EmulatorWorkerThread::running = true;
-volatile ushort EmulatorWorkerThread::stopPoint = 0xC006; //;0x0C6B; //0xBDD9; //
+volatile ushort EmulatorWorkerThread::stopPoint = 0x0000; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::stepByStep = false;
-volatile bool EmulatorWorkerThread::canDebug = true;
+volatile bool EmulatorWorkerThread::canDebug = false;
+volatile int EmulatorWorkerThread::iteration;
+volatile int EmulatorWorkerThread::measures;
+volatile int EmulatorWorkerThread::total;
 
 string EmulatorWorkerThread::debugStringZ80 = "Z80";
 string EmulatorWorkerThread::debugStringStack = "Stack";
@@ -28,9 +31,9 @@ string EmulatorWorkerThread::GetZ80RegsDebugLine()
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
             Z80::PC, Z80::SP.Get(), Z80::IX.Get(), Z80::IY.Get(), Z80::F);
     d.append(buff);
-    d.append("AF'  BC'  DE'  HL' \n");
-    sprintf(buff, "%04X %04X %04X %04X\n",
-            Z80::AF_.Get(), Z80::BC_.Get(), Z80::DE_.Get(), Z80::HL_.Get());
+    d.append("AF'  BC'  DE'  HL'  R    I    Ints\n");
+    sprintf(buff, "%04X %04X %04X %04X %02X   %02X   %01X\n",
+            Z80::AF_.Get(), Z80::BC_.Get(), Z80::DE_.Get(), Z80::HL_.Get(), Z80::R, Z80::I, Z80::InterruptEnable);
     d.append(buff);
     return d;
 }
@@ -96,9 +99,23 @@ string EmulatorWorkerThread::GetGateArrayDebugLine()
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nRMR: %08b", GateArray::RMR);
+    sprintf(buff, "\nRMR: %08b  R52: %d", GateArray::RMR, GateArray::hsyncCounter);
     d += buff;
     return d;
+}
+
+void EmulatorWorkerThread::Run()
+{
+    stepByStep = false;
+    canDebug = false;
+    running = true;
+}
+
+void EmulatorWorkerThread::Pause()
+{
+    stepByStep = false;
+    canDebug = true;
+    running = false;
 }
 
 void EmulatorWorkerThread::StepIn()
@@ -107,8 +124,6 @@ void EmulatorWorkerThread::StepIn()
     canDebug = false;
     running = true;
 }
-
-
 
 void EmulatorWorkerThread::StepOut()
 {
@@ -120,8 +135,6 @@ void EmulatorWorkerThread::StepOut()
     canDebug = false;
     running = true;
 }
-
-
 
 void EmulatorWorkerThread::StepOver()
 {
@@ -136,10 +149,13 @@ void EmulatorWorkerThread::run()
     Emulator::Init();
     while(true)
     {
-        //sleep(0);
         if (running)
         {
-            if (canDebug && !Z80::M1 && Z80::tCycle == 1 && Z80::idMode == IDMode::BASIC && ((Z80::PC == stopPoint) || stepByStep))
+            if (canDebug
+                && !Z80::M1
+                && Z80::tCycle == 1
+                && Z80::idMode == IDMode::BASIC
+                && ((Z80::PC == stopPoint) || stepByStep))
             {
                 // Z80::debugStringLock.lock();
                 debugStringZ80 = GetZ80RegsDebugLine();
@@ -155,9 +171,9 @@ void EmulatorWorkerThread::run()
             else
             {
                 Emulator::Clock();
-                canDebug = true;
+                iteration++;
             }
 
-        }
+        } else sleep(0);
     }
 }

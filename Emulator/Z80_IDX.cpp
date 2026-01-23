@@ -406,6 +406,6 @@ void Z80::Step_IDX()
         }
         break;
     }
-    if (mCycleType == MCycleType::FETCH && idMode == IDMode::IDX)
+    if (mCycleType == MCycleType::FETCH)
         idMode = IDMode::BASIC;
 }

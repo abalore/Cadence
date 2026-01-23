@@ -4,7 +4,6 @@
 #include "defs.h"
 #include "Reg16.h"
 #include "Flag.h"
-#include <mutex>
 
 using namespace std;
 
@@ -15,7 +14,8 @@ enum MCycleType
     WRITE,
     IN,
     OUT,
-    ALU
+    ALU,
+    INT
 };
 
 enum IDMode
@@ -33,7 +33,7 @@ class Z80
 public:
     static void Init();
     static void Reset();
-    static void ClockEdge(bool edge);
+    static void ClockEdge();
     static BYTE tCycle;
     static BYTE mCycle;
     static bool MREQ;
@@ -55,8 +55,9 @@ public:
     static BYTE DR;
     static IDMode idMode;
     static MCycleType mCycleType;
-
-    static mutex debugStringLock;
+    static bool InterruptEnable;
+    static bool InterruptRequest;
+    static bool CLK;
 private:
     static void Step();;
     static void Step_basic();
@@ -66,22 +67,12 @@ private:
     static void Step_IDX_2();
     static void Step_IDX_3();
     static void Step_IDX_CB();
-    static void ProcessFETCH(bool edge);
-    static void ProcessREAD(bool edge);
-    static void ProcessWRITE(bool edge);
-    static void ProcessIN(bool edge);
-    static void ProcessOUT(bool edge);
-    static BYTE ReadMEM(int address);
-    static void WriteMEM(int address, BYTE value);
-    static void ReadMEMHL();
-    static void ReadMEMHLReg(BYTE &reg);
-    static BYTE ReadMEMHLDirect();
-    static void WriteMEMHL();
-    static void WriteMEMHLReg(BYTE reg);
-    static void ReadMEMIDX();
-    static void WriteMEMIDX();
-    static void ReadMEMIDX16();
-    static BYTE ReadMEMPCInc();
+    static void ProcessINT();
+    static void ProcessFETCH();
+    static void ProcessREAD();
+    static void ProcessWRITE();
+    static void ProcessIN();
+    static void ProcessOUT();
     static void FinishInstruction();
     static BYTE t8;
     static Reg16 t16;
@@ -106,8 +97,6 @@ private:
     static void DEC_RR(Reg16 reg);
     static void LD_R_n(BYTE &reg);
     static void LD_Ind_RR_A(Reg16 reg);
-    static void ReadNN();
-    static void ReadN();
     static void PUSH_RR(Reg16 reg);
     static void POP_RR(Reg16 reg);
     static void ADD_HL_RR(Reg16 reg);

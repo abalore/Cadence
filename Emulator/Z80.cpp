@@ -1,10 +1,7 @@
 #include "Headers/Z80.h"
 #include "Headers/CPC.h"
-#include <mutex>
 
 using namespace std;
-
-mutex Z80::debugStringLock;
 
 BYTE Z80::tCycle = 1;
 BYTE Z80::mCycle = 1;
@@ -72,7 +69,10 @@ BYTE Z80::tByte = 0;
 BYTE Z80::opCode = 0;
 Reg16 *Z80::IDX = &IX;
 word Z80::tAddr = 0;
-    
+bool Z80::InterruptEnable = false;
+bool Z80::InterruptRequest = true;
+bool Z80::CLK = false;
+
 void Z80::Reset()
 {
     PC = 0;
@@ -103,15 +103,20 @@ void Z80::Step()
     }
 }
 
-void Z80::ProcessFETCH(bool edge)
+void Z80::ProcessINT()
 {
-    if (edge)
+    if (CLK && tCycle == 3)
+        IR = 0xFF;
+}
+
+void Z80::ProcessFETCH()
+{
+    if (CLK)
     {
         switch (tCycle)
         {
             case 1:
                 CPC::AddressBUS = PC;
-                RFSH = true;
                 M1 = false;
                 break;
             case 3:
@@ -136,15 +141,16 @@ void Z80::ProcessFETCH(bool edge)
                 MREQ = false;
                 break;
             case 4:
+                RFSH = true;
                 MREQ = true;
                 break;
         }
     }
 }
 
-void Z80::ProcessREAD(bool edge)
+void Z80::ProcessREAD()
 {
-    if (edge)
+    if (CLK)
     {
         switch (tCycle)
         {
@@ -172,9 +178,9 @@ void Z80::ProcessREAD(bool edge)
     }
 }
 
-void Z80::ProcessWRITE(bool edge)
+void Z80::ProcessWRITE()
 {
-    if (edge)
+    if (CLK)
     {
         switch (tCycle)
         {
@@ -202,9 +208,9 @@ void Z80::ProcessWRITE(bool edge)
     }
 }
 
-void Z80::ProcessIN(bool edge)
+void Z80::ProcessIN()
 {
-    if (edge)
+    if (CLK)
     {
         switch (tCycle)
         {
@@ -232,9 +238,9 @@ void Z80::ProcessIN(bool edge)
     }
 }
 
-void Z80::ProcessOUT(bool edge)
+void Z80::ProcessOUT()
 {
-    if (edge)
+    if (CLK)
     {
         switch (tCycle)
         {
@@ -262,29 +268,32 @@ void Z80::ProcessOUT(bool edge)
     }
 }
     
-void Z80::ClockEdge(bool edge)
+void Z80::ClockEdge()
 {
     switch (mCycleType)
     {
+        case MCycleType::INT:
+            ProcessINT();
+            break;
         case MCycleType::FETCH:
-            ProcessFETCH(edge);
+            ProcessFETCH();
             break;
         case MCycleType::READ:
-            ProcessREAD(edge);
+            ProcessREAD();
             break;
         case MCycleType::WRITE:
-            ProcessWRITE(edge);
+            ProcessWRITE();
             break;
         case MCycleType::IN:
-            ProcessIN(edge);
+            ProcessIN();
             break;
         case MCycleType::OUT:
-            ProcessOUT(edge);
+            ProcessOUT();
             break;
         default:
             break;
     }
-    if (!edge)
+    if (!CLK)
     {
         if (tCycle == 4)
         {
@@ -293,6 +302,13 @@ void Z80::ClockEdge(bool edge)
             if (mCycleType == MCycleType::FETCH)
             {
                 mCycle = 1;
+                if (InterruptEnable && !InterruptRequest && idMode == IDMode::BASIC)
+                {
+                    InterruptEnable = false;
+                    InterruptRequest = true;
+                    IR = 0xFF;
+                    mCycleType = MCycleType::INT;
+                }
             }
             else
                 mCycle++;
@@ -302,65 +318,9 @@ void Z80::ClockEdge(bool edge)
     }
 }
 
-BYTE Z80::ReadMEM(int address)
-{
-    return CPC::InternalRAM->MEM[address];
-}
-
-void Z80::WriteMEM(int address, BYTE value)
-{
-    CPC::InternalRAM->MEM[address] = value;
-}
-
-void Z80::ReadMEMHL()
-{
-    t8 = ReadMEM(HL.Get());
-}
-
-void Z80::ReadMEMHLReg(BYTE &reg)
-{
-    reg = ReadMEM(HL.Get());
-}
-
-BYTE Z80::ReadMEMHLDirect()
-{
-    return ReadMEM(HL.Get());
-}
-
-void Z80::WriteMEMHL()
-{
-    WriteMEM(HL.Get(), t8);
-}
-
-void Z80::WriteMEMHLReg(BYTE reg)
-{
-    WriteMEM(HL.Get(), reg);
-}
-
-void Z80::ReadMEMIDX()
-{
-    t8 = ReadMEM(IDX->Get() + index);
-}
-
-void Z80::WriteMEMIDX()
-{
-    WriteMEM(IDX->Get() + index, t8);
-}
-
-void Z80::ReadMEMIDX16()
-{
-    *t16.L = ReadMEM(IDX->Get());
-    *t16.H = ReadMEM(IDX->Get() + 1);
-}
-
-BYTE Z80::ReadMEMPCInc()
-{
-    return ReadMEM(PC++);
-}
-
 void Z80::FinishInstruction()
 {
     mCycleType = MCycleType::FETCH;
-   idMode = IDMode::BASIC;
+    idMode = IDMode::BASIC;
 }
 

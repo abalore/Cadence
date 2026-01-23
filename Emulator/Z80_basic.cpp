@@ -805,7 +805,7 @@ void Z80::Step_basic()
             JP(!fS.Get());
             break;
         case 0x3: // DI
-            ///////////////////////////////////////////////////
+            InterruptEnable = false;
             break;
         case 0x4: // CALL P,nn
             CALL(!fS.Get());
@@ -829,7 +829,7 @@ void Z80::Step_basic()
             JP(fS.Get());
             break;
         case 0xB: // EI
-            ///////////////////////////
+            InterruptEnable = true;
             break;
         case 0xC: // CALL M,nn
             CALL(fS.Get());
