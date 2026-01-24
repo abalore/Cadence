@@ -116,6 +116,9 @@ void Z80::ProcessFETCH()
         switch (tCycle)
         {
             case 1:
+                t8 = R & 0x80;
+                R++;
+                R = (R & 0x7F) + t8;
                 CPC::AddressBUS = PC;
                 M1 = false;
                 break;
