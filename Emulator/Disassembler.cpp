@@ -4,8 +4,6 @@
 
 using namespace std;
 
-#define byte unsigned char
-
 const string Disassembler::CB_INSTR[] =
     {
         "RLC ", "RRC ", "RL ", "RR ", "SLA ", "SRA ", "SLL ", "SRL ",
@@ -20,28 +18,30 @@ const string Disassembler::CB_OPERAND[] =
 };
 
 word Disassembler::addr;
-byte *Disassembler::m;
+BYTE *Disassembler::m;
 word Disassembler::offset = 0;
 string Disassembler::instr = "";
 string Disassembler::bytes = "";
 string Disassembler::address = "";
 string Disassembler::idx = "";
 string Disassembler::d;
-byte Disassembler::opCode;
+BYTE Disassembler::opCode;
+BYTE Disassembler::length;
 
 char buff[100];
 
-byte Disassembler::ReadNext()
+BYTE Disassembler::ReadNext()
 {
-    byte b = m[addr++ - offset];
+    BYTE b = m[addr++ - offset];
     sprintf(buff, "%02hhX ", static_cast<unsigned char>(b));
     bytes += buff;
+    length++;
     return b;
 }
 
 string Disassembler::ReadHex8()
 {
-    byte s = ReadNext();
+    BYTE s = ReadNext();
     sprintf(buff, "&%02hhX", static_cast<unsigned char>(s));
     return (string)buff;
 }
@@ -65,8 +65,9 @@ void Disassembler::SetPoint(ushort address)
     addr = address;
 }
 
-void Disassembler::GetNextInstruction(string *addressStr, string *bytesStr, string *instrStr)
+void Disassembler::GetNextInstruction(BYTE &instrLength, string *addressStr, string *bytesStr, string *instrStr)
 {
+    length = 0;
     switch((int)CPC::bank())
     {
     case 0:
@@ -84,13 +85,14 @@ void Disassembler::GetNextInstruction(string *addressStr, string *bytesStr, stri
         break;
     }
     sprintf(buff, "%04X", addr);
-    *addressStr = (string)buff + "   ";
+    *addressStr = (string)buff;
     instr = "??";
     bytes = "";
     opCode = ReadNext();
     GetNextInstructionBasic();
-    *instrStr = instr + "    ";
-    *bytesStr = bytes + "    ";
+    *instrStr = instr;
+    *bytesStr = bytes;
+    instrLength = length;
 }
 
 void Disassembler::GetNextInstructionBasic()
@@ -1643,7 +1645,7 @@ void Disassembler::GetNextInstructionMisc()
             instr = "IM 0";
             break;
         case 0x7: // RRD
-            instr = "RDD";
+            instr = "RRD";
             break;
         case 0x8: // IN L,(C)
             instr = "IN L,(C)";

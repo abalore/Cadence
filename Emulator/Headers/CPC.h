@@ -17,6 +17,7 @@ public:
     static RAM *InternalRAM;
     static ROM *LoROM;
     static ROM *HiROM;
+    static ROM *ExpansionROM;
 };
 
 

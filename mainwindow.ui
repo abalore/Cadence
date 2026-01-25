@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1565</width>
+    <width>1278</width>
     <height>727</height>
    </rect>
   </property>
@@ -27,23 +27,62 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QGraphicsView" name="graphicsView">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>1061</width>
-      <height>680</height>
+      <width>768</width>
+      <height>528</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::NoContextMenu</enum>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="sizeAdjustPolicy">
+     <enum>QAbstractScrollArea::AdjustIgnored</enum>
+    </property>
+    <property name="interactive">
+     <bool>false</bool>
+    </property>
+    <property name="optimizationFlags">
+     <set>QGraphicsView::DontAdjustForAntialiasing|QGraphicsView::DontSavePainterState</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btnStepIn">
     <property name="geometry">
      <rect>
-      <x>1180</x>
+      <x>890</x>
       <y>330</y>
       <width>88</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Step in</string>
@@ -52,7 +91,7 @@
    <widget class="QLabel" name="lblZ80">
     <property name="geometry">
      <rect>
-      <x>1080</x>
+      <x>790</x>
       <y>10</y>
       <width>471</width>
       <height>81</height>
@@ -79,7 +118,7 @@
    <widget class="QLabel" name="lblStack">
     <property name="geometry">
      <rect>
-      <x>1440</x>
+      <x>1150</x>
       <y>100</y>
       <width>111</width>
       <height>221</height>
@@ -106,7 +145,7 @@
    <widget class="QLabel" name="lblDisassembler">
     <property name="geometry">
      <rect>
-      <x>1080</x>
+      <x>790</x>
       <y>100</y>
       <width>351</width>
       <height>221</height>
@@ -133,11 +172,14 @@
    <widget class="QPushButton" name="btnStepOut">
     <property name="geometry">
      <rect>
-      <x>1370</x>
+      <x>1090</x>
       <y>330</y>
       <width>88</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Step out</string>
@@ -146,11 +188,14 @@
    <widget class="QPushButton" name="btnStepOver">
     <property name="geometry">
      <rect>
-      <x>1280</x>
+      <x>990</x>
       <y>330</y>
       <width>88</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Step over</string>
@@ -159,8 +204,8 @@
    <widget class="QLabel" name="lblCRTC">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>370</y>
+      <x>790</x>
+      <y>360</y>
       <width>471</width>
       <height>61</height>
      </rect>
@@ -186,8 +231,8 @@
    <widget class="QLabel" name="lblGateArray">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>440</y>
+      <x>790</x>
+      <y>430</y>
       <width>471</width>
       <height>81</height>
      </rect>
@@ -213,11 +258,14 @@
    <widget class="QPushButton" name="btnRun">
     <property name="geometry">
      <rect>
-      <x>1470</x>
+      <x>1190</x>
       <y>330</y>
       <width>81</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Run</string>
@@ -226,11 +274,14 @@
    <widget class="QPushButton" name="btnPause">
     <property name="geometry">
      <rect>
-      <x>1080</x>
+      <x>790</x>
       <y>330</y>
       <width>88</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Pause</string>
@@ -239,8 +290,8 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>1090</x>
-      <y>560</y>
+      <x>1080</x>
+      <y>530</y>
       <width>66</width>
       <height>18</height>
      </rect>
@@ -249,22 +300,46 @@
      <string>TextLabel</string>
     </property>
    </widget>
+   <widget class="QLabel" name="lblMem">
+    <property name="geometry">
+     <rect>
+      <x>790</x>
+      <y>550</y>
+      <width>471</width>
+      <height>131</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Ubuntu Sans Mono</family>
+     </font>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="lineWidth">
+     <number>1</number>
+    </property>
+    <property name="text">
+     <string>Memory</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1565</width>
+     <width>1278</width>
      <height>23</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuHello">
-    <property name="title">
-     <string>Hello</string>
-    </property>
-   </widget>
-   <addaction name="menuHello"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

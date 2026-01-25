@@ -14,6 +14,7 @@ SOURCES += \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
+    Emulator/ROMSelector.cpp \
     Emulator/Z80_IDX_3.cpp \
     EmulatorWorkerThread.cpp \
     main.cpp \
@@ -49,6 +50,7 @@ HEADERS += \
     Emulator/Headers/PSG.h \
     Emulator/Headers/RAM.h \
     Emulator/Headers/ROM.h \
+    Emulator/Headers/ROMSelector.h \
     Emulator/Headers/Reg16.h \
     Emulator/Headers/Z80.h \
     Emulator/Headers/defs.h \
