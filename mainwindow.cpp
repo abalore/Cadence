@@ -5,7 +5,7 @@
 #include <QFrame>
 #include <QKeyEvent>
 
-// #include <mutex>
+#include <mutex>
 
 using namespace std;
 
@@ -49,15 +49,15 @@ void MainWindow::SetDebugState(bool state)
 
 void MainWindow::onEmulatorPaused()
 {
-    //Z80::debugStringLock.lock();
+    EmulatorWorkerThread::debugLock.lock();
     ui->lblZ80->setText(EmulatorWorkerThread::debugStringZ80.data());
     ui->lblStack->setText(EmulatorWorkerThread::debugStringStack.data());
     ui->lblDisassembler->setText(EmulatorWorkerThread::debugStringDisassembler.data());
     ui->lblCRTC->setText(EmulatorWorkerThread::debugStringCRTC.data());
     ui->lblGateArray->setText(EmulatorWorkerThread::debugStringGateArray.data());
+    ui->lblMem->setText(EmulatorWorkerThread::debugStringMem.data());
     SetDebugState(true);
-
-    //Z80::debugStringLock.unlock();
+    EmulatorWorkerThread::debugLock.unlock();
 }
 
 void MainWindow::onRunClicked()
@@ -102,6 +102,7 @@ void MainWindow::onRenderClicked()
     QImage *image = new QImage(&CRTScreen::Pixels[0], 1024, 624, QImage::Format_RGB888);
     QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
+    pixItem->setPos(-96, -24);
     EmulatorWorkerThread::measures++;
     EmulatorWorkerThread::total += EmulatorWorkerThread::iteration;
     EmulatorWorkerThread::iteration = 0;

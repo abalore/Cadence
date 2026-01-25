@@ -187,7 +187,7 @@ void Z80::Step_basic()
             LD_Ind_HL_n();
             break;
         case 0x7: // SCF
-            fC.Set(true);
+            SCF();
             break;
         case 0x8: // JR C,d
             JR(fC.Get());
@@ -361,7 +361,7 @@ void Z80::Step_basic()
         case 0xD: // LD L,L
             break;
         case 0xE: // LD L,(HL)
-            LD_R_Ind_HL(H);
+            LD_R_Ind_HL(L);
             break;
         case 0xF: // LD L,A
             L = A;

@@ -7,18 +7,21 @@
 #include "Emulator/Headers/Disassembler.h"
 
 volatile bool EmulatorWorkerThread::running = true;
-volatile ushort EmulatorWorkerThread::stopPoint = 0x0000; //0xC006; //0x0C6B; //0xBDD9; //
+volatile ushort EmulatorWorkerThread::stopPoint = 0x0000; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::stepByStep = false;
-volatile bool EmulatorWorkerThread::canDebug = false;
+volatile bool EmulatorWorkerThread::canDebug = true;
 volatile int EmulatorWorkerThread::iteration;
 volatile int EmulatorWorkerThread::measures;
 volatile int EmulatorWorkerThread::total;
+unsigned char EmulatorWorkerThread::nextInstructionLength;
+mutex EmulatorWorkerThread::debugLock;
 
 string EmulatorWorkerThread::debugStringZ80 = "Z80";
 string EmulatorWorkerThread::debugStringStack = "Stack";
 string EmulatorWorkerThread::debugStringDisassembler = "Disassembler";
 string EmulatorWorkerThread::debugStringCRTC = "CRTC";
 string EmulatorWorkerThread::debugStringGateArray = "GateArray";
+string EmulatorWorkerThread::debugStringMem = "Memory";
 
 EmulatorWorkerThread::EmulatorWorkerThread(QObject *parent) : QThread(parent) { }
 
@@ -45,8 +48,8 @@ string EmulatorWorkerThread::GetZ80StackDebugLine()
     word sp = Z80::SP.Get();
     for (int i = 0; i < 8; i++)
     {
-        byte L = CPC::InternalRAM->MEM[sp];
-        byte H = CPC::InternalRAM->MEM[sp + 1];
+        BYTE L = CPC::InternalRAM->MEM[sp];
+        BYTE H = CPC::InternalRAM->MEM[sp + 1];
         sprintf(buff, " %04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;
@@ -57,7 +60,7 @@ string EmulatorWorkerThread::GetZ80StackDebugLine()
 string EmulatorWorkerThread::GetCRTCDebugLine()
 {
     string crtc;
-    char buff[10];
+    char buff[100];
     for (int i = 0; i < 18; i++)
     {
         sprintf(buff, "%3d ", i);
@@ -69,6 +72,9 @@ string EmulatorWorkerThread::GetCRTCDebugLine()
         sprintf(buff, "%3d ", CRTC::Registers[i]);
         crtc += (string)buff;
     }
+    crtc += "\n";
+    sprintf(buff, "HCC: %3d  VCC: %3d  HSYNC: %1d  VSYNC: %1d", CRTC::HCC, CRTC::VCC, CRTC::HSYNC, CRTC::VSYNC);
+    crtc += buff;
     return crtc;
 }
 
@@ -81,9 +87,9 @@ string EmulatorWorkerThread::GetDisassembly()
     Disassembler::SetPoint(Z80::PC);
     for (int i = 0; i < 10; i++)
     {
-        Disassembler::GetNextInstruction(&address, &bytes, &instruction);
-        bytes.insert(bytes.size(), 16 - bytes.size(), ' ');
-        disassembly += address + bytes + instruction + "\n";
+        Disassembler::GetNextInstruction(nextInstructionLength, &address, &bytes, &instruction);
+        bytes.insert(bytes.size(), 13 - bytes.size(), ' ');
+        disassembly += address + "  " + bytes + instruction + "\n";
     }
     return disassembly;
 }
@@ -104,44 +110,73 @@ string EmulatorWorkerThread::GetGateArrayDebugLine()
     return d;
 }
 
+string EmulatorWorkerThread::GetMemDebugLine()
+{
+    string d;
+    char buff[10];
+    for (int i = 0xAE20; i < 0xAE60; i ++)
+    {
+        if ((i % 16) == 0)
+        {
+            sprintf(buff, "%04X", i);
+            if (i > 0) d += "\n";
+            d += buff;
+            d += "  ";
+        }
+        sprintf(buff, "%02X", CPC::InternalRAM->MEM[i]);
+        d += buff;
+        d += " ";
+    }
+    return d;
+}
+
 void EmulatorWorkerThread::Run()
 {
     stepByStep = false;
-    canDebug = false;
     running = true;
 }
 
 void EmulatorWorkerThread::Pause()
 {
-    stepByStep = false;
-    canDebug = true;
-    running = false;
+    stepByStep = true;
+    running = true;
 }
 
 void EmulatorWorkerThread::StepIn()
 {
     stepByStep = true;
-    canDebug = false;
     running = true;
 }
 
 void EmulatorWorkerThread::StepOut()
 {
-    stepByStep = false;
     word address = Z80::SP.Get();
-    byte L = CPC::InternalRAM->MEM[address];
-    byte H = CPC::InternalRAM->MEM[address + 1];
+    BYTE L = CPC::InternalRAM->MEM[address];
+    BYTE H = CPC::InternalRAM->MEM[address + 1];
     stopPoint = L + H * 256;
-    canDebug = false;
+    stepByStep = false;
     running = true;
 }
 
 void EmulatorWorkerThread::StepOver()
 {
+    stopPoint = Z80::PC + nextInstructionLength;
     stepByStep = false;
-    stopPoint = Z80::PC + 2;
-    canDebug = false;
     running = true;
+}
+
+void EmulatorWorkerThread::StartDebugging ()
+{
+    debugLock.lock();
+    debugStringZ80 = GetZ80RegsDebugLine();
+    debugStringStack = GetZ80StackDebugLine();
+    debugStringDisassembler = GetDisassembly();
+    debugStringCRTC = GetCRTCDebugLine();
+    debugStringGateArray = GetGateArrayDebugLine();
+    debugStringMem = GetMemDebugLine();
+    debugLock.unlock();
+    stepByStep = true;
+    running = false;
 }
 
 void EmulatorWorkerThread::run()
@@ -151,29 +186,13 @@ void EmulatorWorkerThread::run()
     {
         if (running)
         {
-            if (canDebug
-                && !Z80::M1
-                && Z80::tCycle == 1
-                && Z80::idMode == IDMode::BASIC
-                && ((Z80::PC == stopPoint) || stepByStep))
+            Emulator::Clock();
+            iteration++;
+            if (Z80::stopPoint && ((Z80::PC == stopPoint) || stepByStep))
             {
-                // Z80::debugStringLock.lock();
-                debugStringZ80 = GetZ80RegsDebugLine();
-                debugStringStack = GetZ80StackDebugLine();
-                debugStringDisassembler = GetDisassembly();
-                debugStringCRTC = GetCRTCDebugLine();
-                debugStringGateArray = GetGateArrayDebugLine();
-                // Z80::debugStringLock.unlock();
-                running = false;
-                stepByStep = true;
+                StartDebugging();
                 OnPause();
             }
-            else
-            {
-                Emulator::Clock();
-                iteration++;
-            }
-
         } else sleep(0);
     }
 }

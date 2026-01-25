@@ -5,7 +5,7 @@ void Z80::Step_IDX_CB()
     switch(mCycle)
     {
     case 1:
-        PC--;
+        //PC--;
         mCycleType = MCycleType::READ;
         tAddr = PC;
         break;
@@ -14,17 +14,17 @@ void Z80::Step_IDX_CB()
         tAddr++;
         break;
     case 3:
-        IR = DR;
+        t8 = DR;
         tAddr++;
         PC = tAddr;
         tAddr = IDX->Get() + index;
         break;
     case 4:
         tByte = DR;
-        switch(IR >> 4)
+        switch(t8 >> 4)
         {
         case 0x0:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RLC (IX+d),B
                 RLC_IDX_R(B);
@@ -77,7 +77,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0x1:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RL B
                 RL_IDX_R(B);
@@ -130,7 +130,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0x2:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SLA B
                 SLA_IDX_R(B);
@@ -183,7 +183,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0x3:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SLL B
                 SLL_IDX_R(B);
@@ -236,31 +236,31 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0x4:
-            if ((IR & 0x0F) < 0x08)
+            if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(0);
             else
                 BIT_x_IDX(1);
             break;
         case 0x5:
-            if ((IR & 0x0F) < 0x08)
+            if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(2);
             else
                 BIT_x_IDX(3);
             break;
         case 0x6:
-            if ((IR & 0x0F) < 0x08)
+            if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(4);
             else
                 BIT_x_IDX(5);
             break;
         case 0x7:
-            if ((IR & 0x0F) < 0x08)
+            if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(6);
             else
                 BIT_x_IDX(7);
             break;
         case 0x8:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RES 0,B
                 RES_x_IDX(0, B);
@@ -313,7 +313,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0x9:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RES 2,B
                 RES_x_IDX(2, B);
@@ -366,7 +366,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xA:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RES 4,B
                 RES_x_IDX(4, B);
@@ -419,7 +419,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xB:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // RES 6,B
                 RES_x_IDX(6, B);
@@ -472,7 +472,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xC:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SET 0,B
                 SET_x_IDX(0, B);
@@ -525,7 +525,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xD:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SET 2,B
                 SET_x_IDX(2, B);
@@ -578,7 +578,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xE:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SET 4,B
                 SET_x_IDX(4, B);
@@ -631,7 +631,7 @@ void Z80::Step_IDX_CB()
             }
             break;
         case 0xF:
-            switch(IR & 0x0F)
+            switch(t8 & 0x0F)
             {
             case 0x0: // SET 6,B
                 SET_x_IDX(6, B);

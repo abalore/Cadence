@@ -72,6 +72,8 @@ word Z80::tAddr = 0;
 bool Z80::InterruptEnable = false;
 bool Z80::InterruptRequest = true;
 bool Z80::CLK = false;
+bool Z80::stopPoint = false;
+BYTE Z80::t_cp = 0;
 
 void Z80::Reset()
 {
@@ -116,11 +118,15 @@ void Z80::ProcessFETCH()
         switch (tCycle)
         {
             case 1:
+                if (idMode == IDMode::BASIC)
+                {
+                    stopPoint = true;
+                    M1 = false;
+                }
                 t8 = R & 0x80;
                 R++;
                 R = (R & 0x7F) + t8;
                 CPC::AddressBUS = PC;
-                M1 = false;
                 break;
             case 3:
                 M1 = true;

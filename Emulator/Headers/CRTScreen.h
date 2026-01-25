@@ -15,6 +15,7 @@ public:
     static BYTE Pixels[PixelWidth * PixelHeight * BytesPerPixel * 2];
 private:
     static int hPos, vPos;
+    static bool lastHSYNC, lastVSYNC;
 };
 
 #endif // CRTSCREEN_H

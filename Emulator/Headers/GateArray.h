@@ -20,6 +20,8 @@ public:
     static const BYTE cL = 0;
     static BYTE RMR;
     static BYTE hsyncCounter;
+    static BYTE vsyncIntDelay;
+    static BYTE mode;
     constexpr static const BYTE Palette[3 * 32] =
         {
             cM, cM, cM, // White

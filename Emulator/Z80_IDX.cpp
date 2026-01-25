@@ -82,6 +82,8 @@ void Z80::Step_IDX()
         {
         case 0x4: // INC (IX+d)
         case 0x5: // DEC (IX+d)
+            Step_IDX_2();
+            break;
         case 0x6: // LD (IX+d),n
             Step_IDX_3();
             break;
@@ -375,8 +377,9 @@ void Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0xB: // IDX BIT OP
+            Step_IDX_CB();
             idMode = IDMode::IDXBIT;
-            break;
+            return;
         }
         break;
     case 0xE:

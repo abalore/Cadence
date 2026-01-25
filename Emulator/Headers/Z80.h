@@ -58,6 +58,7 @@ public:
     static bool InterruptEnable;
     static bool InterruptRequest;
     static bool CLK;
+    static bool stopPoint;
 private:
     static void Step();;
     static void Step_basic();
@@ -81,6 +82,7 @@ private:
     static BYTE opCode;
     static Reg16 *IDX;
     static word tAddr;
+    static BYTE t_cp;
 
     static void INC_R(BYTE &reg);
     static void DEC_R(BYTE &reg);
@@ -127,7 +129,6 @@ private:
     static bool GetParity(BYTE b);
     static void SetFlagsAfterLogicalOp(BYTE b);
     static void SetFlagsAfterShiftOp(BYTE b);
-    static void SetFlagsAfterBIT();
     static void AND_A_v(BYTE v);
     static void AND_R(BYTE &reg);
     static void XOR_A_v(BYTE v);

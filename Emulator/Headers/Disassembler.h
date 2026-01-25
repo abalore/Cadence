@@ -6,24 +6,23 @@
 
 using namespace std;
 
-#define byte unsigned char
-
 class Disassembler
 {
 public:
     static void SetPoint(word address);
-    static void GetNextInstruction(string *address, string *bytes, string *instruction);
+    static void GetNextInstruction(BYTE &instrLength, string *address, string *bytes, string *instruction);
 private:
     static word addr;
-    static byte *m;
+    static BYTE *m;
     static string instr;
     static string bytes;
     static string address;
     static string idx;
     static string d;
     static word offset;
-    static byte opCode;
-    static byte ReadNext();
+    static BYTE opCode;
+    static BYTE length;
+    static BYTE ReadNext();
     static string ReadHex8();
     static string ReadHex16();
     static string ReadSInt8();

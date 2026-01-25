@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <string>
+#include <mutex>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ public:
     static string debugStringDisassembler;
     static string debugStringCRTC;
     static string debugStringGateArray;
+    static string debugStringMem;
     static void Run();
     static void Pause();
     static void StepIn();
@@ -27,6 +29,7 @@ public:
     static volatile int iteration;
     static volatile int measures;
     static volatile int total;
+    static mutex debugLock;
 signals:
     void OnPause();
 protected:
@@ -37,7 +40,10 @@ private:
     static string GetCRTCDebugLine();
     static string GetDisassembly();
     static string GetGateArrayDebugLine();
+    static string GetMemDebugLine();
+    static void StartDebugging();
     static volatile bool canDebug;
+    static unsigned char nextInstructionLength;
 };
 
 #endif // EMULATORWORKERTHREAD_H

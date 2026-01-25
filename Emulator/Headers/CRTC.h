@@ -13,7 +13,7 @@ public:
     static BYTE Index;
     static BYTE RA;
     static word MA;
-    static bool HSYNC, VSYNC, BORDER;
+    static bool HSYNC, VSYNC, BORDER, VSYNCSTART, HSyncFallingEdge;
     static word HCC, VCC;
     static BYTE HSC, VSC;
 };
