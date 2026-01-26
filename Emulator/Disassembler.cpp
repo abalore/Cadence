@@ -17,7 +17,7 @@ const string Disassembler::CB_OPERAND[] =
         "B", "C", "D", "E", "H", "L", "(HL)", "A"
 };
 
-word Disassembler::addr;
+int Disassembler::addr;
 BYTE *Disassembler::m;
 word Disassembler::offset = 0;
 string Disassembler::instr = "";
@@ -68,7 +68,8 @@ void Disassembler::SetPoint(ushort address)
 void Disassembler::GetNextInstruction(BYTE &instrLength, string *addressStr, string *bytesStr, string *instrStr)
 {
     length = 0;
-    switch((int)CPC::bank())
+    BYTE bank = (BYTE)((addr & 0xC000) >> 14);
+    switch(bank)
     {
     case 0:
         m = (GateArray::RMR & 0x04) > 0 ? CPC::InternalRAM->MEM : CPC::LoROM->MEM;

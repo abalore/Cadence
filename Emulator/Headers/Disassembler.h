@@ -11,8 +11,8 @@ class Disassembler
 public:
     static void SetPoint(word address);
     static void GetNextInstruction(BYTE &instrLength, string *address, string *bytes, string *instruction);
+    static int addr;
 private:
-    static word addr;
     static BYTE *m;
     static string instr;
     static string bytes;

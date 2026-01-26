@@ -17,11 +17,5 @@ void RAM::Clock()
         CPC::DataBUS = MEM[CPC::AddressBUS];
     else
         if (!GateArray::MWE())
-    {
-        if (CPC::AddressBUS == 0xC0A0)
-        {
-            BYTE x = 0;
-        }
-        MEM[CPC::AddressBUS] = CPC::DataBUS;
-    }
+            MEM[CPC::AddressBUS] = CPC::DataBUS;
 }

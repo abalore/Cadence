@@ -11,7 +11,6 @@ public:
     static void Init();
     static void Clock();
     static ROM *ActiveROM();
-    static BYTE bank();
     static word AddressBUS;
     static BYTE DataBUS;
     static RAM *InternalRAM;

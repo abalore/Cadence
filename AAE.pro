@@ -10,6 +10,7 @@ CONFIG += qt
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Debugger.cpp \
     Emulator/CRTScreen.cpp \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
     Emulator/Z80_misc.cpp
 
 HEADERS += \
+    Debugger.h \
     Emulator/Headers/CPC.h \
     Emulator/Headers/CRTC.h \
     Emulator/Headers/CRTScreen.h \
@@ -59,6 +61,7 @@ HEADERS += \
     mainwindow.h
 
 FORMS += \
+    Debugger.ui \
     mainwindow.ui
 
 # Default rules for deployment.
