@@ -7,6 +7,13 @@
 
 using namespace std;
 
+enum RunMode
+{
+    Run,
+    StepByStep,
+    StopPoint
+};
+
 class EmulatorWorkerThread : public QThread
 {
     Q_OBJECT
@@ -25,10 +32,11 @@ public:
     static void StepOver();
     static volatile bool running;
     static volatile ushort stopPoint;
-    static volatile bool stepByStep;
     static volatile int iteration;
     static volatile int measures;
     static volatile int total;
+    static volatile bool end;
+    static RunMode runMode;
     static mutex debugLock;
 signals:
     void OnPause();
@@ -41,7 +49,7 @@ private:
     static string GetDisassembly();
     static string GetGateArrayDebugLine();
     static string GetMemDebugLine();
-    static void StartDebugging();
+    void StartDebugging();
     static volatile bool canDebug;
     static unsigned char nextInstructionLength;
 };

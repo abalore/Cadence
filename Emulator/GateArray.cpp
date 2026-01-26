@@ -27,7 +27,7 @@ BYTE GateArray::mode;
 bool GateArray::ROMEN()
 {
     if (Z80::MREQ || Z80::RD) return true;
-    switch(CPC::bank())
+    switch((CPC::AddressBUS & 0xC000) >> 14)
     {
     case 0:
         return (RMR & 0x04) != 0;
@@ -41,7 +41,7 @@ bool GateArray::ROMEN()
 bool GateArray::RAMRD()
 {
     if (Z80::MREQ || Z80::RD) return true;
-    switch(CPC::bank())
+    switch((CPC::AddressBUS & 0xC000) >> 14)
     {
     case 0:
         return (RMR & 0x04) == 0;

@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "EmulatorWorkerThread.h"
+#include "Debugger.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -20,18 +22,13 @@ public:
 protected:
     void timerEvent(QTimerEvent *event) override;
 private slots:
-    void onRunClicked();
-    void onPauseClicked();
-    void on_pushButton_clicked();
     void onEmulatorPaused();
-    void onStepOverClicked();
-    void onStepOutClicked();
-    void onRenderClicked();
+    void onMenuDebugPause();
 private:
-    void SetDebugState(bool state);
-    void EnableDebugButtons();
     Ui::MainWindow *ui;
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixItem;
+    Debugger *debugger;
+    EmulatorWorkerThread *workerThread;
 };
 #endif // MAINWINDOW_H

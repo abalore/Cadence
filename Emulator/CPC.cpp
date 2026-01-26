@@ -29,11 +29,6 @@ ROM *CPC::ActiveROM()
         return LoROM;
 }
 
-BYTE CPC::bank()
-{
-    return (BYTE)((AddressBUS & 0xC000) >> 14);
-}
-
 void CPC::Init()
 {
     InternalRAM = new RAM();

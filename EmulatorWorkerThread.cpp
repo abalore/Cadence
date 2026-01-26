@@ -6,13 +6,14 @@
 #include "Emulator/Headers/GateArray.h"
 #include "Emulator/Headers/Disassembler.h"
 
+volatile ushort EmulatorWorkerThread::stopPoint = 0xC006; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::running = true;
-volatile ushort EmulatorWorkerThread::stopPoint = 0x0000; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
-volatile bool EmulatorWorkerThread::stepByStep = false;
+RunMode EmulatorWorkerThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorWorkerThread::canDebug = true;
 volatile int EmulatorWorkerThread::iteration;
 volatile int EmulatorWorkerThread::measures;
 volatile int EmulatorWorkerThread::total;
+volatile bool EmulatorWorkerThread::end = false;
 unsigned char EmulatorWorkerThread::nextInstructionLength;
 mutex EmulatorWorkerThread::debugLock;
 
@@ -84,12 +85,15 @@ string EmulatorWorkerThread::GetDisassembly()
     string bytes;
     string instruction;
     string disassembly;
+    BYTE length;
     Disassembler::SetPoint(Z80::PC);
     for (int i = 0; i < 10; i++)
     {
-        Disassembler::GetNextInstruction(nextInstructionLength, &address, &bytes, &instruction);
+        Disassembler::GetNextInstruction(length, &address, &bytes, &instruction);
         bytes.insert(bytes.size(), 13 - bytes.size(), ' ');
         disassembly += address + "  " + bytes + instruction + "\n";
+        if (i == 0)
+            nextInstructionLength = length;
     }
     return disassembly;
 }
@@ -132,19 +136,18 @@ string EmulatorWorkerThread::GetMemDebugLine()
 
 void EmulatorWorkerThread::Run()
 {
-    stepByStep = false;
+    runMode = RunMode::Run;
     running = true;
 }
 
 void EmulatorWorkerThread::Pause()
 {
-    stepByStep = true;
-    running = true;
+    runMode = RunMode::StepByStep;
 }
 
 void EmulatorWorkerThread::StepIn()
 {
-    stepByStep = true;
+    runMode = RunMode::StepByStep;
     running = true;
 }
 
@@ -154,14 +157,14 @@ void EmulatorWorkerThread::StepOut()
     BYTE L = CPC::InternalRAM->MEM[address];
     BYTE H = CPC::InternalRAM->MEM[address + 1];
     stopPoint = L + H * 256;
-    stepByStep = false;
+    runMode = RunMode::StepByStep;
     running = true;
 }
 
 void EmulatorWorkerThread::StepOver()
 {
     stopPoint = Z80::PC + nextInstructionLength;
-    stepByStep = false;
+    runMode = RunMode::StepByStep;
     running = true;
 }
 
@@ -175,24 +178,36 @@ void EmulatorWorkerThread::StartDebugging ()
     debugStringGateArray = GetGateArrayDebugLine();
     debugStringMem = GetMemDebugLine();
     debugLock.unlock();
-    stepByStep = true;
     running = false;
+    OnPause();
+
 }
 
 void EmulatorWorkerThread::run()
 {
     Emulator::Init();
-    while(true)
+    while(!end)
     {
         if (running)
         {
             Emulator::Clock();
             iteration++;
-            if (Z80::stopPoint && ((Z80::PC == stopPoint) || stepByStep))
+            switch(runMode)
             {
-                StartDebugging();
-                OnPause();
+            case RunMode::StepByStep:
+                if (Z80::stopPoint)
+                    StartDebugging();
+                break;
+            case RunMode::StopPoint:
+                if (Z80::stopPoint && Z80::PC == stopPoint)
+                    StartDebugging();
+                break;
+            case RunMode::Run:
+                break;
             }
-        } else sleep(0);
+
+        }
+        else
+            sleep(0);
     }
 }
