@@ -4,6 +4,7 @@
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/CRTC.h"
 #include "Emulator/Headers/GateArray.h"
+#include <QElapsedTimer>
 
 volatile ushort EmulatorWorkerThread::stopPoint = 0x8185; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::running = true;
@@ -15,6 +16,7 @@ volatile int EmulatorWorkerThread::total;
 volatile bool EmulatorWorkerThread::end = false;
 unsigned char EmulatorWorkerThread::nextInstructionLength;
 mutex EmulatorWorkerThread::debugLock;
+volatile long EmulatorWorkerThread::elapsed;
 
 string EmulatorWorkerThread::debugStringZ80 = "Z80";
 string EmulatorWorkerThread::debugStringStack = "Stack";
@@ -126,6 +128,8 @@ void EmulatorWorkerThread::Stop ()
 
 void EmulatorWorkerThread::run()
 {
+    QElapsedTimer timer = QElapsedTimer();
+    timer.start();
     Emulator::Init();
     while(!end)
     {
@@ -146,6 +150,8 @@ void EmulatorWorkerThread::run()
             case RunMode::Run:
                 break;
             }
+            elapsed = timer.restart();
+
         }
         else
             sleep(0);

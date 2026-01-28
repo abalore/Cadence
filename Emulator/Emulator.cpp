@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-void ReadROM(char *filename, BYTE *dest)
+void Emulator::ReadROM(char *filename, BYTE *dest)
 {
     FILE *file = fopen(filename, "r");
     fread(dest, 1, 16384, file);
@@ -20,7 +20,7 @@ void Emulator::Init()
     // INT ok
     //ReadROM((char *)"ROM/ROM_OH_MUMMY.bin", CPC::ExpansionROM->MEM); // Collection broken
     //ReadROM((char *)"ROM/ROM_BOULDER_DASH.bin", CPC::ExpansionROM->MEM); // Gameplay broken at start
-    //ReadROM((char *)"ROM/ROM_BRUCE_LEE.bin", CPC::ExpansionROM->MEM); // WORKING
+    ReadROM((char *)"ROM/ROM_BRUCE_LEE.bin", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/ROM_DONKEY_KONG.bin", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/Ahhh.rom", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/Airwolf.rom", CPC::ExpansionROM->MEM); // WORKING
