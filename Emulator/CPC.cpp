@@ -4,7 +4,10 @@
 #include "Headers/GateArray.h"
 #include "Headers/Keyboard.h"
 #include "Headers/ROMSelector.h"
-#include <QElapsedTimer>
+#include "Headers/CRTC.h"
+#include "Headers/Z80.h"
+#include "Headers/PPI.h"
+#include "Headers/PSG.h"
 
 word CPC::AddressBUS;
 BYTE CPC::DataBUS;
@@ -35,12 +38,23 @@ void CPC::Init()
     LoROM = new ROM(0xFF); // -1 = lower
     HiROM = new ROM(0);
     ExpansionROM = new ROM(1);
-    GateArray::Init();
-    Keyboard::Init();
+    Reset();
 }
 
 void CPC::Clock()
 {
     GateArray::Clock();
     CRTScreen::Clock();
+}
+
+void CPC::Reset()
+{
+    Z80::Init();
+    PPI::Init();
+    CRTC::Init();
+    GateArray::Init();
+    Keyboard::Init();
+    ROMSelector::Init();
+    PPI::Init();
+    PSG::Init();
 }

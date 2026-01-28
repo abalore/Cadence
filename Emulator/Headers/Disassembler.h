@@ -10,7 +10,7 @@ class Disassembler
 {
 public:
     static void SetPoint(word address);
-    static void GetNextInstruction(BYTE &instrLength, string *address, string *bytes, string *instruction);
+    static void GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *address, string *bytes, string *instruction);
     static int addr;
 private:
     static BYTE *m;
@@ -20,7 +20,7 @@ private:
     static string idx;
     static string d;
     static word offset;
-    static BYTE opCode;
+    static BYTE op;
     static BYTE length;
     static BYTE ReadNext();
     static string ReadHex8();

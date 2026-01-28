@@ -390,7 +390,7 @@ void Z80::Step_basic()
             LD_Ind_HL_R(L);
             break;
         case 0x6: // HALT
-            ////////////////////////////////////////////////////////////////////////////
+            Z80::halted = true;
             break;
         case 0x7: // LD (HL),A
             LD_Ind_HL_R(A);

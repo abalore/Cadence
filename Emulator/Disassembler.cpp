@@ -25,7 +25,7 @@ string Disassembler::bytes = "";
 string Disassembler::address = "";
 string Disassembler::idx = "";
 string Disassembler::d;
-BYTE Disassembler::opCode;
+BYTE Disassembler::op;
 BYTE Disassembler::length;
 
 char buff[100];
@@ -65,7 +65,7 @@ void Disassembler::SetPoint(ushort address)
     addr = address;
 }
 
-void Disassembler::GetNextInstruction(BYTE &instrLength, string *addressStr, string *bytesStr, string *instrStr)
+void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *addressStr, string *bytesStr, string *instrStr)
 {
     length = 0;
     BYTE bank = (BYTE)((addr & 0xC000) >> 14);
@@ -82,14 +82,15 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, string *addressStr, str
         break;
     case 3:
         offset = 0xC000;
-        m = (GateArray::RMR & 0x08) > 0  ? CPC::InternalRAM->MEM : CPC::HiROM->MEM;
+        m = (GateArray::RMR & 0x08) > 0  ? CPC::InternalRAM->MEM : CPC::ActiveROM()->MEM;
         break;
     }
     sprintf(buff, "%04X", addr);
     *addressStr = (string)buff;
     instr = "??";
     bytes = "";
-    opCode = ReadNext();
+    op = ReadNext();
+    opCode = op;
     GetNextInstructionBasic();
     *instrStr = instr;
     *bytesStr = bytes;
@@ -98,10 +99,10 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, string *addressStr, str
 
 void Disassembler::GetNextInstructionBasic()
 {
-    switch(opCode >> 4)
+    switch(op >> 4)
     {
     case 0x0:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // NOP
             instr = "NOP";
@@ -154,7 +155,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x1:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // DJNZ d
             instr = "DJNZ " + ReadSInt8();
@@ -207,7 +208,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x2:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // JR NZ,d
             instr = "JR NZ," + ReadSInt8();
@@ -260,7 +261,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x3:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // JR NC,D
             instr = "JR NC," + ReadSInt8();
@@ -313,7 +314,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x4:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD B,B
             instr = "LD B,B";
@@ -366,7 +367,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x5:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD D,B
             instr = "LD D,B";
@@ -419,7 +420,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x6:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD H,B
             instr = "LD H,B";
@@ -472,7 +473,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x7:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD (HL),B
             instr = "LD (HL),B";
@@ -525,7 +526,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x8:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // ADD B
             instr = "ADD B";
@@ -578,7 +579,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0x9:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // SUB B
             instr = "SUB B";
@@ -631,7 +632,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xA:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // AND B
             instr = "AND B";
@@ -684,7 +685,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xB:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // OR B
             instr = "OR B";
@@ -737,7 +738,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xC:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // RET NZ
             instr = "RET NZ";
@@ -790,7 +791,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xD:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // RET NC
             instr = "RET NC";
@@ -844,7 +845,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xE:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // RET PO
             instr = "RET PO";
@@ -897,7 +898,7 @@ void Disassembler::GetNextInstructionBasic()
         }
         break;
     case 0xF:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // RET P
             instr = "RET P";
@@ -955,26 +956,26 @@ void Disassembler::GetNextInstructionBasic()
 
 void Disassembler::GetNextInstructionCB()
 {
-    opCode = ReadNext();
-    instr = CB_INSTR[opCode / 8] + CB_OPERAND[opCode % 8];
+    op = ReadNext();
+    instr = CB_INSTR[op / 8] + CB_OPERAND[op % 8];
 }
 
 void Disassembler::GetNextInstructionIDXCB()
 {
     d = ReadSInt8();
-    opCode = ReadNext();
-    instr = CB_INSTR[opCode / 8] + GetRelativeIndex();
-    if (CB_OPERAND[opCode % 8][0] != '(')
-        instr += "," +CB_OPERAND[opCode % 8];
+    op = ReadNext();
+    instr = CB_INSTR[op / 8] + GetRelativeIndex();
+    if (CB_OPERAND[op % 8][0] != '(')
+        instr += "," +CB_OPERAND[op % 8];
 }
 
 void Disassembler::GetNextInstructionIDX()
 {
-    opCode = ReadNext();
-    switch(opCode >> 4)
+    op = ReadNext();
+    switch(op >> 4)
     {
     case 0x0:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x4: // INC B
         case 0x5: // DEC B
@@ -990,7 +991,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x1:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x4: // INC D
         case 0x5: // DEC D
@@ -1006,7 +1007,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x2:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x1: // LD IX,nn
             instr = "LD " + idx + "," + ReadHex16();
@@ -1047,7 +1048,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x3:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x4: // INC (IX+d)
         case 0x5: // DEC (IX+d)
@@ -1065,7 +1066,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x4:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1098,7 +1099,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x5:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1131,7 +1132,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x6:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD IDX.H,B
             instr = "LD " + idx + "H,B";
@@ -1182,7 +1183,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x7:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1210,7 +1211,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x8:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1243,7 +1244,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0x9:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1276,7 +1277,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0xA:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1309,7 +1310,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0xB:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: //
         case 0x1: //
@@ -1342,7 +1343,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0xC:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0xB: // IDX BIT OP
             GetNextInstructionIDXCB();
@@ -1350,7 +1351,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0xE:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x1: // POP IDX
             instr = "POP " + idx;
@@ -1367,7 +1368,7 @@ void Disassembler::GetNextInstructionIDX()
         }
         break;
     case 0xF:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x9: // LD SP,IX
             instr = "LD SP," + idx;
@@ -1385,10 +1386,10 @@ string Disassembler::GetRelativeIndex()
 void Disassembler::GetNextInstructionIDX2()
 {
     d = ReadSInt8();
-    switch(opCode >> 4)
+    switch(op >> 4)
     {
     case 0x3:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x4:
             instr = "INC " + GetRelativeIndex();
@@ -1402,7 +1403,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x4:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "LD B," + GetRelativeIndex();
@@ -1413,7 +1414,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x5:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "LD D," + GetRelativeIndex();
@@ -1424,7 +1425,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x6:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "LD H," + GetRelativeIndex();
@@ -1435,7 +1436,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x7:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LD (IDX+d),B
             instr = "LD " + GetRelativeIndex() + ",B";
@@ -1464,7 +1465,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x8:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "ADD " + GetRelativeIndex();
@@ -1475,7 +1476,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0x9:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "SUB " + GetRelativeIndex();
@@ -1486,7 +1487,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0xA:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "AND " + GetRelativeIndex();
@@ -1497,7 +1498,7 @@ void Disassembler::GetNextInstructionIDX2()
         }
         break;
     case 0xB:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x6:
             instr = "OR " + GetRelativeIndex();
@@ -1512,11 +1513,11 @@ void Disassembler::GetNextInstructionIDX2()
 
 void Disassembler::GetNextInstructionMisc()
 {
-    opCode = ReadNext();
-    switch(opCode >> 4)
+    op = ReadNext();
+    switch(op >> 4)
     {
     case 0x4:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // IN B,(C)
             instr = "IN B,(C)";
@@ -1569,7 +1570,7 @@ void Disassembler::GetNextInstructionMisc()
         }
         break;
     case 0x5:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // IN D,(C)
             instr = "IN E,(C)";
@@ -1622,7 +1623,7 @@ void Disassembler::GetNextInstructionMisc()
         }
         break;
     case 0x6:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // IN H,(C)
             instr = "IN H,(C)";
@@ -1675,7 +1676,7 @@ void Disassembler::GetNextInstructionMisc()
         }
         break;
     case 0x7:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // IN (C) Flags only
             instr = "IN (C)";
@@ -1725,7 +1726,7 @@ void Disassembler::GetNextInstructionMisc()
         }
         break;
     case 0xA:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LDI
             instr = "LDI";
@@ -1754,7 +1755,7 @@ void Disassembler::GetNextInstructionMisc()
         }
         break;
     case 0xB:
-        switch(opCode & 0x0F)
+        switch(op & 0x0F)
         {
         case 0x0: // LDIR
             instr = "LDIR";

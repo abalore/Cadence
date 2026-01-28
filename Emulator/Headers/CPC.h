@@ -10,6 +10,7 @@ class CPC
 public:
     static void Init();
     static void Clock();
+    static void Reset();
     static ROM *ActiveROM();
     static word AddressBUS;
     static BYTE DataBUS;

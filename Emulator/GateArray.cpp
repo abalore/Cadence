@@ -7,11 +7,11 @@
 #include "Headers/ROMSelector.h"
 
 
-BYTE GateArray::Color[3];
+const BYTE *GateArray::Color;
 BYTE GateArray::INK[16];
 BYTE GateArray::BORDER = 0;
-BYTE GateArray::RMR = 0b00000000;
-BYTE GateArray::MMR = 0;
+BYTE GateArray::RMR;
+BYTE GateArray::MMR;
 BYTE GateArray::currentPen = 0;
 bool GateArray::borderSelected = false;
 word GateArray::videoAddress = 0;
@@ -21,9 +21,14 @@ BYTE GateArray::videoPen = 0;
 BYTE GateArray::clockDividerCounter = 0;
 bool GateArray::CCLK = false;
 bool GateArray::lastHSYNC = false;
-BYTE GateArray::hsyncCounter = 0;
-BYTE GateArray::vsyncIntDelay = 0;
+BYTE GateArray::R52 = 0;
+BYTE GateArray::vsyncDelay = 0;
+BYTE GateArray::hsyncDelay = 0;
 BYTE GateArray::mode;
+bool GateArray::GA_HSYNC;
+bool GateArray::GA_VSYNC;
+
+
 bool GateArray::ROMEN()
 {
     if (Z80::MREQ || Z80::RD) return true;
@@ -75,9 +80,10 @@ void GateArray::Init()
     CCLK = false;
     currentByte = 0;
     pixelIndex = 0x80;
-    ROMSelector::Init();
-    PPI::Init();
-    PSG::Init();
+    GA_HSYNC = false;
+    GA_HSYNC = true;
+    RMR = 0;
+    MMR = 0;
 }
 
 void GateArray::Clock()
@@ -110,30 +116,7 @@ void GateArray::Clock()
     if ((clockDividerCounter % 16) == 0)
     {
         CRTC::CRTClock();
-        if (CRTC::HSyncFallingEdge)
-        {
-            mode = RMR & 0x03;
-            hsyncCounter++;
-            if (hsyncCounter == 52)// || (hsyncCounter >=32 && CRTC::VSYNCSTART))
-            {
-                //////////////////////////////////////
-                /// CPU INT ACK Control
-                hsyncCounter = 0;
-                Z80::InterruptRequest = false;
-            }
-            if (CRTC::VSYNCSTART)
-            {
-                hsyncCounter = 0;
-                if (hsyncCounter < 32)
-                    vsyncIntDelay = 2;
-            }
-            if (vsyncIntDelay > 0)
-            {
-                Z80::InterruptRequest = false;
-                if (vsyncIntDelay == 0)
-                    Z80::InterruptRequest = false;
-            }
-        }
+        GenerateSyncAndInterrupt();
     }
     // 2 Mhz
     if ((clockDividerCounter % 8) == 0)
@@ -146,13 +129,61 @@ void GateArray::Clock()
     SetPixel();
 }
 
+void GateArray::GenerateSyncAndInterrupt()
+{
+    if (CRTC::HSYNC)
+    {
+        if (hsyncDelay)
+            hsyncDelay--;
+        else
+        {
+            if (GA_HSYNC == false)
+            {
+                mode = RMR & 0x03;
+                R52++;
+                if (R52 == 52)
+                {
+                    //////////////////////////////////////
+                    /// CPU INT ACK Control
+                    R52 = 0;
+                    Z80::InterruptRequest = false;
+                }
+                if (CRTC::VSYNC)
+                {
+                    if (vsyncDelay)
+                        vsyncDelay--;
+                    else
+                    {
+                        if (GA_VSYNC == false)
+                        {
+                            if (R52 > 32)
+                                Z80::InterruptRequest = false;
+                            R52 = 0;
+                        }
+                        GA_VSYNC = true;
+                    }
+                }
+                else
+                {
+                    vsyncDelay = 0;
+                    GA_VSYNC = false;
+                }
+            }
+            GA_HSYNC = true;
+        }
+    }
+    else
+    {
+        hsyncDelay = 2;
+        GA_HSYNC = false;
+    }
+}
+
 void GateArray::SetPixel()
 {
     if (CRTC::HSYNC)
     {
-        Color[0] = 0;
-        Color[1] = 0;
-        Color[2] = 0;
+        Color = &Palette[60];
         return;
     }
     BYTE pi;
@@ -183,9 +214,9 @@ void GateArray::SetPixel()
     if (++pixelIndex == 8) pixelIndex = 0;
 
     int base = (CRTC::BORDER ? BORDER : INK[videoPen]) * 3;
-    Color[0] = Palette[base];
-    Color[1] = Palette[base + 1];
-    Color[2] = Palette[base + 2];
+    if (CRTC::BORDER && !Z80::InterruptEnable) base = 6;
+    //if (GA_HSYNC || GA_VSYNC) base = 6;
+    Color = &Palette[base];
 }
 
 void GateArray::ReadByte()

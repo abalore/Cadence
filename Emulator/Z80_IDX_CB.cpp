@@ -20,6 +20,7 @@ void Z80::Step_IDX_CB()
         tAddr = IDX->Get() + index;
         break;
     case 4:
+        mCycleType = MCycleType::WRITE;
         tByte = DR;
         switch(t8 >> 4)
         {
@@ -240,24 +241,28 @@ void Z80::Step_IDX_CB()
                 BIT_x_IDX(0);
             else
                 BIT_x_IDX(1);
+            mCycleType = MCycleType::ALU;
             break;
         case 0x5:
             if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(2);
             else
                 BIT_x_IDX(3);
+            mCycleType = MCycleType::ALU;
             break;
         case 0x6:
             if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(4);
             else
                 BIT_x_IDX(5);
+            mCycleType = MCycleType::ALU;
             break;
         case 0x7:
             if ((t8 & 0x0F) < 0x08)
                 BIT_x_IDX(6);
             else
                 BIT_x_IDX(7);
+            mCycleType = MCycleType::ALU;
             break;
         case 0x8:
             switch(t8 & 0x0F)
@@ -684,7 +689,6 @@ void Z80::Step_IDX_CB()
             }
             break;
         }
-        mCycleType = MCycleType::WRITE;
         DR = tByte;
         break;
     case 5:

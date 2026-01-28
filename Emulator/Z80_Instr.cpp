@@ -358,8 +358,9 @@ void Z80::ADD_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         ADD_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -374,8 +375,9 @@ void Z80::ADC_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         ADC_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -390,8 +392,9 @@ void Z80::SUB_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         SUB_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -406,8 +409,9 @@ void Z80::SBC_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         SBC_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -422,8 +426,9 @@ void Z80::AND_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         AND_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -438,8 +443,9 @@ void Z80::XOR_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         XOR_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -454,8 +460,9 @@ void Z80::OR_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         OR_A_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -470,8 +477,9 @@ void Z80::CP_n()
         tAddr = PC;
         break;
     case 2:
+        tAddr++;
+        PC = tAddr;
         CP_v(DR);
-        PC++;
         FinishInstruction();
         break;
     }
@@ -1207,12 +1215,12 @@ void Z80::CPI(bool R)
         break;
     case 2:
         mCycleType = MCycleType::ALU;
-        HL.Set(HL.Get()+1);
-        BC.Set(BC.Get()-1);
+        HL.Set(HL.Get() + 1);
+        BC.Set(BC.Get() - 1);
         break;
     case 3:
-        fH.Set((A & 0xF) < (DR & 0xF));
-        fS.Set(((A - DR) & 0x80) > 0);
+        fH.Set((A & 0x0F) < (DR & 0x0F));
+        fS.Set((A - DR) & 0x80);
         fZ.Set(A == DR);
         fP.Set(BC.Get() != 0);
         fN.Set(true);
@@ -1730,12 +1738,13 @@ void Z80::RLD()
         tAddr = HL.Get();
         break;
     case 2:
+        t8 = DR;
         DR = (BYTE)((DR << 4) + (A & 0x0F));
         mCycleType = MCycleType::WRITE;
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        A = (BYTE)((A & 0xF0) + (DR >> 4));
+        A = (BYTE)((A & 0xF0) + (t8 >> 4));
         break;
     case 4:
         fP.Set((A & 0x01) == 0);
@@ -1778,18 +1787,7 @@ void Z80::RRD()
 
 void Z80::IM(int mode)
 {
-    switch(mode)
-    {
-    case 0:
-        ////////////////////////////////
-        break;
-    case 1:
-        ///////////////////////////////////
-        break;
-    case 2:
-        //////////////////////////////
-        break;
-    }
+    InterruptMode = mode;
     idMode = IDMode::BASIC;
 }
 

@@ -24,6 +24,7 @@ protected:
 private slots:
     void onEmulatorPaused();
     void onMenuDebugPause();
+    void onMenuDebugReset();
 private:
     Ui::MainWindow *ui;
     QGraphicsScene *scene;

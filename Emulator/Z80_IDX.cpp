@@ -118,8 +118,8 @@ void Z80::Step_IDX()
         case 0x5: // LD B,IDX.L
             B = *(*IDX).L;
             break;
-        case 0x6: // LD B,(IDX+d)
-        case 0xE: // LD C,(IX+n)
+        case 0x6: // LD B,(IDX+n)
+        case 0xE: // LD C,(IDX+n)
             Step_IDX_2();
             break;
         case 0xC: // LD C,IDX.H
@@ -151,8 +151,8 @@ void Z80::Step_IDX()
         case 0x5: // LD D,IDX.L
             D = *(*IDX).L;
             break;
-        case 0x6: // LD D,(IDX+d)
-        case 0xE: // LD E,(IX+n)
+        case 0x6: // LD D,(IDX+n)
+        case 0xE: // LD E,(IDX+n)
             Step_IDX_2();
             break;
         case 0xC: // LD E,IDX.H
@@ -183,8 +183,8 @@ void Z80::Step_IDX()
         case 0x5: // LD IDX.H,IDX.L
             *(*IDX).H = *(*IDX).L;
             break;
-        case 0x6: // LD H,(IDX+d)
-        case 0xE: // LD L,(IX+n)
+        case 0x6: // LD H,(IDX+n)
+        case 0xE: // LD L,(IDX+n)
             Step_IDX_2();
             break;
         case 0x7: // LD IDX.H,A

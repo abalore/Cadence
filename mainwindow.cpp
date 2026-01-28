@@ -23,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
     workerThread->start();
     workerThread->setPriority(QThread::HighPriority);
     debugger = new Debugger(this);
-    connect(ui->menuDebug, &QMenu::triggered, this, &MainWindow::onMenuDebugPause);
+    connect(ui->actionPause, &QAction::triggered, this, &MainWindow::onMenuDebugPause);
+    connect(ui->actionReset, &QAction::triggered, this, &MainWindow::onMenuDebugReset);
     startTimer(17, Qt::PreciseTimer);
 }
 
@@ -44,7 +45,12 @@ void MainWindow::onEmulatorPaused()
 
 void MainWindow::onMenuDebugPause()
 {
-    EmulatorWorkerThread::Pause();
+    EmulatorWorkerThread::RunStep();
+}
+
+void MainWindow::onMenuDebugReset()
+{
+    EmulatorWorkerThread::Reset();
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)
@@ -54,9 +60,9 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QImage *image = new QImage(&CRTScreen::Pixels[0], 1024, 624, QImage::Format_RGB888);
     QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
-    pixItem->setPos(-96, -24);
-    EmulatorWorkerThread::measures++;
-    EmulatorWorkerThread::total += EmulatorWorkerThread::iteration;
-    EmulatorWorkerThread::iteration = 0;
-    ui->label->setText(QString::number(EmulatorWorkerThread::total / EmulatorWorkerThread::measures, 10));
+    pixItem->setPos(-64, -20);
+    //EmulatorWorkerThread::measures++;
+    //EmulatorWorkerThread::total += EmulatorWorkerThread::iteration;
+    //EmulatorWorkerThread::iteration = 0;
+    //ui->label->setText(QString::number(EmulatorWorkerThread::total / EmulatorWorkerThread::measures, 10));
 }
