@@ -102,10 +102,20 @@
     <addaction name="actionPause"/>
     <addaction name="actionReset"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionLoad_binary"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionPause">
+   <property name="icon">
+    <iconset theme="media-playback-pause"/>
+   </property>
    <property name="text">
     <string>Pause</string>
    </property>
@@ -123,11 +133,25 @@
    </property>
   </action>
   <action name="actionReset">
+   <property name="icon">
+    <iconset theme="system-reboot"/>
+   </property>
    <property name="text">
     <string>Reset</string>
    </property>
    <property name="shortcut">
     <string>F4</string>
+   </property>
+  </action>
+  <action name="actionLoad_binary">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
+   <property name="text">
+    <string>Load binary</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
    </property>
   </action>
  </widget>

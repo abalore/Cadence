@@ -22,9 +22,10 @@ public:
 protected:
     void timerEvent(QTimerEvent *event) override;
 private slots:
-    void onEmulatorPaused();
+    void onMenuFileLoadBinary();
     void onMenuDebugPause();
     void onMenuDebugReset();
+    void onEmulatorPaused();
 private:
     Ui::MainWindow *ui;
     QGraphicsScene *scene;

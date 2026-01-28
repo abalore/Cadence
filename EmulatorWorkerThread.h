@@ -33,6 +33,7 @@ public:
     static volatile int measures;
     static volatile int total;
     static volatile bool end;
+    static volatile long elapsed;
     static RunMode runMode;
     static mutex debugLock;
 signals:
