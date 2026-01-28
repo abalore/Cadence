@@ -100,6 +100,7 @@
      <string>Debug</string>
     </property>
     <addaction name="actionPause"/>
+    <addaction name="actionReset"/>
    </widget>
    <addaction name="menuDebug"/>
   </widget>
@@ -119,6 +120,14 @@
    </property>
    <property name="shortcutVisibleInContextMenu">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionReset">
+   <property name="text">
+    <string>Reset</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
    </property>
   </action>
  </widget>

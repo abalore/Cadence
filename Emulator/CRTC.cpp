@@ -8,8 +8,6 @@ BYTE CRTC::RA;
 word CRTC::MA;
 bool CRTC::HSYNC;
 bool CRTC::VSYNC;
-bool CRTC::HSyncFallingEdge;
-bool CRTC::VSYNCSTART;
 bool CRTC::BORDER;
 word CRTC::HCC;
 word CRTC::VCC;
@@ -24,6 +22,9 @@ void CRTC::Init()
     VSC = 0;
     MA = 0;
     RA = 0;
+    HSYNC = false;
+    VSYNC = false;
+
 }
 
 void CRTC::IOClock()
@@ -55,38 +56,32 @@ void CRTC::IOClock()
 void CRTC::CRTClock()
 {
     HCC++;
-    MA++;
-    VSYNCSTART = false;
-    HSyncFallingEdge = false;
     if (HCC > Registers[0])
     {
         HCC = 0;
-        MA -= Registers[0] + 1;
         RA++;
         if (RA > Registers[9])
         {
             RA = 0;
             VCC++;
-            MA += Registers[1];
+            if (VCC > Registers[4])
+            {
+                VCC = 0;
+                // MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]);
+            }
             if (VCC == Registers[7])
             {
                 VSC = ((BYTE)(Registers[3] >> 4));
                 if (VSC < 4) VSC = 4;
-                VSYNCSTART = true;
             }
-            if (VCC > Registers[4])
-            {
-                VCC = 0;
-                MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]);
-            }
-            if (VSC > 0)
-            {
-                VSYNC = true;
-                VSC--;
-            }
-            else
-                VSYNC = false;
         }
+        if (VSC > 0)
+        {
+            VSYNC = true;
+            VSC--;
+        }
+        else
+            VSYNC = false;
     }
     if (HCC == Registers[2])
     {
@@ -97,11 +92,10 @@ void CRTC::CRTClock()
     {
         HSYNC = true;
         HSC--;
-        if (HSC == 0)
-            HSyncFallingEdge = true;
     }
     else
         HSYNC = false;
     BORDER = HCC >= Registers[1] || VCC >= Registers[6];
+    MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]) + VCC * Registers[1] + HCC;
 }
 

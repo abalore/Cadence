@@ -7,6 +7,8 @@
 #include <QCloseEvent>
 #include <QStringListModel>
 #include <QModelIndex>
+#include <QScrollBar>
+#include <QShortcut>
 
 Debugger::Debugger(QWidget *parent)
     : QDialog(parent)
@@ -17,10 +19,15 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnStepIn, &QPushButton::clicked, this, &Debugger::onStepInClicked);
     connect(ui->btnStepOver, &QPushButton::clicked, this, &Debugger::onStepOverClicked);
     connect(ui->btnStepOut, &QPushButton::clicked, this, &Debugger::onStepOutClicked);
+    connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
     modelDisassembly = new QStringListModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
     ui->listMemory->setModel(modelMemory);
+    connect(new QShortcut(Qt::Key_F9, this), &QShortcut::activated, this, &Debugger::onRunClicked);
+    connect(new QShortcut(Qt::Key_F10, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
+    connect(new QShortcut(Qt::Key_F11, this), &QShortcut::activated, this, &Debugger::onStepInClicked);
+    connect(new QShortcut(Qt::Key_F12, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
 }
 
 Debugger::~Debugger()
@@ -40,25 +47,35 @@ void Debugger::closeEvent(QCloseEvent *event)
 void Debugger::Update()
 {
     int pcPosition = 0;
+    int instrCount = 0;
     listDisassembly.clear();
     char buff[200];
+    bool pcFound = false;
     Disassembler::SetPoint(0x0000);
     while (Disassembler::addr < 0x10000)
     {
+        BYTE opCode;
         BYTE instrLength;
         string address, bytes, instruction;
-        Disassembler::GetNextInstruction(instrLength, &address, &bytes, &instruction);
+        ushort position = Disassembler::addr;
+        Disassembler::GetNextInstruction(instrLength, opCode, &address, &bytes, &instruction);
         sprintf(buff, "%4s  %12s  %s", address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
-        if (Disassembler::addr <= Z80::PC)
-            pcPosition = listDisassembly.count();
+        if (!pcFound && position >= Z80::PC)
+        {
+            pcPosition = instrCount;
+            pcFound = true;
+            nextInstructionLength = instrLength;
+            nextInstructionOpCode = opCode;
+        }
+        instrCount++;
     }
     modelDisassembly -> setStringList(listDisassembly);
-    modelDisassembly -> dataChanged(modelDisassembly->index(0x0000), modelDisassembly->index(0xFFFF));
     modelDisassemblyIndex = modelDisassembly->index(pcPosition);
     ui->listDisassembly->scrollTo(modelDisassemblyIndex, QAbstractItemView::PositionAtCenter);
     ui->listDisassembly->setCurrentIndex(modelDisassemblyIndex);
 
+    int memoryIndex = ui->listMemory->currentIndex().row();
     listMemory.clear();
     for (int i = 0x0000; i <= 0xFFF0; i += 16)
     {
@@ -73,10 +90,11 @@ void Debugger::Update()
                 CPC::InternalRAM->MEM[i + 14], CPC::InternalRAM->MEM[i + 15]);
         listMemory.append(buff);
     }
+
     modelMemory -> setStringList(listMemory);
-    modelMemory -> dataChanged(modelMemory->index(0), modelMemory->index(0xFFFF));
-    modelMemoryIndex = modelDisassembly->index(0);
-    ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtTop);
+    modelMemoryIndex = modelMemory->index(memoryIndex);
+    ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
+    ui->listMemory->setCurrentIndex(modelMemoryIndex);
 
     EmulatorWorkerThread::debugLock.lock();
     ui->lblZ80->setText(EmulatorWorkerThread::debugStringZ80.data());
@@ -94,16 +112,32 @@ void Debugger::onRunClicked()
 
 void Debugger::onStepInClicked()
 {
-    EmulatorWorkerThread::StepIn();
+    EmulatorWorkerThread::RunStep();
 }
 
 void Debugger::onStepOverClicked()
 {
-    EmulatorWorkerThread::StepOver();
+    if (nextInstructionOpCode == 0x18
+        || nextInstructionOpCode == 0xC3
+        || nextInstructionOpCode == 0xC9
+        || nextInstructionOpCode == 0xE9)
+        EmulatorWorkerThread::RunStep();
+    else
+        EmulatorWorkerThread::RunTo(Z80::PC + nextInstructionLength);
 }
 
 void Debugger::onStepOutClicked()
 {
-    EmulatorWorkerThread::StepOut();
+    word address = Z80::SP.Get();
+    BYTE L = CPC::InternalRAM->MEM[address];
+    BYTE H = CPC::InternalRAM->MEM[address + 1];
+    EmulatorWorkerThread::RunTo(L + H * 256);
+}
+
+void Debugger::onRunToClicked()
+{
+    int index = ui->listDisassembly->currentIndex().row();
+    QString string = listDisassembly.at(index).first(4);
+    EmulatorWorkerThread::RunTo(string.toInt(nullptr, 16));
 }
 

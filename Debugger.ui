@@ -22,16 +22,19 @@
   <property name="windowTitle">
    <string>AAE Debugger</string>
   </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
   <property name="modal">
    <bool>false</bool>
   </property>
   <widget class="QLabel" name="lblZ80">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>400</y>
-     <width>471</width>
-     <height>81</height>
+     <x>370</x>
+     <y>10</y>
+     <width>81</width>
+     <height>221</height>
     </rect>
    </property>
    <property name="font">
@@ -82,7 +85,7 @@
   <widget class="QLabel" name="lblStack">
    <property name="geometry">
     <rect>
-     <x>370</x>
+     <x>480</x>
      <y>10</y>
      <width>111</width>
      <height>221</height>
@@ -109,10 +112,10 @@
   <widget class="QLabel" name="lblCRTC">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>10</y>
-     <width>101</width>
-     <height>401</height>
+     <x>10</x>
+     <y>400</y>
+     <width>471</width>
+     <height>81</height>
     </rect>
    </property>
    <property name="font">
@@ -137,64 +140,88 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>430</y>
+     <y>240</y>
      <width>101</width>
      <height>26</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step in</string>
+    <string>Step in (F11)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnStepOut">
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>490</y>
+     <y>300</y>
      <width>101</width>
      <height>26</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step out</string>
+    <string>Step out (F12)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnRun">
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>520</y>
+     <y>330</y>
      <width>101</width>
      <height>26</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Run</string>
+    <string>Run (F9)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnStepOver">
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>460</y>
+     <y>270</y>
      <width>101</width>
      <height>26</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
    </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step over</string>
+    <string>Step over (F10)</string>
    </property>
   </widget>
   <widget class="QListView" name="listDisassembly">
@@ -256,14 +283,39 @@
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
+   <property name="selectionBehavior">
+    <enum>QAbstractItemView::SelectRows</enum>
+   </property>
    <property name="layoutMode">
-    <enum>QListView::Batched</enum>
+    <enum>QListView::SinglePass</enum>
    </property>
    <property name="uniformItemSizes">
     <bool>true</bool>
    </property>
    <property name="batchSize">
     <number>8</number>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnRunTo">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>360</y>
+     <width>101</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>Run To</string>
    </property>
   </widget>
  </widget>

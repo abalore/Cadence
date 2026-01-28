@@ -23,6 +23,7 @@ private slots:
     void onStepInClicked();
     void onStepOverClicked();
     void onStepOutClicked();
+    void onRunToClicked();
 private:
     Ui::Debugger *ui;
     QStringList listDisassembly;
@@ -31,6 +32,8 @@ private:
     QStringList listMemory;
     QStringListModel *modelMemory;
     QModelIndex modelMemoryIndex;
+    uchar nextInstructionLength;
+    uchar nextInstructionOpCode;
     void closeEvent(QCloseEvent *event);
 };
 

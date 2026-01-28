@@ -10,6 +10,7 @@ BYTE PPI::controlWord;
 
 void PPI::Init()
 {
+    controlWord = 0;
 }
 
 void PPI::IOClock()

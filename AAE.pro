@@ -17,6 +17,7 @@ SOURCES += \
     Emulator/PSG.cpp \
     Emulator/ROMSelector.cpp \
     Emulator/Z80_IDX_3.cpp \
+    Emulator/Z80_intexec.cpp \
     EmulatorWorkerThread.cpp \
     main.cpp \
     mainwindow.cpp \

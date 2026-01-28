@@ -15,6 +15,7 @@ void Z80::Step_IDX_2()
         tAddr = IDX->Get() + index;
         break;
     case 3:
+        mCycleType = MCycleType::ALU;
         t8 = DR;
         switch(IR >> 4)
         {
@@ -23,9 +24,13 @@ void Z80::Step_IDX_2()
             {
             case 0x4: // 6
                 INC_R(t8);
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x5: // 6
                 DEC_R(t8);
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             }
             break;
@@ -67,24 +72,38 @@ void Z80::Step_IDX_2()
             {
             case 0x0: // LD (IDX+d),B
                 t8 = B; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x1: // LD (IDX+d),C
                 t8 = C; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x2: // LD (IDX+d),D
                 t8 = D; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x3: // LD (IDX+d),E
                 t8 = E; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x4: // LD (IDX+d),H
                 t8 = H; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x5: // LD (IDX+d),L
                 t8 = L; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0x7: // LD (IDX+d),A
                 t8 = A; // 5
+                mCycleType = MCycleType::WRITE;
+                DR = t8;
                 break;
             case 0xE: // LD A,(IX+d)
                 A = t8; // 5
@@ -136,8 +155,6 @@ void Z80::Step_IDX_2()
             }
             break;
         }
-        mCycleType = MCycleType::WRITE;
-        DR = t8;
         break;
     case 4:
         if ((IR >> 4) == 3)

@@ -11,7 +11,7 @@ public:
     static bool ROMEN();
     static bool RAMRD();
     static bool MWE();
-    static BYTE Color[3];
+    static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
     static BYTE currentPen;
@@ -19,9 +19,12 @@ public:
     static const BYTE cM = 128;
     static const BYTE cL = 0;
     static BYTE RMR;
-    static BYTE hsyncCounter;
-    static BYTE vsyncIntDelay;
+    static BYTE R52;
+    static BYTE hsyncDelay;
+    static BYTE vsyncDelay;
     static BYTE mode;
+    static bool GA_HSYNC;
+    static bool GA_VSYNC;
     constexpr static const BYTE Palette[3 * 32] =
         {
             cM, cM, cM, // White
@@ -55,10 +58,11 @@ public:
             cM, cL, cL, // Red
             cM, cL, cH, // Mauve
             cM, cM, cL, // Yellow
-            cL, cL, cH, // Pastel blue
+            cM, cM, cH, // Pastel blue
     };
 
 private:
+    static void GenerateSyncAndInterrupt();
     static void SetPixel();
     static void ReadByte();
     static void IO_Clock();

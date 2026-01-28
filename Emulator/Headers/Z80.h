@@ -25,7 +25,8 @@ enum IDMode
     BIT,
     IDX,
     IDX2,
-    IDXBIT
+    IDXBIT,
+    INTEXEC
 };
 
 class Z80
@@ -59,6 +60,8 @@ public:
     static bool InterruptRequest;
     static bool CLK;
     static bool stopPoint;
+    static bool halted;
+    static BYTE InterruptMode;
 private:
     static void Step();;
     static void Step_basic();
@@ -68,6 +71,7 @@ private:
     static void Step_IDX_2();
     static void Step_IDX_3();
     static void Step_IDX_CB();
+    static void Step_Int_Exec();
     static void ProcessINT();
     static void ProcessFETCH();
     static void ProcessREAD();

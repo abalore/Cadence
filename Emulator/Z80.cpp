@@ -71,13 +71,32 @@ Reg16 *Z80::IDX = &IX;
 word Z80::tAddr = 0;
 bool Z80::InterruptEnable = false;
 bool Z80::InterruptRequest = true;
+BYTE Z80::InterruptMode = 0;
 bool Z80::CLK = false;
 bool Z80::stopPoint = false;
 BYTE Z80::t_cp = 0;
+bool Z80::halted = false;
 
-void Z80::Reset()
+void Z80::Init()
 {
+    tCycle = 1;
+    mCycle = 1;
+    MREQ = true;
+    RD = true;
+    WR = true;
+    IORQ = true;
+    // WAIT = true;
+    RFSH = true;
+    M1 = true;
     PC = 0;
+    idMode = IDMode::BASIC;
+    mCycleType = MCycleType::FETCH;
+    InterruptEnable = true;
+    InterruptRequest = true;
+    InterruptMode = 0;
+    CLK = false;
+    stopPoint = false;
+    halted = false;
 }
 
 void Z80::Step()
@@ -102,13 +121,29 @@ void Z80::Step()
         case IDMode::IDXBIT:
             Step_IDX_CB();
             break;
+        case IDMode::INTEXEC:
+            Step_Int_Exec();
+            break;
     }
 }
 
 void Z80::ProcessINT()
 {
     if (CLK && tCycle == 3)
-        IR = 0xFF;
+    {
+        switch(InterruptMode)
+        {
+        case 0:
+            break;
+        case 1:
+            IR = 0xFF;
+            break;
+        case 2:
+
+            break;
+        }
+
+    }
 }
 
 void Z80::ProcessFETCH()
@@ -130,11 +165,16 @@ void Z80::ProcessFETCH()
                 break;
             case 3:
                 M1 = true;
-                IR = CPC::DataBUS;
                 RD = true;
                 RFSH = false;
                 MREQ = true;
-                PC++;
+                if (halted)
+                    IR = 0x00;
+                else
+                {
+                    IR = CPC::DataBUS;
+                    PC++;
+                }
                 break;
         }
     }
@@ -317,6 +357,8 @@ void Z80::ClockEdge()
                     InterruptRequest = true;
                     IR = 0xFF;
                     mCycleType = MCycleType::INT;
+                    halted = false;
+                    idMode = IDMode::INTEXEC;
                 }
             }
             else
