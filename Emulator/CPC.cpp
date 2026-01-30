@@ -15,6 +15,7 @@ RAM *CPC::InternalRAM;
 ROM *CPC::LoROM;
 ROM *CPC::HiROM;
 ROM *CPC::ExpansionROM;
+PSG *CPC::psg;
 
 ROM *CPC::ActiveROM()
 {
@@ -38,6 +39,7 @@ void CPC::Init()
     LoROM = new ROM(0xFF); // -1 = lower
     HiROM = new ROM(0);
     ExpansionROM = new ROM(1);
+    psg = new PSG();
     Reset();
 }
 
@@ -56,5 +58,5 @@ void CPC::Reset()
     Keyboard::Init();
     ROMSelector::Init();
     PPI::Init();
-    PSG::Init();
+    psg->Init();
 }

@@ -4,6 +4,7 @@
 #include "defs.h"
 #include "ROM.h"
 #include "RAM.h"
+#include "PSG.h"
 
 class CPC
 {
@@ -18,6 +19,7 @@ public:
     static ROM *LoROM;
     static ROM *HiROM;
     static ROM *ExpansionROM;
+    static PSG *psg;
 };
 
 

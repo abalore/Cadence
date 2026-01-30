@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "EmulatorWorkerThread.h"
+#include "SoundThread.h"
 #include "Debugger.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
@@ -19,18 +20,19 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-protected:
-    void timerEvent(QTimerEvent *event) override;
+    static MainWindow *Instance;
 private slots:
     void onMenuFileLoadBinary();
     void onMenuDebugPause();
     void onMenuDebugReset();
     void onEmulatorPaused();
+    void onEmulatorFinishedFrame();
 private:
     Ui::MainWindow *ui;
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixItem;
     Debugger *debugger;
     EmulatorWorkerThread *workerThread;
+    SoundThread *soundThread;
 };
 #endif // MAINWINDOW_H

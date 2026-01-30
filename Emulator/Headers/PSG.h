@@ -6,18 +6,37 @@
 class PSG
 {
 public:
-    static void Init();
-    static void Clock();
-    static BYTE ReadData();
-    static void WriteData(BYTE data);
-    static BYTE PortA;
-    static bool BC1;
-    static bool BDIR;
+    void Init();
+    void Clock();
+    BYTE ReadData();
+    void WriteData(BYTE data);
+    BYTE PortA;
+    bool BC1;
+    bool BDIR;
+    BYTE outputA;
+    BYTE outputB;
+    BYTE outputC;
+    volatile bool DataAvailable;
+    volatile BYTE output;
 private:
-    static BYTE inputRegister;
-    static BYTE outputRegister;
-    static BYTE selectedRegister;
-    static BYTE registers[16];
+    BYTE inputRegister;
+    BYTE outputRegister;
+    BYTE selectedRegister;
+    BYTE registers[16];
+    word counterA;
+    word counterB;
+    word counterC;
+    BYTE divider;
+    bool bitA;
+    bool bitB;
+    bool bitC;
+    word periodA;
+    word periodB;
+    word periodC;
+    bool mixA;
+    bool mixB;
+    bool mixC;
 };
 
 #endif // PSG_H
+

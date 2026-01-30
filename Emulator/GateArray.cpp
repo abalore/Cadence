@@ -109,7 +109,7 @@ void GateArray::Clock()
 
     if ((clockDividerCounter % 16) == 0)
     {
-        PSG::Clock();
+        CPC::psg -> Clock();
     }
 
     // 1Mhz
@@ -212,11 +212,7 @@ void GateArray::SetPixel()
         break;
     }
     if (++pixelIndex == 8) pixelIndex = 0;
-
-    int base = (CRTC::BORDER ? BORDER : INK[videoPen]) * 3;
-    if (CRTC::BORDER && !Z80::InterruptEnable) base = 6;
-    //if (GA_HSYNC || GA_VSYNC) base = 6;
-    Color = &Palette[base];
+    Color = &Palette[(CRTC::BORDER ? BORDER : INK[videoPen]) * 3];
 }
 
 void GateArray::ReadByte()

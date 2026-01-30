@@ -6,6 +6,7 @@ int CRTScreen::vPos = 0;
 BYTE CRTScreen::Pixels[PixelWidth * PixelHeight * BytesPerPixel * 2];
 bool CRTScreen::lastHSYNC = false;
 bool CRTScreen::lastVSYNC = false;
+BYTE CRTScreen::newFrame = 0;
 
 void CRTScreen::Init()
 {
@@ -17,20 +18,21 @@ void CRTScreen::Init()
 
 void CRTScreen::Clock()
 {
-    hPos++;
+    hPos += 3;
     if (GateArray::GA_HSYNC && !lastHSYNC)
     {
         hPos = 0;
-        vPos++;
+        vPos += Stride;
     }
     if (GateArray::GA_VSYNC && !lastVSYNC)
-        vPos = 0;
-    if (hPos < PixelWidth && vPos < PixelHeight)
     {
-        int base = vPos * Stride * 2 + hPos * BytesPerPixel;
+        vPos = 0;
+        newFrame = 2;
+    }
+    int base = vPos + hPos;
+    if (base < DataSize)
         for (int i = 0; i < BytesPerPixel; i++)
             Pixels[base + i] = GateArray::Color[i];
-    }
     lastHSYNC = GateArray::GA_HSYNC;
     lastVSYNC = GateArray::GA_VSYNC;
 }

@@ -4,15 +4,15 @@
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/CRTC.h"
 #include "Emulator/Headers/GateArray.h"
-#include <QElapsedTimer>
+#include "Emulator/Headers/CRTScreen.h"
+#include <stdlib.h>
+
+using namespace std::chrono;
 
 volatile ushort EmulatorWorkerThread::stopPoint = 0x8185; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::running = true;
 RunMode EmulatorWorkerThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorWorkerThread::canDebug = true;
-volatile int EmulatorWorkerThread::iteration;
-volatile int EmulatorWorkerThread::measures;
-volatile int EmulatorWorkerThread::total;
 volatile bool EmulatorWorkerThread::end = false;
 unsigned char EmulatorWorkerThread::nextInstructionLength;
 mutex EmulatorWorkerThread::debugLock;
@@ -128,30 +128,42 @@ void EmulatorWorkerThread::Stop ()
 
 void EmulatorWorkerThread::run()
 {
-    QElapsedTimer timer = QElapsedTimer();
-    timer.start();
     Emulator::Init();
+    long lastT = 0;
+    long t;
+    long elapsed;
+
     while(!end)
     {
         if (running)
         {
-            Emulator::Clock();
-            iteration++;
-            switch(runMode)
+            while (CRTScreen::newFrame == 0)
             {
-            case RunMode::StepByStep:
-                if (Z80::stopPoint)
-                    Stop();
-                break;
-            case RunMode::StopPoint:
-                if (Z80::stopPoint && Z80::PC == stopPoint)
-                    Stop();
-                break;
-            case RunMode::Run:
-                break;
+                Emulator::Clock();
+                switch(runMode)
+                {
+                case RunMode::StepByStep:
+                    if (Z80::stopPoint)
+                        Stop();
+                    break;
+                case RunMode::StopPoint:
+                    if (Z80::stopPoint && Z80::PC == stopPoint)
+                        Stop();
+                    break;
+                case RunMode::Run:
+                    break;
+                }
             }
-            elapsed = timer.restart();
-
+            do
+            {
+                duration now = high_resolution_clock::now().time_since_epoch();
+                t = duration_cast<microseconds>(now).count();
+                elapsed = t - lastT;
+            } while (elapsed < 20000);
+            lastT = t;
+            OnFinishedFrame();
+            CRTScreen::newFrame--;
+            while (CRTScreen::newFrame > 0) {}
         }
         else
             sleep(0);
