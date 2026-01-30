@@ -18,9 +18,9 @@ void Emulator::Init()
     ReadROM((char *)"ROM/ROM_BASIC_464.bin", CPC::HiROM->MEM);
 
     // INT ok
-    //ReadROM((char *)"ROM/ROM_OH_MUMMY.bin", CPC::ExpansionROM->MEM); // Collection broken
+    ReadROM((char *)"ROM/ROM_OH_MUMMY.bin", CPC::ExpansionROM->MEM); // Collection broken
     //ReadROM((char *)"ROM/ROM_BOULDER_DASH.bin", CPC::ExpansionROM->MEM); // Gameplay broken at start
-    ReadROM((char *)"ROM/ROM_BRUCE_LEE.bin", CPC::ExpansionROM->MEM); // WORKING
+    //ReadROM((char *)"ROM/ROM_BRUCE_LEE.bin", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/ROM_DONKEY_KONG.bin", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/Ahhh.rom", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/Airwolf.rom", CPC::ExpansionROM->MEM); // WORKING

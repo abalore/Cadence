@@ -11,8 +11,10 @@ public:
     static const int PixelWidth = 1024;
     static const int PixelHeight = 312;
     static const int BytesPerPixel = 3;
-    static const int Stride = PixelWidth * BytesPerPixel;
-    static BYTE Pixels[PixelWidth * PixelHeight * BytesPerPixel * 2];
+    static const int Stride = PixelWidth * BytesPerPixel * 2;
+    static const int DataSize = PixelWidth * PixelHeight * BytesPerPixel * 2;
+    static BYTE Pixels[DataSize];
+    static BYTE newFrame;
 private:
     static int hPos, vPos;
     static bool lastHSYNC, lastVSYNC;

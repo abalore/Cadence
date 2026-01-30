@@ -29,15 +29,13 @@ public:
     static void Reset();
     static volatile bool running;
     static volatile ushort stopPoint;
-    static volatile int iteration;
-    static volatile int measures;
-    static volatile int total;
     static volatile bool end;
     static volatile long elapsed;
     static RunMode runMode;
     static mutex debugLock;
 signals:
     void OnPause();
+    void OnFinishedFrame();
 protected:
     void run() override;
 private:

@@ -23,14 +23,14 @@ void PPI::IOClock()
             {
             case 0: // 8255 PPI Port A (PSG Data)   (R/W)
                 if ((controlWord & 0x10) == 0)
-                    PSG::WriteData(CPC::DataBUS);
+                    CPC::psg->WriteData(CPC::DataBUS);
                 break;
             case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
                 break;
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
                 Keyboard::SetRow(CPC::DataBUS & 0x0F);
-                PSG::BDIR = (CPC::DataBUS & 0x80) > 0;
-                PSG::BC1 = (CPC::DataBUS & 0x40) > 0;
+                CPC::psg->BDIR = (CPC::DataBUS & 0x80) > 0;
+                CPC::psg->BC1 = (CPC::DataBUS & 0x40) > 0;
                 break;
             case 3: // 8255 PPI Control-Register (W)
                 if (CPC::DataBUS & 0x80)
@@ -42,10 +42,10 @@ void PPI::IOClock()
                     switch(value)
                     {
                     case 0x80:
-                        PSG::BDIR = bit;
+                        CPC::psg -> BDIR = bit;
                         break;
                     case 0x40:
-                        PSG::BC1 = bit;
+                        CPC::psg -> BC1 = bit;
                         break;
                     case 0x20:
                         break;
@@ -65,7 +65,7 @@ void PPI::IOClock()
             switch((CPC::AddressBUS & 0x0300) >> 8)
             {
             case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-                CPC::DataBUS = (controlWord & 0x10) ? PSG::ReadData() : 0xFF;
+                CPC::DataBUS = (controlWord & 0x10) ? CPC::psg -> ReadData() : 0xFF;
                 break;
             case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
                 CPC::DataBUS = 0x3E + CRTC::VSYNC;
