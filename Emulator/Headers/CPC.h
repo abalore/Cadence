@@ -19,7 +19,6 @@ public:
     static ROM *LoROM;
     static ROM *HiROM;
     static ROM *ExpansionROM;
-    static PSG *psg;
 };
 
 
