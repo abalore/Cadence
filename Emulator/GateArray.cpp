@@ -109,7 +109,7 @@ void GateArray::Clock()
 
     if ((clockDividerCounter % 16) == 0)
     {
-        CPC::psg -> Clock();
+        PSG::Clock();
     }
 
     // 1Mhz

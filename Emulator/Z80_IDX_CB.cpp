@@ -10,7 +10,7 @@ void Z80::Step_IDX_CB()
         tAddr = PC;
         break;
     case 2:
-        index = DR;
+        index = (sbyte)DR;
         tAddr++;
         break;
     case 3:

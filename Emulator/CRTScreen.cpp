@@ -6,7 +6,7 @@ int CRTScreen::vPos = 0;
 BYTE CRTScreen::Pixels[PixelWidth * PixelHeight * BytesPerPixel * 2];
 bool CRTScreen::lastHSYNC = false;
 bool CRTScreen::lastVSYNC = false;
-BYTE CRTScreen::newFrame = 0;
+CRTStage CRTScreen::stage = CRTStage::Running;
 
 void CRTScreen::Init()
 {
@@ -27,7 +27,7 @@ void CRTScreen::Clock()
     if (GateArray::GA_VSYNC && !lastVSYNC)
     {
         vPos = 0;
-        newFrame = 2;
+        stage = CRTStage::WaitingEmulation;
     }
     int base = vPos + hPos;
     if (base < DataSize)

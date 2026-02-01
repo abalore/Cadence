@@ -27,6 +27,8 @@ private slots:
     void onMenuDebugReset();
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
+    void onMenuTapeLoadFromFile();
+    void onMenuTapeFromAudioInput();
 private:
     Ui::MainWindow *ui;
     QGraphicsScene *scene;

@@ -1,7 +1,7 @@
 QT += core
 QT += gui
-QT += multimedia
 
+LIBS += -lpulse -lpulse-simple
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,6 +19,7 @@ SOURCES += \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
     Emulator/ROMSelector.cpp \
+    Emulator/Tape.cpp \
     Emulator/Z80_IDX_3.cpp \
     Emulator/Z80_intexec.cpp \
     EmulatorWorkerThread.cpp \
@@ -59,6 +60,7 @@ HEADERS += \
     Emulator/Headers/ROM.h \
     Emulator/Headers/ROMSelector.h \
     Emulator/Headers/Reg16.h \
+    Emulator/Headers/Tape.h \
     Emulator/Headers/Z80.h \
     Emulator/Headers/defs.h \
     EmulatorWorkerThread.h \
@@ -74,5 +76,4 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
 

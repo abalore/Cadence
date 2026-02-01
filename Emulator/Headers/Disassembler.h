@@ -26,6 +26,7 @@ private:
     static string ReadHex8();
     static string ReadHex16();
     static string ReadSInt8();
+    static string ReadRelativeAddressHex16();
     static void GetNextInstructionBasic();
     static void GetNextInstructionCB();
     static void GetNextInstructionIDXCB();

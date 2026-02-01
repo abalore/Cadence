@@ -4,6 +4,7 @@
 #include "EmulatorWorkerThread.h"
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/CRTScreen.h"
+#include "Emulator/Headers/Tape.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -34,7 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionPause, &QAction::triggered, this, &MainWindow::onMenuDebugPause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::onMenuDebugReset);
     connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
-
+    connect(ui->actionLoad_from_file, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFromFile);
+    connect(ui->actionFrom_audio_input, &QAction::triggered, this, &MainWindow::onMenuTapeFromAudioInput);
     Instance = this;
 }
 
@@ -57,14 +59,14 @@ void MainWindow::onEmulatorPaused()
 void MainWindow::onMenuFileLoadBinary()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), ".", tr("Binary Files (*.bin)"));
-    QFile bin = QFile(fileName);
-    bin.open(QIODevice::ReadOnly);
-    if (bin.isOpen())
+    QFile file = QFile(fileName);
+    file.open(QIODevice::ReadOnly);
+    if (file.isOpen())
     {
-        QByteArray ba = bin.readAll();
+        QByteArray ba = file.readAll();
         memcpy(CPC::InternalRAM->MEM + 0x100, ba.data(), ba.size());
     }
-    bin.close();
+    file.close();
 }
 
 void MainWindow::onMenuDebugPause()
@@ -84,4 +86,15 @@ void MainWindow::onEmulatorFinishedFrame()
     QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
     pixItem->setPos(-64, -20);
+}
+
+void MainWindow::onMenuTapeLoadFromFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("WAV Files (*.wav)"));
+    Tape::LoadWAV((char *)fileName.toUtf8().data());
+}
+
+void MainWindow::onMenuTapeFromAudioInput()
+{
+    Tape::FromAudioInput(ui->actionFrom_audio_input->isChecked());
 }

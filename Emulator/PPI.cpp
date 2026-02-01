@@ -1,16 +1,36 @@
 #include "Headers/PPI.h"
 #include "Headers/Z80.h"
 #include "Headers/CPC.h"
-#include "Headers/GateArray.h"
 #include "Headers/CRTC.h"
 #include "Headers/PSG.h"
 #include "Headers/Keyboard.h"
+#include "Headers/Tape.h"
 
 BYTE PPI::controlWord;
+BYTE PPI::aMode;
+BYTE PPI::bMode;
+BYTE PPI::aHandshake;
+BYTE PPI::bHandshake;
+bool PPI::lCIO;
+bool PPI::hCIO;
+bool PPI::aIO;
+bool PPI::bIO;
+BYTE PPI::lC;
+BYTE PPI::hC;
 
 void PPI::Init()
 {
     controlWord = 0;
+    aMode = 0;
+    bMode = 0;
+    aHandshake = 0;
+    bHandshake = 0;
+    lCIO = false;
+    hCIO = false;
+    aIO = false;
+    bIO = false;
+    lC = 0;
+    hC = 0;
 }
 
 void PPI::IOClock()
@@ -22,19 +42,66 @@ void PPI::IOClock()
             switch((CPC::AddressBUS & 0x0300) >> 8)
             {
             case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-                if ((controlWord & 0x10) == 0)
-                    CPC::psg->WriteData(CPC::DataBUS);
+                if (!aIO || aMode == 2)
+                    PSG::WriteData(CPC::DataBUS);
                 break;
             case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
+                if (!bIO)
+                {
+
+                }
                 break;
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
-                Keyboard::SetRow(CPC::DataBUS & 0x0F);
-                CPC::psg->BDIR = (CPC::DataBUS & 0x80) > 0;
-                CPC::psg->BC1 = (CPC::DataBUS & 0x40) > 0;
+                if (!lCIO)
+                {
+                    // bits 2..0
+                    lC = CPC::DataBUS & 0x0F;
+                    // bit 3
+                    if (aMode != 0)
+                    {
+                        aHandshake &= 0xF7;
+                        aHandshake |= lC & 0x08;
+                    }
+                    // Destination
+                    if (bMode == 0)
+                        Keyboard::SetRow(lC);
+                    else
+                        bHandshake = lC & 0x07;
+                }
+                if (!hCIO)
+                {
+                    // bits 7..4
+                    hC = CPC::DataBUS & 0xF0;
+                    switch(aMode)
+                    {
+                    case 0:
+                        PSG::BDIR = (hC & 0x80) > 0;
+                        PSG::BC1 = (hC & 0x40) > 0;
+                        Tape::SetMotorState(hC & 0x10);
+                        break;
+                    case 1:
+                    case 2:
+                        aHandshake |= hC;
+                        break;
+                    }
+                }
                 break;
             case 3: // 8255 PPI Control-Register (W)
                 if (CPC::DataBUS & 0x80)
+                {
                     controlWord = CPC::DataBUS;
+                    PSG::WriteData(0);
+                    Keyboard::SetRow(0);
+                    PSG::BDIR = false;
+                    PSG::BC1 = false;
+                    Tape::SetMotorState(false);
+                    aMode = (controlWord & 0x7F) >> 5;
+                    bMode = (controlWord & 0x07) >> 2;
+                    lCIO = controlWord & 0x01;
+                    hCIO = controlWord & 0x08;
+                    aIO = controlWord & 0x10;
+                    bIO = controlWord & 0x02;
+                }
                 else
                 {
                     BYTE bit = (CPC::DataBUS & 0x0E) >> 1;
@@ -42,14 +109,15 @@ void PPI::IOClock()
                     switch(value)
                     {
                     case 0x80:
-                        CPC::psg -> BDIR = bit;
+                        PSG::BDIR = bit;
                         break;
                     case 0x40:
-                        CPC::psg -> BC1 = bit;
+                        PSG::BC1 = bit;
                         break;
                     case 0x20:
                         break;
                     case 0x10:
+                        Tape::SetMotorState(bit);
                         break;
                     default:
                         Keyboard::Row &= value ^0xFF;
@@ -65,13 +133,44 @@ void PPI::IOClock()
             switch((CPC::AddressBUS & 0x0300) >> 8)
             {
             case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-                CPC::DataBUS = (controlWord & 0x10) ? CPC::psg -> ReadData() : 0xFF;
+                CPC::DataBUS = aIO  || aMode == 2 ? PSG::ReadData() : 0xFF;
                 break;
             case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-                CPC::DataBUS = 0x3E + CRTC::VSYNC;
+                CPC::DataBUS = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0xFF;
                 break;
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
-                CPC::DataBUS = 0xFF;
+                if (lCIO)
+                {
+                    // bits 2..0
+                    if (bMode == 0)
+                        CPC::DataBUS = lC;
+                    else
+                        CPC::DataBUS = bHandshake;
+                    // bit 3
+                    if (aMode != 0)
+                    {
+                        CPC::DataBUS &= 0xF7;
+                        CPC::DataBUS |= aHandshake & 0x08;
+                    }
+                }
+                else
+                    CPC::DataBUS &= 0xF0;
+                if (hCIO)
+                {
+                    switch(aMode)
+                    {
+                    case 0:
+                        CPC::DataBUS |= hC;
+                        break;
+                    case 1:
+                    case 2:
+                        CPC::DataBUS |= aHandshake & 0xF0;
+                        break;
+                    }
+                }
+                else
+                    CPC::DataBUS &= 0x0F;
+
                 break;
             case 3: // 8255 PPI Control-Register (W)
                 CPC::DataBUS = 0xFF;

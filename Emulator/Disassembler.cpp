@@ -1,6 +1,7 @@
 #include "Headers/Disassembler.h"
 #include "Headers/CPC.h"
 #include "Headers/GateArray.h"
+#include <stdlib.h>
 
 using namespace std;
 
@@ -37,6 +38,14 @@ BYTE Disassembler::ReadNext()
     bytes += buff;
     length++;
     return b;
+}
+
+string Disassembler::ReadRelativeAddressHex16()
+{
+    sbyte s = (sbyte)ReadNext();
+    int jaddr = addr + s;
+    sprintf(buff, "&%04X", jaddr);
+    return (string)buff;
 }
 
 string Disassembler::ReadHex8()
@@ -158,7 +167,7 @@ void Disassembler::GetNextInstructionBasic()
         switch(op & 0x0F)
         {
         case 0x0: // DJNZ d
-            instr = "DJNZ " + ReadSInt8();
+            instr = "DJNZ " + ReadRelativeAddressHex16();
             break;
         case 0x1: // LD DE,nn
             instr = "LD DE," + ReadHex16();
@@ -182,7 +191,7 @@ void Disassembler::GetNextInstructionBasic()
             instr = "RLA";
             break;
         case 0x8: // JR d
-            instr = "JR " + ReadSInt8();
+            instr = "JR " + ReadRelativeAddressHex16();
             break;
         case 0x9: // ADD HL,DE
             instr = "ADD HL,DE";
@@ -211,7 +220,7 @@ void Disassembler::GetNextInstructionBasic()
         switch(op & 0x0F)
         {
         case 0x0: // JR NZ,d
-            instr = "JR NZ," + ReadSInt8();
+            instr = "JR NZ," + ReadRelativeAddressHex16();
             break;
         case 0x1: // LD HL,nn
             instr = "LD HL," + ReadHex16();
@@ -235,7 +244,7 @@ void Disassembler::GetNextInstructionBasic()
             instr = "DAA";
             break;
         case 0x8: // JR Z,d
-            instr = "JR Z," + ReadSInt8();
+            instr = "JR Z," + ReadRelativeAddressHex16();
             break;
         case 0x9: // ADD HL,HL
             instr = "ADD HL,HL";
@@ -264,7 +273,7 @@ void Disassembler::GetNextInstructionBasic()
         switch(op & 0x0F)
         {
         case 0x0: // JR NC,D
-            instr = "JR NC," + ReadSInt8();
+            instr = "JR NC," + ReadRelativeAddressHex16();
             break;
         case 0x1: // LD SP,nn
             instr = "LD SP," + ReadHex16();
@@ -288,7 +297,7 @@ void Disassembler::GetNextInstructionBasic()
             instr = "SCF";
             break;
         case 0x8: // JR C,d
-            instr = "JR C," + ReadSInt8();
+            instr = "JR C," + ReadRelativeAddressHex16();
             break;
         case 0x9: // ADD HL,SP
             instr = "ADD HL,SP";
@@ -962,7 +971,7 @@ void Disassembler::GetNextInstructionCB()
 
 void Disassembler::GetNextInstructionIDXCB()
 {
-    d = ReadSInt8();
+    d = ReadHex8();
     op = ReadNext();
     instr = CB_INSTR[op / 8] + GetRelativeIndex();
     if (CB_OPERAND[op % 8][0] != '(')
@@ -1380,12 +1389,12 @@ void Disassembler::GetNextInstructionIDX()
 
 string Disassembler::GetRelativeIndex()
 {
-    return "(" + idx + "" + d + ")";
+    return "(" + idx + "+" + d + ")";
 }
 
 void Disassembler::GetNextInstructionIDX2()
 {
-    d = ReadSInt8();
+    d = ReadHex8();
     switch(op >> 4)
     {
     case 0x3:

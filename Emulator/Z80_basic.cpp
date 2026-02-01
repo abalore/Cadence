@@ -823,7 +823,7 @@ void Z80::Step_basic()
             RET(fS.Get());
             break;
         case 0x9: // LD SP,HL
-            SP = HL;
+            LD_SP_HL();
             break;
         case 0xA: // JP M,nn
             JP(fS.Get());

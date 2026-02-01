@@ -5,11 +5,9 @@
 #include "Emulator/Headers/CRTC.h"
 #include "Emulator/Headers/GateArray.h"
 #include "Emulator/Headers/CRTScreen.h"
-#include <stdlib.h>
+#include "Emulator/Headers/PPI.h"
 
-using namespace std::chrono;
-
-volatile ushort EmulatorWorkerThread::stopPoint = 0x8185; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
+volatile ushort EmulatorWorkerThread::stopPoint = 0x082B; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
 volatile bool EmulatorWorkerThread::running = true;
 RunMode EmulatorWorkerThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorWorkerThread::canDebug = true;
@@ -64,17 +62,17 @@ string EmulatorWorkerThread::GetCRTCDebugLine()
     char buff[100];
     for (int i = 0; i < 18; i++)
     {
-        sprintf(buff, "%3d ", i);
+        sprintf(buff, "%2d ", i);
         crtc += (string)buff;
     }
     crtc += "\n";
     for (int i = 0; i < 18; i++)
     {
-        sprintf(buff, "%3d ", CRTC::Registers[i]);
+        sprintf(buff, "%02X ", CRTC::Registers[i]);
         crtc += (string)buff;
     }
     crtc += "\n";
-    sprintf(buff, "HCC: %3d  VCC: %3d  HSYNC: %1d  VSYNC: %1d", CRTC::HCC, CRTC::VCC, CRTC::HSYNC, CRTC::VSYNC);
+    sprintf(buff, "HCC: %02d  VCC: %02d  HSYNC: %1d  VSYNC: %1d", CRTC::HCC, CRTC::VCC, CRTC::HSYNC, CRTC::VSYNC);
     crtc += buff;
     return crtc;
 }
@@ -90,7 +88,7 @@ string EmulatorWorkerThread::GetGateArrayDebugLine()
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nRMR: %08b  R52: %d", GateArray::RMR, GateArray::R52);
+    sprintf(buff, "\nRMR: %08b  R52: %d  PPI Control: %08b", GateArray::RMR, GateArray::R52, PPI::controlWord);
     d += buff;
     return d;
 }
@@ -129,16 +127,14 @@ void EmulatorWorkerThread::Stop ()
 void EmulatorWorkerThread::run()
 {
     Emulator::Init();
-    long lastT = 0;
-    long t;
-    long elapsed;
 
     while(!end)
     {
         if (running)
         {
-            while (CRTScreen::newFrame == 0)
+            switch(CRTScreen::stage)
             {
+            case CRTStage::Running:
                 Emulator::Clock();
                 switch(runMode)
                 {
@@ -153,17 +149,14 @@ void EmulatorWorkerThread::run()
                 case RunMode::Run:
                     break;
                 }
+                break;
+            case CRTStage::WaitingEmulation:
+                OnFinishedFrame();
+                CRTScreen::stage = CRTStage::WaitingAudio;
+                break;
+            case CRTStage::WaitingAudio:
+                break;
             }
-            do
-            {
-                duration now = high_resolution_clock::now().time_since_epoch();
-                t = duration_cast<microseconds>(now).count();
-                elapsed = t - lastT;
-            } while (elapsed < 20000);
-            lastT = t;
-            OnFinishedFrame();
-            CRTScreen::newFrame--;
-            while (CRTScreen::newFrame > 0) {}
         }
         else
             sleep(0);

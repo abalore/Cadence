@@ -108,13 +108,22 @@
     </property>
     <addaction name="actionLoad_binary"/>
    </widget>
+   <widget class="QMenu" name="menuTape">
+    <property name="title">
+     <string>Tape</string>
+    </property>
+    <addaction name="actionLoad_from_file"/>
+    <addaction name="actionFrom_audio_input"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
+   <addaction name="menuTape"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionPause">
    <property name="icon">
-    <iconset theme="media-playback-pause"/>
+    <iconset theme="media-playback-pause">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Pause</string>
@@ -134,7 +143,8 @@
   </action>
   <action name="actionReset">
    <property name="icon">
-    <iconset theme="system-reboot"/>
+    <iconset theme="system-reboot">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Reset</string>
@@ -145,13 +155,27 @@
   </action>
   <action name="actionLoad_binary">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Load binary</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
+   </property>
+  </action>
+  <action name="actionLoad_from_file">
+   <property name="text">
+    <string>Load from file</string>
+   </property>
+  </action>
+  <action name="actionFrom_audio_input">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>From audio input</string>
    </property>
   </action>
  </widget>

@@ -1,13 +1,19 @@
 ﻿#include "Headers/Emulator.h"
 #include "Headers/CPC.h"
+#include "Headers/Tape.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
+word Emulator::tapeTick = 0;
+
 void Emulator::ReadROM(char *filename, BYTE *dest)
 {
     FILE *file = fopen(filename, "r");
-    fread(dest, 1, 16384, file);
+    if (!fread(dest, 1, 16384, file))
+    {
+
+    }
     fclose(file);
 }
 
@@ -18,7 +24,7 @@ void Emulator::Init()
     ReadROM((char *)"ROM/ROM_BASIC_464.bin", CPC::HiROM->MEM);
 
     // INT ok
-    ReadROM((char *)"ROM/ROM_OH_MUMMY.bin", CPC::ExpansionROM->MEM); // Collection broken
+    //ReadROM((char *)"ROM/ROM_OH_MUMMY.bin", CPC::ExpansionROM->MEM); // Collection broken
     //ReadROM((char *)"ROM/ROM_BOULDER_DASH.bin", CPC::ExpansionROM->MEM); // Gameplay broken at start
     //ReadROM((char *)"ROM/ROM_BRUCE_LEE.bin", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/ROM_DONKEY_KONG.bin", CPC::ExpansionROM->MEM); // WORKING
@@ -31,11 +37,19 @@ void Emulator::Init()
     //ReadROM((char *)"ROM/Tempest.rom", CPC::ExpansionROM->MEM); // WORKING
     //ReadROM((char *)"ROM/Thrust.rom", CPC::ExpansionROM->MEM); // Controls fail
     //ReadROM((char *)"ROM/AmstradDiagUpper.rom", CPC::ExpansionROM->MEM); // WORKING
+
 }
 
 void Emulator::Clock()
 {
     CPC::Clock();
+    tapeTick++;
+    if (tapeTick == 726)
+    {
+        tapeTick = 0;
+        Tape::Clock();
+
+    }
 }
 
 void Emulator::Reset()

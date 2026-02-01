@@ -9,7 +9,7 @@ void Z80::Step_IDX_2()
         tAddr = PC;
         break;
     case 2:
-        index = DR;
+        index = (sbyte)DR;
         tAddr++;
         PC = tAddr;
         tAddr = IDX->Get() + index;

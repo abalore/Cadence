@@ -17,5 +17,12 @@ void RAM::Clock()
         CPC::DataBUS = MEM[CPC::AddressBUS];
     else
         if (!GateArray::MWE())
+    {
             MEM[CPC::AddressBUS] = CPC::DataBUS;
+        if (CPC::AddressBUS == 0x00EE)
+            {
+                word t = Z80::PC;
+                Z80::PC = t;
+            }
+    }
 }
