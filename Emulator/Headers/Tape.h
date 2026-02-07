@@ -2,7 +2,7 @@
 #define TAPE_H
 
 #include "defs.h"
-#include <pulse/simple.h>
+#include "../../CDT.h"
 
 enum TapeSource
 {
@@ -16,10 +16,11 @@ class Tape
 {
 public:
     static void LoadWAV( char *filename);
+    static void LoadCDT( char *filename);
     static void Clock();
     static void SetMotorState(bool state);
-    static void FromAudioInput(bool value);
     static BYTE GetLevel();
+    static volatile bool motorState;
 private:
     static void FreeBuffer();
     static TapeSource tapeSource;
@@ -27,10 +28,10 @@ private:
     static unsigned long bufferReadIndex;
     static unsigned long bufferWriteIndex;
     static unsigned long bufferSize;
-    static bool motorState;
     static bool lastLevel;
     static BYTE level;
-    static pa_simple *pa;
+    static class CDT cdt;
+    static word tapeTick;
 };
 
 #endif // TAPE_H

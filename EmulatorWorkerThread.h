@@ -27,6 +27,7 @@ public:
     static void RunStep();
     static void RunTo(ushort address);
     static void Reset();
+    static void Pause();
     static volatile bool running;
     static volatile ushort stopPoint;
     static volatile bool end;
@@ -36,6 +37,8 @@ public:
 signals:
     void OnPause();
     void OnFinishedFrame();
+    void OnTapeMotorOn();
+    void OnTapeMotorOff();
 protected:
     void run() override;
 private:

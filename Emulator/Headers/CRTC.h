@@ -16,6 +16,7 @@ public:
     static bool HSYNC, VSYNC, BORDER;
     static word HCC, VCC;
     static BYTE HSC, VSC;
+    static BYTE R12, R13;
 };
 
 #endif // CRTC_H

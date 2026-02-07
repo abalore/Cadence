@@ -203,10 +203,9 @@ void Z80::Step_IDX()
             *(*IDX).L = E;
             break;
         case 0xC: // LD IDX.L,IDX.H
-            C = *(*IDX).H;
+            *(*IDX).L = *(*IDX).H;
             break;
         case 0xD: // LD IDX.L,IDX.L
-            C = *(*IDX).L;
             break;
         case 0xF: // LD IDX.L,A
             *(*IDX).L = A;

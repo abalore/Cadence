@@ -1,5 +1,7 @@
 QT += core
 QT += gui
+QT += opengl
+QT += openglwidgets
 
 LIBS += -lpulse -lpulse-simple
 
@@ -13,6 +15,7 @@ CONFIG += qt
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    CDT.cpp \
     Debugger.cpp \
     Emulator/CRTScreen.cpp \
     Emulator/Keyboard.cpp \
@@ -24,6 +27,7 @@ SOURCES += \
     Emulator/Z80_intexec.cpp \
     EmulatorWorkerThread.cpp \
     SoundThread.cpp \
+    graphicsinspector.cpp \
     main.cpp \
     mainwindow.cpp \
     Emulator/CPC.cpp \
@@ -42,9 +46,12 @@ SOURCES += \
     Emulator/Z80_IDX_CB.cpp \
     Emulator/Z80_Instr.cpp \
     Emulator/Z80_basic.cpp \
-    Emulator/Z80_misc.cpp
+    Emulator/Z80_misc.cpp \
+    pboWidget.cpp \
+    pboWidget.h
 
 HEADERS += \
+    CDT.h \
     Debugger.h \
     Emulator/Headers/CPC.h \
     Emulator/Headers/CRTC.h \
@@ -66,10 +73,12 @@ HEADERS += \
     EmulatorWorkerThread.h \
     KeyPressFilter.h \
     SoundThread.h \
+    graphicsinspector.h \
     mainwindow.h
 
 FORMS += \
     Debugger.ui \
+    graphicsinspector.ui \
     mainwindow.ui
 
 # Default rules for deployment.

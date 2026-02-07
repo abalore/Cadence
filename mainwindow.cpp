@@ -3,7 +3,6 @@
 #include "Debugger.h"
 #include "EmulatorWorkerThread.h"
 #include "Emulator/Headers/CPC.h"
-#include "Emulator/Headers/CRTScreen.h"
 #include "Emulator/Headers/Tape.h"
 #include <QFrame>
 #include <QKeyEvent>
@@ -21,23 +20,31 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    scene = new QGraphicsScene(this);
-    scene->setSceneRect(0, 0, 1024, 312*2);
-    ui->graphicsView->setScene(scene);
-    pixItem = 0;
+
     workerThread = new EmulatorWorkerThread(NULL);
     connect(workerThread, &EmulatorWorkerThread::OnPause, this, &MainWindow::onEmulatorPaused);
     connect(workerThread, &EmulatorWorkerThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
     workerThread->start(QThread::HighPriority);
     soundThread = new SoundThread(NULL);
     soundThread->start(QThread::HighPriority);
+
     debugger = new Debugger(this);
+    graphicsInspector = new GraphicsInspector(this);
+
     connect(ui->actionPause, &QAction::triggered, this, &MainWindow::onMenuDebugPause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::onMenuDebugReset);
     connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
-    connect(ui->actionLoad_from_file, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFromFile);
-    connect(ui->actionFrom_audio_input, &QAction::triggered, this, &MainWindow::onMenuTapeFromAudioInput);
+    connect(ui->actionLoad_WAV, &QAction::triggered, this, &MainWindow::onMenuTapeLoadWAV);
+    connect(ui->actionLoad_CDT, &QAction::triggered, this, &MainWindow::onMenuTapeLoadCDT);
+    connect(ui->actionInspect_graphics, &QAction::triggered, this, &MainWindow::onMenuDebugInspectGraphics);
+
     Instance = this;
+
+    //screenView->show();
+
+    setFixedSize(768, 624);
+
+    startTimer(1000, Qt::CoarseTimer);
 }
 
 MainWindow::~MainWindow()
@@ -45,6 +52,7 @@ MainWindow::~MainWindow()
     workerThread->end = true;
     soundThread->end = true;
     while(!workerThread->isFinished() || !soundThread->isFinished()){}
+    delete graphicsInspector;
     delete debugger;
     delete ui;
 }
@@ -71,7 +79,7 @@ void MainWindow::onMenuFileLoadBinary()
 
 void MainWindow::onMenuDebugPause()
 {
-    EmulatorWorkerThread::RunStep();
+    EmulatorWorkerThread::Pause();
 }
 
 void MainWindow::onMenuDebugReset()
@@ -79,22 +87,35 @@ void MainWindow::onMenuDebugReset()
     EmulatorWorkerThread::Reset();
 }
 
+void MainWindow::onMenuDebugInspectGraphics()
+{
+    if (graphicsInspector->isHidden())
+        graphicsInspector->show();
+    graphicsInspector->UpdateGraphics();
+}
+
 void MainWindow::onEmulatorFinishedFrame()
 {
-    if (pixItem) scene->removeItem(pixItem);
-    QImage *image = new QImage(&CRTScreen::Pixels[0], 1024, 624, QImage::Format_RGB888);
-    QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
-    pixItem = scene->addPixmap(pixmap);
-    pixItem->setPos(-64, -20);
+    ui->openGLWidget->updateTexture();
 }
 
-void MainWindow::onMenuTapeLoadFromFile()
+void MainWindow::onMenuTapeLoadWAV()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("WAV Files (*.wav)"));
-    Tape::LoadWAV((char *)fileName.toUtf8().data());
+    if (fileName != nullptr)
+        Tape::LoadWAV((char *)fileName.toUtf8().data());
 }
 
-void MainWindow::onMenuTapeFromAudioInput()
+void MainWindow::onMenuTapeLoadCDT()
 {
-    Tape::FromAudioInput(ui->actionFrom_audio_input->isChecked());
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("CDT Files (*.cdt)"));
+    if (fileName != nullptr)
+        Tape::LoadCDT((char *)fileName.toUtf8().data());
+}
+
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    event->accept();
+    QString str = QString::number(SoundThread::lastElapsed);
+    ui->label->setText(str);
 }

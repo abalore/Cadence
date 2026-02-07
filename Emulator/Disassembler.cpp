@@ -28,8 +28,87 @@ string Disassembler::idx = "";
 string Disassembler::d;
 BYTE Disassembler::op;
 BYTE Disassembler::length;
+map<word, string> *Disassembler::labels = new map<word, string>();
 
 char buff[100];
+
+void Disassembler::Init()
+{
+/*
+    // Oh mummy routines
+    AddNewLabel(0x66ED, "GameLoop");
+    AddNewLabel(0x7578, "UpdateMummies");       // returns fC = Game Over
+    AddNewLabel(0x77D1, "UpdateMan");
+    AddNewLabel(0x7863, "PrintScore");
+    AddNewLabel(0x7893, "CheckForPause");
+    AddNewLabel(0x78B7, "DrawMummies");
+    AddNewLabel(0x78F7, "DrawMan");
+    AddNewLabel(0x790B, "MoveMan");
+    AddNewLabel(0x7A64, "ChkWallCollide");      // returns fZ = Collision
+    AddNewLabel(0x7A98, "DrawMan");
+    AddNewLabel(0x7AB0, "MoveUp");
+    AddNewLabel(0x7AAC, "MoveRight");
+    AddNewLabel(0x7AA6, "MoveDown");
+    AddNewLabel(0x7AA2, "MoveLeft");
+    AddNewLabel(0x7B39, "DrawSprType");         // A = Type (0x54 footsteps, 0x41 man), D = pos X, E = pos Y
+    AddNewLabel(0x7D3E, "GetMapCoords");        // D = Line,  L = H byte,  returns HL
+    AddNewLabel(0x7CC4, "DrawSprite");          // D = Line,  L = H byte,  IY = PixelData
+    AddNewLabel(0x7CE6, "DrwFootOrEmpty");
+    AddNewLabel(0x7E92, "GetSprLineAddr");      // H = Line,  L = H byte
+
+    // Oh Mummy data
+    AddNewLabel(0x7CC6, "SPRSIZEY");            // Self modified code
+    AddNewLabel(0x7CD0, "SPRSIZEX");            // Self modified code
+    AddNewLabel(0x814C, "KEY_ASSIGNS");
+    AddNewLabel(0x8153, "DELAY");
+    AddNewLabel(0x8155, "MAN_X");
+    AddNewLabel(0x8155, "MAN_Y");
+    AddNewLabel(0x8155, "LAST_DIRECTION");
+    AddNewLabel(0x8158, "ANIM_STATE");
+    AddNewLabel(0x815A, "SCORE");
+    AddNewLabel(0x816A, "MEN");
+    AddNewLabel(0x816C, "NUM_MUMMIES");
+    AddNewLabel(0x816D, "MUMMIES_TABLE");
+    AddNewLabel(0x8200, "MAP");                 // In chars, 40 x 25
+*/
+
+    // Boulder dash routines
+    AddNewLabel(0x0206, "DrawTileInner2");
+    AddNewLabel(0x028A, "DrawChar");
+    AddNewLabel(0x030A, "DrawCharInner");
+    AddNewLabel(0x035F, "DrawTileInner");
+    AddNewLabel(0x039D, "DrawTile");
+    AddNewLabel(0x03FD, "GetRandomNumber");
+
+    AddNewLabel(0x10E9, "DrawTitle");
+    AddNewLabel(0x1E92, "Init");
+    AddNewLabel(0x1F42, "Start");
+    AddNewLabel(0x1E2F, "MenuOrGame");
+    AddNewLabel(0x1A2F, "RunMenu");
+    AddNewLabel(0x1B0A, "DrawLevelEffect");
+    AddNewLabel(0x20E8, "DrawFSLogo");
+    AddNewLabel(0x2882, "SetPalette");
+
+    // Boulder Dash data
+    AddNewLabel(0x0064, "TileX");
+    AddNewLabel(0x0065, "TileY");
+    AddNewLabel(0x30E7, "BlackPalette");
+    AddNewLabel(0x0133, "ScreenBase");
+    AddNewLabel(0xB0E0, "Map");
+
+    // BIOS routines
+    AddNewLabel(0xBB09, "KMReadChar");
+    AddNewLabel(0xBB0C, "KMCharReturn");
+    AddNewLabel(0xBB1E, "KMTestKey");
+    AddNewLabel(0xBB5A, "TXTOutput");
+    AddNewLabel(0xBB66, "TXTWinEnable");
+    AddNewLabel(0xBB75, "TXTSetCursor");
+    AddNewLabel(0xBB90, "TXTSetPen");
+    AddNewLabel(0xBB96, "TXTSetPaper");
+    AddNewLabel(0x8ECA, "LineAddrTable");
+    AddNewLabel(0xBB09, "KMReadChar");
+    AddNewLabel(0xBCAA, "SoundQueue");
+}
 
 BYTE Disassembler::ReadNext()
 {
@@ -58,6 +137,9 @@ string Disassembler::ReadHex8()
 string Disassembler::ReadHex16()
 {
     word w = (int)ReadNext() + (int)ReadNext() * 256;
+    auto pos = labels->find(w);
+    if (pos != labels->end())
+        return pos->second;
     sprintf(buff, "&%04X", w);
     return (string)buff;
 }
@@ -74,8 +156,18 @@ void Disassembler::SetPoint(ushort address)
     addr = address;
 }
 
-void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *addressStr, string *bytesStr, string *instrStr)
+void Disassembler::AddNewLabel(word address, string label)
 {
+    labels->insert_or_assign(address, label);
+}
+
+void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *label, string *addressStr, string *bytesStr, string *instrStr)
+{
+    auto pos = labels->find(addr);
+    if (pos != labels->end())
+        *label = pos->second;
+    else
+        *label = (string)"";
     length = 0;
     BYTE bank = (BYTE)((addr & 0xC000) >> 14);
     switch(bank)
@@ -1794,4 +1886,3 @@ void Disassembler::GetNextInstructionMisc()
         break;
     }
 }
-

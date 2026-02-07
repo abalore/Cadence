@@ -13,6 +13,7 @@ public:
     explicit SoundThread(QObject *parent);
     ~SoundThread();
     volatile bool end;
+    static volatile long lastElapsed;
 signals:
 protected:
     void run() override;

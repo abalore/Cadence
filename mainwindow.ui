@@ -9,12 +9,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>786</width>
-    <height>618</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
-   <string>Abalore Amstrad Emulator</string>
+   <string>AMSTRAD EMULATOR</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
@@ -26,57 +32,27 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGraphicsView" name="graphicsView">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="PboWidget" name="openGLWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
+      <x>0</x>
+      <y>0</y>
       <width>768</width>
       <height>528</height>
      </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
-    </property>
-    <property name="contextMenuPolicy">
-     <enum>Qt::NoContextMenu</enum>
-    </property>
-    <property name="acceptDrops">
-     <bool>false</bool>
-    </property>
-    <property name="lineWidth">
-     <number>0</number>
-    </property>
-    <property name="verticalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOff</enum>
-    </property>
-    <property name="horizontalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOff</enum>
-    </property>
-    <property name="sizeAdjustPolicy">
-     <enum>QAbstractScrollArea::AdjustIgnored</enum>
-    </property>
-    <property name="interactive">
-     <bool>false</bool>
-    </property>
-    <property name="optimizationFlags">
-     <set>QGraphicsView::DontAdjustForAntialiasing|QGraphicsView::DontSavePainterState</set>
     </property>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>710</x>
-      <y>540</y>
+      <x>50</x>
+      <y>550</y>
       <width>66</width>
       <height>18</height>
      </rect>
@@ -91,7 +67,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>786</width>
+     <width>800</width>
      <height>23</height>
     </rect>
    </property>
@@ -101,6 +77,10 @@
     </property>
     <addaction name="actionPause"/>
     <addaction name="actionReset"/>
+    <addaction name="separator"/>
+    <addaction name="separator"/>
+    <addaction name="actionInspect_graphics"/>
+    <addaction name="actionCRT_Screen_view"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -112,17 +92,16 @@
     <property name="title">
      <string>Tape</string>
     </property>
-    <addaction name="actionLoad_from_file"/>
-    <addaction name="actionFrom_audio_input"/>
+    <addaction name="actionLoad_WAV"/>
+    <addaction name="actionLoad_CDT"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuTape"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="actionPause">
    <property name="icon">
-    <iconset theme="media-playback-pause">
+    <iconset>
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -143,7 +122,7 @@
   </action>
   <action name="actionReset">
    <property name="icon">
-    <iconset theme="system-reboot">
+    <iconset>
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -155,7 +134,7 @@
   </action>
   <action name="actionLoad_binary">
    <property name="icon">
-    <iconset theme="document-open">
+    <iconset>
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -165,20 +144,34 @@
     <string>F2</string>
    </property>
   </action>
-  <action name="actionLoad_from_file">
+  <action name="actionLoad_WAV">
    <property name="text">
-    <string>Load from file</string>
+    <string>Load WAV</string>
    </property>
   </action>
-  <action name="actionFrom_audio_input">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionInspect_graphics">
    <property name="text">
-    <string>From audio input</string>
+    <string>Inspect graphics</string>
+   </property>
+  </action>
+  <action name="actionLoad_CDT">
+   <property name="text">
+    <string>Load CDT</string>
+   </property>
+  </action>
+  <action name="actionCRT_Screen_view">
+   <property name="text">
+    <string>CRT Screen view</string>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PboWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header>pboWidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
