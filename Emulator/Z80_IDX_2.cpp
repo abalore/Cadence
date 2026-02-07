@@ -12,7 +12,9 @@ void Z80::Step_IDX_2()
         index = (sbyte)DR;
         tAddr++;
         PC = tAddr;
-        tAddr = IDX->Get() + index;
+        tAddr = IDX->Get();
+        t16.Set(index);
+        tAddr += t16.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;
@@ -105,7 +107,7 @@ void Z80::Step_IDX_2()
                 mCycleType = MCycleType::WRITE;
                 DR = t8;
                 break;
-            case 0xE: // LD A,(IX+d)
+            case 0xE: // LD A,(IDX+d)
                 A = t8; // 5
                 break;
             }

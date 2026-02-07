@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <pulse/simple.h>
 #include <pulse/error.h>
-
 #include <pulse/mainloop.h>
+#include <pulse/xmalloc.h>
 
 pa_threaded_mainloop *SoundThread::outputMainLoop ;
 pa_context *SoundThread::outputContext;
 pa_stream *SoundThread::outputStream;
+volatile long SoundThread::lastElapsed;
 
 using namespace std::chrono;
 SoundThread::SoundThread(QObject *parent) : QThread(parent)
@@ -40,12 +41,17 @@ void SoundThread::run()
                 break;
             case CRTStage::WaitingAudio:
                 pa_simple_write(PSG::buffer, PSG::bufferIndex);
-                do
+                PSG::bufferIndex = 0;
+                duration now = high_resolution_clock::now().time_since_epoch();
+                t = duration_cast<microseconds>(now).count();
+                elapsed = t - lastT;
+                lastElapsed = elapsed;
+                while (elapsed < 20000)
                 {
                     duration now = high_resolution_clock::now().time_since_epoch();
                     t = duration_cast<microseconds>(now).count();
                     elapsed = t - lastT;
-                } while (elapsed < 20000);
+                };
                 lastT = t;
                 CRTScreen::stage = CRTStage::Running;
                 break;
@@ -196,19 +202,15 @@ unlock_and_fail:
 void SoundThread::pa_simple_free() {
     if (outputMainLoop)
         pa_threaded_mainloop_stop(outputMainLoop);
-
     if (outputStream)
         pa_stream_unref(outputStream);
-
     if (outputContext) {
         pa_context_disconnect(outputContext);
         pa_context_unref(outputContext);
     }
-
     if (outputMainLoop)
         pa_threaded_mainloop_free(outputMainLoop);
-
-    //             pa_xfree(s);
+    // pa_xfree(outputStream);
 }
 
 void SoundThread::stream_state_cb(pa_stream *s, void * userdata) {
@@ -220,7 +222,6 @@ void SoundThread::stream_state_cb(pa_stream *s, void * userdata) {
     case PA_STREAM_TERMINATED:
         pa_threaded_mainloop_signal(outputMainLoop, 0);
         break;
-
     case PA_STREAM_UNCONNECTED:
     case PA_STREAM_CREATING:
         break;

@@ -196,9 +196,11 @@ void PSG::Clock()
         if (noiseC)
             outputC += registers[10] * noiseLevel;
 
-        buffer[bufferIndex] = outputA + outputB + outputC + Tape::GetLevel() * 7;
         if (bufferIndex < PSG_BUFFER_SIZE)
+        {
+            buffer[bufferIndex] = (outputA + outputB + outputC + Tape::GetLevel() * 6) * 5;
             bufferIndex++;
+        }
     }
 }
 

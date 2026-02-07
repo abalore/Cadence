@@ -9,7 +9,13 @@ public:
     static void Init();
     static void IOClock();
     static BYTE controlWord;
+    static BYTE PortA;
+    static BYTE PortB;
+    static BYTE PortC;
 private:
+    static void ApplyLC();
+    static void ApplyHC();
+    static BYTE DataBuffer;
     static BYTE aMode;
     static BYTE bMode;
     static BYTE aHandshake;
@@ -20,6 +26,7 @@ private:
     static bool bIO;
     static BYTE lC;
     static BYTE hC;
+
 };
 
 #endif // PPI_H

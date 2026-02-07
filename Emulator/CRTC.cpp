@@ -13,6 +13,8 @@ word CRTC::HCC;
 word CRTC::VCC;
 BYTE CRTC::HSC;
 BYTE CRTC::VSC;
+BYTE CRTC::R12;
+BYTE CRTC::R13;
 
 void CRTC::Init()
 {
@@ -45,7 +47,6 @@ void CRTC::IOClock()
                 //////////////////////////////////////////
                 break;
             case 3: // Data out
-                //////////////////////////////////////////
                 CPC::DataBUS = Registers[Index];
                 break;
             }
@@ -67,6 +68,8 @@ void CRTC::CRTClock()
             if (VCC > Registers[4])
             {
                 VCC = 0;
+                R12 = Registers[12];
+                R13 = Registers[13];
                 // MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]);
             }
             if (VCC == Registers[7])
@@ -96,6 +99,6 @@ void CRTC::CRTClock()
     else
         HSYNC = false;
     BORDER = HCC >= Registers[1] || VCC >= Registers[6];
-    MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]) + VCC * Registers[1] + HCC;
+    MA = ((R12 & 0x3F) << 8) + R13 + VCC * Registers[1] + HCC;
 }
 

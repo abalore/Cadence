@@ -76,6 +76,8 @@ bool Z80::CLK = false;
 bool Z80::stopPoint = false;
 BYTE Z80::t_cp = 0;
 bool Z80::halted = false;
+bool Z80::tC = false;
+int Z80::tCV = 0;
 
 void Z80::Init()
 {

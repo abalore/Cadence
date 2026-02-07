@@ -4,7 +4,6 @@
 #include "defs.h"
 #include "ROM.h"
 #include "RAM.h"
-#include "PSG.h"
 
 class CPC
 {

@@ -4,9 +4,11 @@
 #include "EmulatorWorkerThread.h"
 #include "SoundThread.h"
 #include "Debugger.h"
+#include "graphicsinspector.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
+#include <QTimerEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,18 +24,19 @@ public:
     ~MainWindow();
     static MainWindow *Instance;
 private slots:
+    void timerEvent(QTimerEvent *event) override;
     void onMenuFileLoadBinary();
     void onMenuDebugPause();
     void onMenuDebugReset();
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
-    void onMenuTapeLoadFromFile();
-    void onMenuTapeFromAudioInput();
+    void onMenuTapeLoadWAV();
+    void onMenuTapeLoadCDT();
+    void onMenuDebugInspectGraphics();
 private:
     Ui::MainWindow *ui;
-    QGraphicsScene *scene;
-    QGraphicsPixmapItem *pixItem;
     Debugger *debugger;
+    GraphicsInspector *graphicsInspector;
     EmulatorWorkerThread *workerThread;
     SoundThread *soundThread;
 };

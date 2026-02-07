@@ -87,6 +87,8 @@ private:
     static Reg16 *IDX;
     static word tAddr;
     static BYTE t_cp;
+    static bool tC;
+    static int tCV;
 
     static void INC_R(BYTE &reg);
     static void DEC_R(BYTE &reg);
@@ -207,6 +209,8 @@ private:
     static void RRD();
     static void IM(int mode);
     static void ShiftOpIndHL(BYTE opCode);
+    static void INI(bool R, bool dir);
+    static void OUTI(bool R, bool dir);
 };
 
 #endif // Z80_H

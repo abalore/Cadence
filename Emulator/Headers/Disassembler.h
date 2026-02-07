@@ -3,14 +3,16 @@
 
 #include "defs.h"
 #include <string>
+#include <map>
 
 using namespace std;
 
 class Disassembler
 {
 public:
+    static void Init();
     static void SetPoint(word address);
-    static void GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *address, string *bytes, string *instruction);
+    static void GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *label, string *address, string *bytes, string *instruction);
     static int addr;
 private:
     static BYTE *m;
@@ -34,8 +36,10 @@ private:
     static string GetRelativeIndex();
     static void GetNextInstructionIDX2();
     static void GetNextInstructionMisc();
+    static void AddNewLabel(word address, string label);
     static const string CB_INSTR[];
     static const string CB_OPERAND[];
+    static map<word, string> *labels;
 };
 
 #endif // DISASSEMBLER_H

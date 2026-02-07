@@ -10,8 +10,6 @@ public:
     static void Clock();
     static void Reset();
     static void ReadROM(char *filename, BYTE *dest);
-private:
-    static word tapeTick;
 };
 
 #endif // EMULATOR_H

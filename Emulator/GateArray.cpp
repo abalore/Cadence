@@ -165,7 +165,7 @@ void GateArray::GenerateSyncAndInterrupt()
                 }
                 else
                 {
-                    vsyncDelay = 0;
+                    vsyncDelay = 2;
                     GA_VSYNC = false;
                 }
             }
@@ -186,33 +186,39 @@ void GateArray::SetPixel()
         Color = &Palette[60];
         return;
     }
-    BYTE pi;
-    switch(mode)
-    {
-    case 0:
-        pi = pixelIndex >> 2;
-        videoPen = ((currentByte & (0x80 >> pi)) > 0) +
-                   ((currentByte & (0x20 >> pi)) > 0) * 4 +
-                   ((currentByte & (0x08 >> pi)) > 0) * 2 +
-                   ((currentByte & (0x02 >> pi)) > 0) * 8;
-        break;
-    case 1:
-        pi = pixelIndex >> 1;
-        videoPen = ((currentByte & (0x80 >> pi)) > 0) +
-                   ((currentByte & (0x08 >> pi)) > 0) * 2;
-        break;
-    case 2:
-        pi = pixelIndex;
-        videoPen = (currentByte & (0x80 >> pi )) > 0;
-        break;
-    case 3:
-        pi = pixelIndex >> 2;
-        videoPen = ((pi & (0x08 >> pi)) >> (2 - pi))
-                   + ((pi & (0x02 >> pi)) >> (1 - pi));
-        break;
-    }
+    videoPen = GetPenForPixel(mode, currentByte, pixelIndex);
     if (++pixelIndex == 8) pixelIndex = 0;
     Color = &Palette[(CRTC::BORDER ? BORDER : INK[videoPen]) * 3];
+}
+
+const BYTE *GateArray::GetPaletteEntry(BYTE entry)
+{
+    return &Palette[INK[entry] * 3];
+}
+
+BYTE GateArray::GetPenForPixel(BYTE m, BYTE b, BYTE i)
+{
+    BYTE pi;
+    switch(m)
+    {
+    case 0:
+        pi = i >> 2;
+        return ((b & (0x80 >> pi)) > 0) +
+               ((b & (0x20 >> pi)) > 0) * 4 +
+               ((b & (0x08 >> pi)) > 0) * 2 +
+               ((b & (0x02 >> pi)) > 0) * 8;
+    case 1:
+        pi = i >> 1;
+        return ((b & (0x80 >> pi)) > 0) +
+               ((b & (0x08 >> pi)) > 0) * 2;
+    case 2:
+        pi = i;
+        return (b & (0x80 >> pi )) > 0;
+    default:
+        pi = i >> 2;
+        return ((b & (0x08 >> pi)) >> (2 - pi))
+               + ((b & (0x02 >> pi)) >> (1 - pi));
+    }
 }
 
 void GateArray::ReadByte()

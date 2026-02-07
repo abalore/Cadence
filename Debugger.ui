@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>561</height>
+    <width>598</width>
+    <height>623</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -31,15 +31,16 @@
   <widget class="QLabel" name="lblZ80">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>10</y>
-     <width>81</width>
-     <height>221</height>
+     <x>490</x>
+     <y>30</y>
+     <width>101</width>
+     <height>241</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="autoFillBackground">
@@ -59,7 +60,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>490</y>
+     <y>550</y>
      <width>471</width>
      <height>61</height>
     </rect>
@@ -67,6 +68,7 @@
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="autoFillBackground">
@@ -85,15 +87,16 @@
   <widget class="QLabel" name="lblStack">
    <property name="geometry">
     <rect>
-     <x>480</x>
-     <y>10</y>
-     <width>111</width>
-     <height>221</height>
+     <x>490</x>
+     <y>300</y>
+     <width>101</width>
+     <height>161</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="autoFillBackground">
@@ -113,14 +116,15 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>400</y>
+     <y>480</y>
      <width>471</width>
-     <height>81</height>
+     <height>61</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="autoFillBackground">
@@ -140,7 +144,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>240</y>
+     <y>560</y>
      <width>101</width>
      <height>26</height>
     </rect>
@@ -162,7 +166,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>300</y>
+     <y>470</y>
      <width>101</width>
      <height>26</height>
     </rect>
@@ -177,14 +181,14 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step out (F12)</string>
+    <string>Step out (F8)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnRun">
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>330</y>
+     <y>500</y>
      <width>101</width>
      <height>26</height>
     </rect>
@@ -206,7 +210,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>270</y>
+     <y>530</y>
      <width>101</width>
      <height>26</height>
     </rect>
@@ -231,14 +235,15 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>351</width>
-     <height>221</height>
+     <y>30</y>
+     <width>471</width>
+     <height>241</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="focusPolicy">
@@ -270,14 +275,15 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>240</y>
+     <y>300</y>
      <width>471</width>
-     <height>151</height>
+     <height>161</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="focusPolicy">
@@ -300,7 +306,7 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>360</y>
+     <y>590</y>
      <width>101</width>
      <height>26</height>
     </rect>
@@ -315,7 +321,87 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Run To</string>
+    <string>Run To (F12)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>280</y>
+     <width>471</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>MEM   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>471</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Disassembly</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>10</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Z80</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>280</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu Sans Mono</family>
+     <pointsize>10</pointsize>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Stack</string>
    </property>
   </widget>
  </widget>

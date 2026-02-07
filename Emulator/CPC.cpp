@@ -44,7 +44,6 @@ void CPC::Init()
 void CPC::Clock()
 {
     GateArray::Clock();
-    CRTScreen::Clock();
 }
 
 void CPC::Reset()

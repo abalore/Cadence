@@ -52,7 +52,7 @@ void Z80::Step_misc()
             /////////////////////////////////////////////////////////
             break;
         case 0xE: // IM 0
-            /////////////////////////////////////////////////////////
+            IM(0);
             break;
         case 0xF: // LD R,A
             LD_R_A();
@@ -232,10 +232,10 @@ void Z80::Step_misc()
             CPI(false);
             break;
         case 0x2: // INI
-            /////////////////////////////////////
+            INI(false, true);
             break;
         case 0x3: // OUTI
-            /////////////////////////////////////
+            OUTI(false, true);
             break;
         case 0x8: // LDD
             LDD(false);
@@ -244,10 +244,10 @@ void Z80::Step_misc()
             CPD(false);
             break;
         case 0xA: // IND
-            //////////////////////////////////////
+            INI(false, false);
             break;
         case 0xB: // OUTD
-            //////////////////////////////////////
+            OUTI(false, false);
             break;
         }
         break;
@@ -261,10 +261,10 @@ void Z80::Step_misc()
             CPI(true);
             break;
         case 0x2: // INIR
-            //////////////////////////////////////
+            INI(true, true);
             break;
         case 0x3: // OUTIR
-            //////////////////////////////////////
+            OUTI(true, true);
             break;
         case 0x8: // LDDR
             LDD(true);
@@ -273,10 +273,10 @@ void Z80::Step_misc()
             CPD(true);
             break;
         case 0xA: // INDR
-            //////////////////////////////////////
+            INI(true, false);
             break;
         case 0xB: // OUTDR
-            //////////////////////////////////////
+            OUTI(true, false);
             break;
         }
         break;

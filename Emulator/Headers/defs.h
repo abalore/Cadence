@@ -4,5 +4,6 @@
 #define word unsigned short
 #define sbyte char
 #define BYTE unsigned char
+#define dword unsigned int
 
 #endif // DEFS_H

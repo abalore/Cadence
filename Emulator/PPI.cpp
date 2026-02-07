@@ -54,36 +54,13 @@ void PPI::IOClock()
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
                 if (!lCIO)
                 {
-                    // bits 2..0
                     lC = CPC::DataBUS & 0x0F;
-                    // bit 3
-                    if (aMode != 0)
-                    {
-                        aHandshake &= 0xF7;
-                        aHandshake |= lC & 0x08;
-                    }
-                    // Destination
-                    if (bMode == 0)
-                        Keyboard::SetRow(lC);
-                    else
-                        bHandshake = lC & 0x07;
+                    ApplyLC();
                 }
                 if (!hCIO)
                 {
-                    // bits 7..4
                     hC = CPC::DataBUS & 0xF0;
-                    switch(aMode)
-                    {
-                    case 0:
-                        PSG::BDIR = (hC & 0x80) > 0;
-                        PSG::BC1 = (hC & 0x40) > 0;
-                        Tape::SetMotorState(hC & 0x10);
-                        break;
-                    case 1:
-                    case 2:
-                        aHandshake |= hC;
-                        break;
-                    }
+                    ApplyHC();
                 }
                 break;
             case 3: // 8255 PPI Control-Register (W)
@@ -105,24 +82,19 @@ void PPI::IOClock()
                 else
                 {
                     BYTE bit = (CPC::DataBUS & 0x0E) >> 1;
-                    BYTE value = (CPC::DataBUS & 0x01) << bit;
-                    switch(value)
+                    if (bit < 4)
                     {
-                    case 0x80:
-                        PSG::BDIR = bit;
-                        break;
-                    case 0x40:
-                        PSG::BC1 = bit;
-                        break;
-                    case 0x20:
-                        break;
-                    case 0x10:
-                        Tape::SetMotorState(bit);
-                        break;
-                    default:
-                        Keyboard::Row &= value ^0xFF;
-                        Keyboard::Row |= value;
-                        break;
+                        BYTE value = 1 << bit;
+                        lC &= value ^0x0F;
+                        lC |= value;
+                        ApplyLC();
+                    }
+                    else
+                    {
+                        BYTE value = (CPC::DataBUS & 0x01) << bit;
+                        hC &= value ^0x0F;
+                        hC |= value;
+                        ApplyHC();
                     }
                 }
                 break;
@@ -139,7 +111,7 @@ void PPI::IOClock()
                 CPC::DataBUS = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0xFF;
                 break;
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
-                if (lCIO)
+                if (!lCIO)
                 {
                     // bits 2..0
                     if (bMode == 0)
@@ -155,7 +127,7 @@ void PPI::IOClock()
                 }
                 else
                     CPC::DataBUS &= 0xF0;
-                if (hCIO)
+                if (!hCIO)
                 {
                     switch(aMode)
                     {
@@ -173,9 +145,38 @@ void PPI::IOClock()
 
                 break;
             case 3: // 8255 PPI Control-Register (W)
-                CPC::DataBUS = 0xFF;
+                CPC::DataBUS = 0x00;
                 break;
             }
         }
+    }
+}
+
+void PPI::ApplyLC()
+{
+    if (aMode != 0)
+    {
+        aHandshake &= 0xF7;
+        aHandshake |= lC & 0x08;
+    }
+    if (bMode == 0)
+        Keyboard::SetRow(lC);
+    else
+        bHandshake = lC & 0x07;
+}
+
+void PPI::ApplyHC()
+{
+    switch(aMode)
+    {
+    case 0:
+        PSG::BDIR = (hC & 0x80) > 0;
+        PSG::BC1 = (hC & 0x40) > 0;
+        Tape::SetMotorState(hC & 0x10);
+        break;
+    case 1:
+    case 2:
+        aHandshake |= hC;
+        break;
     }
 }

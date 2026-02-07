@@ -6,10 +6,11 @@
 #include "Emulator/Headers/GateArray.h"
 #include "Emulator/Headers/CRTScreen.h"
 #include "Emulator/Headers/PPI.h"
+#include "Emulator/Headers/Tape.h"
 
-volatile ushort EmulatorWorkerThread::stopPoint = 0x082B; //0x35F2; //0xC006; //0x0C6B; //0xBDD9; //
+volatile ushort EmulatorWorkerThread::stopPoint = 0x0000;
 volatile bool EmulatorWorkerThread::running = true;
-RunMode EmulatorWorkerThread::runMode = RunMode::StopPoint;
+RunMode EmulatorWorkerThread::runMode = RunMode::Run;
 volatile bool EmulatorWorkerThread::canDebug = true;
 volatile bool EmulatorWorkerThread::end = false;
 unsigned char EmulatorWorkerThread::nextInstructionLength;
@@ -33,10 +34,10 @@ string EmulatorWorkerThread::GetZ80RegsDebugLine()
     d.append(buff);
     sprintf(buff, "IM:%1d\nInts:%1d", Z80::InterruptMode, Z80::InterruptEnable);
     d.append(buff);
-//    d.append("AF'  BC'  DE'  HL'  R    I    Ints\n");
-//    sprintf(buff, "%04X %04X %04X %04X %02X   %02X   %01X\n",
-//            Z80::AF_.Get(), Z80::BC_.Get(), Z80::DE_.Get(), Z80::HL_.Get(), Z80::R, Z80::I, Z80::InterruptEnable);
-//    d.append(buff);
+    //    d.append("AF'  BC'  DE'  HL'  R    I    Ints\n");
+    //    sprintf(buff, "%04X %04X %04X %04X %02X   %02X   %01X\n",
+    //            Z80::AF_.Get(), Z80::BC_.Get(), Z80::DE_.Get(), Z80::HL_.Get(), Z80::R, Z80::I, Z80::InterruptEnable);
+    //    d.append(buff);
     return d;
 }
 
@@ -49,7 +50,7 @@ string EmulatorWorkerThread::GetZ80StackDebugLine()
     {
         BYTE L = CPC::InternalRAM->MEM[sp];
         BYTE H = CPC::InternalRAM->MEM[sp + 1];
-        sprintf(buff, " %04X : %04X\n", sp, L + H * 256);
+        sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;
     }
@@ -93,23 +94,40 @@ string EmulatorWorkerThread::GetGateArrayDebugLine()
     return d;
 }
 
+void EmulatorWorkerThread::Pause()
+{
+    if (running)
+    {
+        runMode = RunMode::StepByStep;
+    }
+}
+
 void EmulatorWorkerThread::Run()
 {
-    runMode = RunMode::Run;
-    running = true;
+    if (!running)
+    {
+        runMode = RunMode::Run;
+        running = true;
+    }
 }
 
 void EmulatorWorkerThread::RunStep()
 {
-    runMode = RunMode::StepByStep;
-    running = true;
+    if (!running)
+    {
+        runMode = RunMode::StepByStep;
+        running = true;
+    }
 }
 
 void EmulatorWorkerThread::RunTo(ushort address)
 {
-    stopPoint = address;
-    runMode = RunMode::StopPoint;
-    running = true;
+    if (!running)
+    {
+        stopPoint = address;
+        runMode = RunMode::StopPoint;
+        running = true;
+    }
 }
 
 void EmulatorWorkerThread::Stop ()
@@ -127,6 +145,7 @@ void EmulatorWorkerThread::Stop ()
 void EmulatorWorkerThread::run()
 {
     Emulator::Init();
+    bool lastMotorState = Tape::motorState;
 
     while(!end)
     {
@@ -136,6 +155,12 @@ void EmulatorWorkerThread::run()
             {
             case CRTStage::Running:
                 Emulator::Clock();
+                /*
+                if (Tape::motorState)
+                    OnTapeMotorOn();
+                else
+                    OnTapeMotorOff();
+*/
                 switch(runMode)
                 {
                 case RunMode::StepByStep:

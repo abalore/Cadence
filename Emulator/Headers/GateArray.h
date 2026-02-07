@@ -11,6 +11,8 @@ public:
     static bool ROMEN();
     static bool RAMRD();
     static bool MWE();
+    static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
+    static const BYTE *GetPaletteEntry(BYTE entry);
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
