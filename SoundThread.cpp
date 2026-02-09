@@ -46,7 +46,7 @@ void SoundThread::run()
                 t = duration_cast<microseconds>(now).count();
                 elapsed = t - lastT;
                 lastElapsed = elapsed;
-                while (elapsed < 20000)
+                while (elapsed < 19968)
                 {
                     duration now = high_resolution_clock::now().time_since_epoch();
                     t = duration_cast<microseconds>(now).count();

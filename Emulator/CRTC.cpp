@@ -1,6 +1,7 @@
 #include "Headers/CRTC.h"
 #include "Headers/CPC.h"
 #include "Headers/Z80.h"
+#include "Headers/GateArray.h"
 
 BYTE CRTC::Registers[18];
 BYTE CRTC::Index;
@@ -54,12 +55,12 @@ void CRTC::IOClock()
     }
 }
 
-void CRTC::CRTClock()
+void CRTC::CheckHSync()
 {
-    HCC++;
-    if (HCC > Registers[0])
+    if (HCC == Registers[2])
     {
-        HCC = 0;
+        HSC = ((BYTE)(Registers[3] & 0x0F));
+        HSYNC = true;
         RA++;
         if (RA > Registers[9])
         {
@@ -75,29 +76,39 @@ void CRTC::CRTClock()
             if (VCC == Registers[7])
             {
                 VSC = ((BYTE)(Registers[3] >> 4));
-                if (VSC < 4) VSC = 4;
+                VSYNC = true;
             }
         }
+        GateArray::GenerateVSync();
         if (VSC > 0)
         {
-            VSYNC = true;
             VSC--;
+            if (VSC == 0)
+                VSYNC = false;
         }
-        else
-            VSYNC = false;
-    }
-    if (HCC == Registers[2])
-    {
-        HSC = ((BYTE)(Registers[3] & 0x0F));
-        if (HSC > 6) HSC = 6;
     }
     if (HSC > 0)
     {
-        HSYNC = true;
         HSC--;
+        if (HSC == 0)
+        {
+            HSYNC = false;
+        }
     }
-    else
-        HSYNC = false;
+}
+
+void CRTC::DoVSync()
+{
+
+}
+
+
+void CRTC::CRTClock()
+{
+    HCC++;
+    CheckHSync();
+    if (HCC > Registers[0])
+        HCC = 0;
     BORDER = HCC >= Registers[1] || VCC >= Registers[6];
     MA = ((R12 & 0x3F) << 8) + R13 + VCC * Registers[1] + HCC;
 }

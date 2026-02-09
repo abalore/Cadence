@@ -13,6 +13,6 @@ word Reg16::Get()
 
 void Reg16::Set(word value)
 {
-    *H = (value >> 8);
+    *H = (value / 256);
     *L = (value & 0xFF);
 }

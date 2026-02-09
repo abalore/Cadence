@@ -24,9 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     workerThread = new EmulatorWorkerThread(NULL);
     connect(workerThread, &EmulatorWorkerThread::OnPause, this, &MainWindow::onEmulatorPaused);
     connect(workerThread, &EmulatorWorkerThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
-    workerThread->start(QThread::HighPriority);
+    workerThread->start(QThread::TimeCriticalPriority);
     soundThread = new SoundThread(NULL);
-    soundThread->start(QThread::HighPriority);
+    soundThread->start(QThread::TimeCriticalPriority);
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);

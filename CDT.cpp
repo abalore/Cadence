@@ -30,7 +30,7 @@ bool CDT::GetNextLevel()
     {
         Process();
         if (currentPeriod > 0)
-            currentPeriod /= 23;
+            currentPeriod /= 20;
         if (currentPeriod > 0)
         {
             level = !level;

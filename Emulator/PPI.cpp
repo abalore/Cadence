@@ -69,8 +69,7 @@ void PPI::IOClock()
                     controlWord = CPC::DataBUS;
                     PSG::WriteData(0);
                     Keyboard::SetRow(0);
-                    PSG::BDIR = false;
-                    PSG::BC1 = false;
+                    PSG::SelectFunction(false, false);
                     Tape::SetMotorState(false);
                     aMode = (controlWord & 0x7F) >> 5;
                     bMode = (controlWord & 0x07) >> 2;
@@ -105,10 +104,10 @@ void PPI::IOClock()
             switch((CPC::AddressBUS & 0x0300) >> 8)
             {
             case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-                CPC::DataBUS = aIO  || aMode == 2 ? PSG::ReadData() : 0xFF;
+                CPC::DataBUS = aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
                 break;
             case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-                CPC::DataBUS = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0xFF;
+                CPC::DataBUS = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0x00;
                 break;
             case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
                 if (!lCIO)
@@ -170,8 +169,7 @@ void PPI::ApplyHC()
     switch(aMode)
     {
     case 0:
-        PSG::BDIR = (hC & 0x80) > 0;
-        PSG::BC1 = (hC & 0x40) > 0;
+        PSG::SelectFunction((hC & 0x80) > 0, (hC & 0x40) > 0);
         Tape::SetMotorState(hC & 0x10);
         break;
     case 1:

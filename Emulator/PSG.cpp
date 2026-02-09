@@ -22,8 +22,11 @@ BYTE PSG::divider;
 BYTE PSG::envelopeDivider;
 BYTE PSG::envelopeStage;
 BYTE PSG::envelopeLevel;
-bool PSG::envelopeDir;
+EnvelopeDir PSG::envelopeDir;
+bool PSG::envelopeHold;
+bool PSG::envelopeAlternate;
 word PSG::envelopePeriod;
+word PSG::envelopeCounter;
 BYTE PSG::noiseDivider;
 bool PSG::noiseLevel;
 bool PSG::bitA;
@@ -38,7 +41,9 @@ bool PSG::mixC;
 bool PSG::noiseA;
 bool PSG::noiseB;
 bool PSG::noiseC;
-BYTE PSG::tVol;
+BYTE PSG::tVolA;
+BYTE PSG::tVolB;
+BYTE PSG::tVolC;
 
 
 void PSG::Init()
@@ -55,7 +60,7 @@ void PSG::Init()
     envelopeDivider = 0;
     envelopeStage = 0;
     envelopeLevel = 0;
-    envelopeDir = true;
+    envelopeDir = EnvelopeDir::EDNone;
     envelopePeriod = 0;
     noiseDivider = 0;
     noiseLevel = 0;
@@ -76,6 +81,73 @@ void PSG::Init()
 }
 
 void PSG::Clock()
+{
+    //if (envelopeDivider == 0)
+        UpdateEnvelope();
+    //envelopeDivider++;
+    divider++;
+    if (divider == 16)
+    {
+        divider = 0;
+        UpdateNoise();
+        counterA++;
+        if (counterA >= periodA)
+        {
+            counterA = 0;
+            bitA = !bitA;
+        }
+        tVolA = registers[8];
+        if (tVolA & 0x10)
+            tVolA = GetCurrentEnvelopeLevel();
+        tVolB = registers[9];
+        if (tVolB & 0x10)
+            tVolB = GetCurrentEnvelopeLevel();
+        tVolC = registers[10];
+        if (tVolC & 0x10)
+            tVolC = GetCurrentEnvelopeLevel();
+
+        if (mixA)
+            outputA = volumes[tVolA * bitA];
+        else outputA = 0;
+        counterB++;
+        if (counterB >= periodB)
+        {
+            counterB = 0;
+            bitB = !bitB;
+        }
+        if (mixB)
+            outputB = volumes[tVolB * bitB];
+        else outputB = 0;
+        counterC++;
+        if (counterC >= periodC)
+        {
+            counterC = 0;
+            bitC = !bitC;
+        }
+        if (mixC)
+            outputC = volumes[tVolC * bitC];
+        else outputC = 0;
+        if (noiseA)
+            outputA += volumes[tVolA * noiseLevel];
+        if (noiseB)
+            outputB += volumes[tVolB * noiseLevel];
+        if (noiseC)
+            outputC += volumes[tVolC * noiseLevel];
+        if (bufferIndex < PSG_BUFFER_SIZE)
+        {
+            buffer[bufferIndex] = (outputA + outputB + outputC + Tape::GetLevel() * 10);
+            bufferIndex++;
+        }
+    }
+}
+
+void PSG::SelectFunction(bool bdir, bool bc1)
+{
+    BDIR = bdir;
+    BC1 = bc1;
+}
+
+void PSG::Clock_IO()
 {
     if (BDIR)
     {
@@ -98,6 +170,9 @@ void PSG::Clock()
             case 5:
                 periodC = ((registers[5] & 0x0F ) * 256 + registers[4]) >> 1;
                 break;
+            case 6:
+                noiseDivider = (registers[6] & 0x1F);
+                break;
             case 7:
                 mixA = !(inputRegister & 0x01);
                 mixB = !(inputRegister & 0x02);
@@ -109,18 +184,26 @@ void PSG::Clock()
             case 8:
             case 9:
             case 10:
-                if (inputRegister == 16)
-                {
-                    tVol = 10;
-                }
                 break;
             case 11:
             case 12:
                 envelopePeriod = registers[12] * 256 + registers[11];
+                envelopeCounter = envelopePeriod;
                 break;
             case 13:
-            case 14:
-                noiseDivider = (registers[6] & 0x1F);
+                if (registers[13] & 0x04)
+                {
+                    envelopeLevel = 0;
+                    envelopeDir = EnvelopeDir::EDUp;
+                }
+                else
+                {
+                    envelopeLevel = 15;
+                    envelopeDir = EnvelopeDir::EDDown;
+                }
+                envelopeHold = (registers[13] ^ 0x08) & 0x09;
+                envelopeAlternate = registers[13] & 0x02;
+                envelopeCounter = envelopePeriod;
                 break;
             }
         }
@@ -130,77 +213,11 @@ void PSG::Clock()
         if (BC1)
         {
             if (selectedRegister < 0x0E)
-            {
                 outputRegister = registers[selectedRegister];
-            }
             else if (selectedRegister == 0x0E)
                 outputRegister = Keyboard::Read();
         }
-        else
-            outputRegister = 0xFF;
-    }
-    if (envelopeDivider == 0)
-        UpdateEnvelope();
-    envelopeDivider++;
-    divider++;
-    if (divider == 16)
-    {
-        UpdateNoise();
-        divider = 0;
-        counterA++;
-        if (counterA >= periodA)
-        {
-            counterA = 0;
-            bitA = !bitA;
-        }
-        if (mixA)
-        {
-            tVol = registers[8];
-            if (tVol & 0x10)
-                tVol = GetCurrentEnvelopeLevel();
-            outputA = tVol * bitA;
-        }
-        else outputA = 0;
-        counterB++;
-        if (counterB >= periodB)
-        {
-            counterB = 0;
-            bitB = !bitB;
-        }
-        if (mixB)
-        {
-            tVol = registers[9];
-            if (tVol & 0x10)
-                tVol = GetCurrentEnvelopeLevel();
-            outputB = tVol * bitB;
-        }
-        else outputB = 0;
-        counterC++;
-        if (counterC >= periodC)
-        {
-            counterC = 0;
-            bitC = !bitC;
-        }
-        if (mixC)
-        {
-            tVol = registers[10];
-            if (tVol & 0x10)
-                tVol = GetCurrentEnvelopeLevel();
-            outputC = tVol * bitC;
-        }
-        else outputC = 0;
-        if (noiseA)
-            outputA += registers[8] * noiseLevel;
-        if (noiseB)
-            outputB += registers[9] * noiseLevel;
-        if (noiseC)
-            outputC += registers[10] * noiseLevel;
-
-        if (bufferIndex < PSG_BUFFER_SIZE)
-        {
-            buffer[bufferIndex] = (outputA + outputB + outputC + Tape::GetLevel() * 6) * 5;
-            bufferIndex++;
-        }
+        else outputRegister = 0xFF;
     }
 }
 
@@ -216,29 +233,52 @@ void PSG::WriteData(BYTE data)
 
 void PSG::UpdateEnvelope()
 {
-    envelopePeriod--;
-    if (envelopePeriod == 0)
+    envelopeCounter--;
+    if (envelopeCounter == 0)
     {
-        envelopePeriod = registers[12] * 256 + registers[11];
-        tVol = envelopeLevel;
-        envelopeLevel += envelopeDir ? 1 : 0xFF;
-        envelopeStage++;
-        if (envelopeStage == 16)
+        envelopeCounter = envelopePeriod;
+        switch(envelopeDir)
         {
-            if (registers[13] & 0x01)
+        case EnvelopeDir::EDNone:
+            break;
+        case EnvelopeDir::EDUp:
+            envelopeLevel++;
+            if (envelopeLevel >= 15)
             {
-                envelopeStage--;
-                envelopeLevel = tVol;
-            }
-            else
-            {
-                envelopeStage = 0;
-                if (registers[13] & 0x02)
-                    envelopeDir = !envelopeDir;
+                if (envelopeHold)
+                {
+                    envelopeDir = EnvelopeDir::EDNone;
+                    if (envelopeAlternate)
+                        envelopeLevel = 0;
+                }
                 else
-                    envelopeDir = registers[13] & 0x04;
-                envelopeLevel = envelopeDir ? 0 : 15;
+                {
+                    if (envelopeAlternate)
+                        envelopeDir = EnvelopeDir::EDDown;
+                    else
+                        envelopeLevel = 0;
+                }
             }
+            break;
+        case EnvelopeDir::EDDown:
+            envelopeLevel--;
+            if (envelopeLevel == 0)
+            {
+                if (envelopeHold)
+                {
+                    envelopeDir = EnvelopeDir::EDNone;
+                    if (envelopeAlternate)
+                        envelopeLevel = 15;
+                }
+                else
+                {
+                    if (envelopeAlternate)
+                        envelopeDir = EnvelopeDir::EDUp;
+                    else
+                        envelopeLevel = 15;
+                }
+            }
+            break;
         }
     }
 }

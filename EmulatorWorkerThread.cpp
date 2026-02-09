@@ -132,6 +132,7 @@ void EmulatorWorkerThread::RunTo(ushort address)
 
 void EmulatorWorkerThread::Stop ()
 {
+    Z80::stopPoint = false;
     debugLock.lock();
     debugStringZ80 = GetZ80RegsDebugLine();
     debugStringStack = GetZ80StackDebugLine();
@@ -145,8 +146,6 @@ void EmulatorWorkerThread::Stop ()
 void EmulatorWorkerThread::run()
 {
     Emulator::Init();
-    bool lastMotorState = Tape::motorState;
-
     while(!end)
     {
         if (running)
@@ -155,12 +154,6 @@ void EmulatorWorkerThread::run()
             {
             case CRTStage::Running:
                 Emulator::Clock();
-                /*
-                if (Tape::motorState)
-                    OnTapeMotorOn();
-                else
-                    OnTapeMotorOff();
-*/
                 switch(runMode)
                 {
                 case RunMode::StepByStep:

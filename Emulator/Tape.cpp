@@ -48,7 +48,7 @@ void Tape::LoadCDT(char *filename)
 void Tape::Clock()
 {
     tapeTick++;
-    if (tapeTick >= 363) // 363 for 44100 Hz    726 for 22050 Hz
+    if (tapeTick >= 20) // (1 Mhz / sample rate) i.e. 20 for 50 Khz
     {
         tapeTick = 0;
         switch(tapeSource)

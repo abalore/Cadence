@@ -5,6 +5,7 @@
 #include "Headers/PPI.h"
 #include "Headers/PSG.h"
 #include "Headers/ROMSelector.h"
+#include "Headers/Tape.h"
 
 
 const BYTE *GateArray::Color;
@@ -27,6 +28,12 @@ BYTE GateArray::hsyncDelay = 0;
 BYTE GateArray::mode;
 bool GateArray::GA_HSYNC;
 bool GateArray::GA_VSYNC;
+BYTE GateArray::pi;
+BYTE GateArray::decodedPen[4][8][256];
+bool GateArray::hsyncTrigger = false;
+bool GateArray::vsyncTrigger = false;
+SyncState GateArray::hsyncState = SyncState::SSWaitingCRTC;
+SyncState GateArray::vsyncState = SyncState::SSWaitingCRTC;
 
 
 bool GateArray::ROMEN()
@@ -84,39 +91,42 @@ void GateArray::Init()
     GA_HSYNC = true;
     RMR = 0;
     MMR = 0;
+    for (BYTE m = 0; m < 4; m++)
+        for (BYTE i = 0; i < 8; i++)
+            for (int b = 0; b < 256; b++)
+                decodedPen[m][i][b] = GetPenForPixel(m, b, i);
 }
 
 void GateArray::Clock()
 {
     Z80::stopPoint = false;
-    // 8 Mhz
-    if ((clockDividerCounter & 0x01) == 0)
-    {
-        Z80::CLK = !Z80::CLK;
-        Z80::ClockEdge();
-    }
 
     // 4 Mhz
-    if ((clockDividerCounter % 16) == 7)
+    if ((clockDividerCounter % 4) == 2)
+    {
+        Z80::Clock();
+    }
+
+    // 1 Mhz
+
+    if ((clockDividerCounter % 16) == 8)
     {
         IO_Clock();
         ROMSelector::IOClock();
         CRTC::IOClock();
         PPI::IOClock();
+        Tape::Clock();
+        PSG::Clock_IO();
+        PSG::Clock();
         CPC::ActiveROM()->Clock();
         CPC::InternalRAM->Clock();
-    }
-
-    if ((clockDividerCounter % 16) == 0)
-    {
-        PSG::Clock();
     }
 
     // 1Mhz
     if ((clockDividerCounter % 16) == 0)
     {
         CRTC::CRTClock();
-        GenerateSyncAndInterrupt();
+        GenerateHSync();
     }
     // 2 Mhz
     if ((clockDividerCounter % 8) == 0)
@@ -129,53 +139,89 @@ void GateArray::Clock()
     SetPixel();
 }
 
-void GateArray::GenerateSyncAndInterrupt()
+void GateArray::GenerateVSync()
 {
-    if (CRTC::HSYNC)
+    switch(vsyncState)
     {
-        if (hsyncDelay)
-            hsyncDelay--;
-        else
+    case SyncState::SSWaitingCRTC:
+        if (CRTC::VSYNC)
         {
-            if (GA_HSYNC == false)
-            {
-                mode = RMR & 0x03;
-                R52++;
-                if (R52 == 52)
-                {
-                    //////////////////////////////////////
-                    /// CPU INT ACK Control
-                    R52 = 0;
-                    Z80::InterruptRequest = false;
-                }
-                if (CRTC::VSYNC)
-                {
-                    if (vsyncDelay)
-                        vsyncDelay--;
-                    else
-                    {
-                        if (GA_VSYNC == false)
-                        {
-                            if (R52 > 32)
-                                Z80::InterruptRequest = false;
-                            R52 = 0;
-                        }
-                        GA_VSYNC = true;
-                    }
-                }
-                else
-                {
-                    vsyncDelay = 2;
-                    GA_VSYNC = false;
-                }
-            }
-            GA_HSYNC = true;
+            vsyncDelay = 2;
+            vsyncState = SyncState::SSDelaying;
         }
+        break;
+    case SyncState::SSDelaying:
+        vsyncDelay--;
+        if (vsyncDelay == 0)
+        {
+            GA_VSYNC = true;
+            vsyncTrigger = true;
+            vsyncDelay = 2;
+            vsyncState = SyncState::SSRunning;
+            if (R52 > 32)
+                Z80::InterruptRequest = false;
+            R52 = 0;
+        }
+        break;
+    case SyncState::SSRunning:
+        vsyncDelay--;
+        if (vsyncDelay == 0)
+        {
+            vsyncState = SyncState::SSFinished;
+        }
+        break;
+    case SyncState::SSFinished:
+        if (!CRTC::VSYNC)
+        {
+            GA_VSYNC = false;
+            vsyncState = SyncState::SSWaitingCRTC;
+        }
+        break;
     }
-    else
+}
+
+void GateArray::GenerateHSync()
+{
+    switch(hsyncState)
     {
-        hsyncDelay = 2;
-        GA_HSYNC = false;
+    case SyncState::SSWaitingCRTC:
+        if (CRTC::HSYNC)
+        {
+            hsyncDelay = 2;
+            hsyncState = SyncState::SSDelaying;
+        }
+        break;
+    case SyncState::SSDelaying:
+        hsyncDelay--;
+        if (hsyncDelay == 0)
+        {
+            GA_HSYNC = true;
+            hsyncDelay = 4;
+            hsyncState = SyncState::SSRunning;
+            hsyncTrigger = true;
+        }
+        break;
+    case SyncState::SSRunning:
+        hsyncDelay--;
+        if (hsyncDelay == 0)
+        {
+            hsyncState = SyncState::SSFinished;
+        }
+        break;
+    case SyncState::SSFinished:
+        if (!CRTC::HSYNC)
+        {
+            GA_HSYNC = false;
+            hsyncState = SyncState::SSWaitingCRTC;
+            mode = RMR & 0x03;
+            R52++;
+            if (R52 == 52)
+            {
+                R52 = 0;
+                Z80::InterruptRequest = false;
+            }
+        }
+        break;
     }
 }
 
@@ -183,12 +229,22 @@ void GateArray::SetPixel()
 {
     if (CRTC::HSYNC)
     {
-        Color = &Palette[60];
+        Color = &AbsoluteBlack[0];
         return;
     }
-    videoPen = GetPenForPixel(mode, currentByte, pixelIndex);
-    if (++pixelIndex == 8) pixelIndex = 0;
-    Color = &Palette[(CRTC::BORDER ? BORDER : INK[videoPen]) * 3];
+    if (CRTC::BORDER)
+    {
+//        if (Z80::InterruptEnable && !Z80::InterruptRequest)
+//            Color = &Palette[26 * 3];
+//        else
+        Color = &Palette[BORDER * 3];
+    }
+    else
+    {
+        videoPen = decodedPen[mode][pixelIndex][currentByte];
+        if (++pixelIndex == 8) pixelIndex = 0;
+        Color = &Palette[INK[videoPen] * 3];
+    }
 }
 
 const BYTE *GateArray::GetPaletteEntry(BYTE entry)
@@ -198,7 +254,6 @@ const BYTE *GateArray::GetPaletteEntry(BYTE entry)
 
 BYTE GateArray::GetPenForPixel(BYTE m, BYTE b, BYTE i)
 {
-    BYTE pi;
     switch(m)
     {
     case 0:
@@ -253,6 +308,8 @@ void GateArray::IO_Clock()
             break;
         case 0x80: // RMR
             RMR = CPC::DataBUS & 0x3F;
+            if ((CPC::DataBUS & 0x10) > 0)
+                R52 = 0;
             break;
         case 0xC0: // MMR
             MMR = CPC::DataBUS & 0x3F;
