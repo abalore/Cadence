@@ -113,7 +113,7 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // JR NZ,d    {fZ 8T, !fZ 12T}
-            JR(!fZ.Get());
+            JR(!fZ);
             break;
         case 0x1: // LD HL,nn   {12T}
             LD_RR_nn(HL);
@@ -137,7 +137,7 @@ void Z80::Step_basic()
             DAA();
             break;
         case 0x8: // JR Z,d    {fZ 8T, !fZ 12T}
-            JR(fZ.Get());
+            JR(fZ);
             break;
         case 0x9: // ADD HL,HL
             ADD_HL_RR(HL);
@@ -166,7 +166,7 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // JR NC,D    {fC 8T, !fC 12T}
-            JR(!fC.Get());
+            JR(!fC);
             break;
         case 0x1: // LD SP,nn   {12T}
             LD_RR_nn(SP);
@@ -190,7 +190,7 @@ void Z80::Step_basic()
             SCF();
             break;
         case 0x8: // JR C,d
-            JR(fC.Get());
+            JR(fC);
             break;
         case 0x9: // ADD HL,SP
             ADD_HL_RR(SP);
@@ -636,19 +636,19 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // RET NZ
-            RET(!fZ.Get());
+            RET(!fZ);
             break;
         case 0x1: // POP BC
             POP_RR(BC);
             break;
         case 0x2: // JP NZ,nn
-            JP(!fZ.Get());
+            JP(!fZ);
             break;
         case 0x3: // JP nn
             JP(true);
             break;
         case 0x4: // CALL NZ,nn
-            CALL(!fZ.Get());
+            CALL(!fZ);
             break;
         case 0x5: // PUSH BC
             PUSH_RR(BC);
@@ -660,19 +660,19 @@ void Z80::Step_basic()
             RST(0);
             break;
         case 0x8: // RET z
-            RET(fZ.Get());
+            RET(fZ);
             break;
         case 0x9: // RET
             RET(true);
             break;
         case 0xA: // JP Z,nn
-            JP(fZ.Get());
+            JP(fZ);
             break;
         case 0xB: // BIT OP //////////////////////////////////////
             idMode = IDMode::BIT;
             break;
         case 0xC: // CALL Z,nn
-            CALL(fZ.Get());
+            CALL(fZ);
             break;
         case 0xD: // CALL nn
             CALL(true);
@@ -689,19 +689,19 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // RET NC
-            RET(!fC.Get());
+            RET(!fC);
             break;
         case 0x1: // POP DE
             POP_RR(DE);
             break;
         case 0x2: // JP NC,NN
-            JP(!fC.Get());
+            JP(!fC);
             break;
         case 0x3: // OUT (n),A
             //////////////////////////////////////////////////
             break;
         case 0x4: // CALL NC,nn
-            CALL(!fC.Get());
+            CALL(!fC);
             break;
         case 0x5: // PUSH_DE
             PUSH_RR(DE);
@@ -713,19 +713,19 @@ void Z80::Step_basic()
             RST(0x10);
             break;
         case 0x8: // RET C
-            RET(fC.Get());
+            RET(fC);
             break;
         case 0x9: // EXX
             EXX();
             break;
         case 0xA: // JP C,nn
-            JP(fC.Get());
+            JP(fC);
             break;
         case 0xB: // IN A,(n)
             //////////////////////////////////////////////////////////
             break;
         case 0xC: // CALL C,nn
-            CALL(fC.Get());
+            CALL(fC);
             break;
         case 0xD: // IX OP
             IDX = &IX;
@@ -743,19 +743,19 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // RET PO
-            RET(!fP.Get());
+            RET(!fP);
             break;
         case 0x1: // POP HL
             POP_RR(HL);
             break;
         case 0x2: // JP PO,nn
-            JP(!fP.Get());
+            JP(!fP);
             break;
         case 0x3: // EX (SP),HL
             EX_HL_Ind_SP();
             break;
         case 0x4: // CALL PO,nn
-            CALL(!fP.Get());
+            CALL(!fP);
             break;
         case 0x5: // PUSH_HL
             PUSH_RR(HL);
@@ -767,19 +767,19 @@ void Z80::Step_basic()
             RST(0x20);
             break;
         case 0x8: // RET PE
-            RET(fP.Get());
+            RET(fP);
             break;
         case 0x9: // JP (HL)
             JP_HL();
             break;
         case 0xA: // JP PE,nn
-            JP(fP.Get());
+            JP(fP);
             break;
         case 0xB: // EX DE,HL
             EX_DE_HL();
             break;
         case 0xC: // CALL PE,nn
-            CALL(fP.Get());
+            CALL(fP);
             break;
         case 0xD: // MISC
             idMode = IDMode::MISC;
@@ -796,21 +796,23 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // RET P
-            RET(!fS.Get());
+            RET(!fS);
             break;
         case 0x1: // POP AF
             POP_RR(AF);
+            DecodeF();
             break;
         case 0x2: // JP P,nn
-            JP(!fS.Get());
+            JP(!fS);
             break;
         case 0x3: // DI
             InterruptEnable = false;
             break;
         case 0x4: // CALL P,nn
-            CALL(!fS.Get());
+            CALL(!fS);
             break;
         case 0x5: // PUSH_AF
+            EncodeF();
             PUSH_RR(AF);
             break;
         case 0x6: // OR n
@@ -820,19 +822,19 @@ void Z80::Step_basic()
             RST(0x30);
             break;
         case 0x8: // RET M
-            RET(fS.Get());
+            RET(fS);
             break;
         case 0x9: // LD SP,HL
             LD_SP_HL();
             break;
         case 0xA: // JP M,nn
-            JP(fS.Get());
+            JP(fS);
             break;
         case 0xB: // EI
             InterruptEnable = true;
             break;
         case 0xC: // CALL M,nn
-            CALL(fS.Get());
+            CALL(fS);
             break;
         case 0xD: // IY op
             IDX = &IY;

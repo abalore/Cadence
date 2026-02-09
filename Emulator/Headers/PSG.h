@@ -5,16 +5,23 @@
 
 #define PSG_BUFFER_SIZE 1500
 
+enum EnvelopeDir
+{
+    EDUp,
+    EDDown,
+    EDNone
+};
+
 class PSG
 {
 public:
     static void Init();
     static void Clock();
+    static void Clock_IO();
+    static void SelectFunction(bool bdir, bool bc1);
     static BYTE ReadData();
     static void WriteData(BYTE data);
     static BYTE PortA;
-    static bool BC1;
-    static bool BDIR;
     static BYTE outputA;
     static BYTE outputB;
     static BYTE outputC;
@@ -35,8 +42,11 @@ private:
     static BYTE envelopeDivider;
     static BYTE envelopeStage;
     static BYTE envelopeLevel;
-    static bool envelopeDir;
+    static EnvelopeDir envelopeDir;
+    static bool envelopeHold;
+    static bool envelopeAlternate;
     static word envelopePeriod;
+    static word envelopeCounter;
     static BYTE noiseDivider;
     static bool noiseLevel;
     static bool bitA;
@@ -51,7 +61,30 @@ private:
     static bool noiseA;
     static bool noiseB;
     static bool noiseC;
-    static BYTE tVol;
+    static BYTE tVolA;
+    static BYTE tVolB;
+    static BYTE tVolC;
+    static bool BC1;
+    static bool BDIR;
+    constexpr static const BYTE volumes[16]
+    {
+        0,
+        0,
+        0,
+        1,
+        2,
+        4,
+        6,
+        8,
+        10,
+        13,
+        16,
+        20,
+        24,
+        28,
+        32,
+        37
+    };
 };
 
 #endif // PSG_H

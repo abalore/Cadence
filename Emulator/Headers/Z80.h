@@ -34,20 +34,18 @@ class Z80
 public:
     static void Init();
     static void Reset();
-    static void ClockEdge();
+    static void Clock();
     static BYTE tCycle;
     static BYTE mCycle;
     static bool MREQ;
     static bool RD;
     static bool WR;
     static bool IORQ;
-    // public static bool WAIT;
-    static bool RFSH;
     static bool M1;
     static word PC;
     static Reg16 SP, AF, BC, DE, HL, IX, IY;
     static Reg16 AF_, BC_, DE_, HL_;
-    static Flag fS, fZ, fH, fP, fN, fC, f3, f5;
+    static bool fS, fZ, fH, fP, fN, fC, f3, f5;
     static BYTE A, F, B, C, D, E, H, L, IXH, IXL, IYH, IYL;
     static BYTE A_, F_, B_, C_, D_, E_, H_, L_;
     static BYTE t16H, t16L, SPH, SPL;
@@ -58,7 +56,6 @@ public:
     static MCycleType mCycleType;
     static bool InterruptEnable;
     static bool InterruptRequest;
-    static bool CLK;
     static bool stopPoint;
     static bool halted;
     static BYTE InterruptMode;
@@ -211,6 +208,8 @@ private:
     static void ShiftOpIndHL(BYTE opCode);
     static void INI(bool R, bool dir);
     static void OUTI(bool R, bool dir);
+    static void EncodeF();
+    static void DecodeF();
 };
 
 #endif // Z80_H

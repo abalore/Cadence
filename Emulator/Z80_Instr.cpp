@@ -2,22 +2,22 @@
 
 void Z80::INC_R(BYTE &reg)
 {
-    fH.Set((reg & 0xF) == 0xF);
-    fP.Set(reg == 0x7F);
+    fH = (reg & 0xF) == 0xF;
+    fP = reg == 0x7F;
     reg++;
-    fS.Set(reg & 0x80);
-    fZ.Set(reg == 0);
-    fN.Set(false);
+    fS = reg & 0x80;
+    fZ = reg == 0;
+    fN = false;
 }
 
 void Z80::DEC_R(BYTE &reg)
 {
-    fH.Set((reg & 0xF) == 0x0);
-    fP.Set(reg == 0x80);
+    fH = (reg & 0xF) == 0x0;
+    fP = reg == 0x80;
     reg--;
-    fS.Set(reg & 0x80);
-    fZ.Set(reg == 0);
-    fN.Set(true);
+    fS = reg & 0x80;
+    fZ = reg == 0;
+    fN = true;
 }
 
 void Z80::JR(bool condition)
@@ -321,9 +321,9 @@ void Z80::ADD_HL_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        fC.Set(HL.Get() + reg.Get() > 0xFFFF);
-        fP.Set(HL.Get() + reg.Get() > 0xFFFF);
-        fH.Set((HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) > 0xFFF);
+        fC = HL.Get() + reg.Get() > 0xFFFF;
+        fP = HL.Get() + reg.Get() > 0xFFFF;
+        fH = (HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) > 0xFFF;
         break;
     case 2:
         H += *reg.H;
@@ -331,7 +331,7 @@ void Z80::ADD_HL_RR(Reg16 reg)
         L += *reg.L;
         break;
     case 3:
-        fN.Set(false);
+        fN = false;
         FinishInstruction();
         break;
     }
@@ -340,13 +340,13 @@ void Z80::ADD_HL_RR(Reg16 reg)
 void Z80::ADD_A_v(BYTE v)
 {
     int signedResult = (sbyte)A + (sbyte)v;
-    fP.Set((signedResult > 127) || (signedResult < -128));
-    fC.Set(A + v > 255);
-    fH.Set(((A & 0xF) + (v & 0xF)) > 0xF);
+    fP = (signedResult > 127) || (signedResult < -128);
+    fC = A + v > 255;
+    fH = ((A & 0xF) + (v & 0xF)) > 0xF;
     A += v;
-    fS.Set(A & 0x80);
-    fZ.Set(A == 0);
-    fN.Set(false);
+    fS = A & 0x80;
+    fZ = A == 0;
+    fN = false;
 }
 
 void Z80::ADD_n()
@@ -613,15 +613,15 @@ void Z80::CP_Ind_HL()
 
 void Z80::ADC_A_v(BYTE v)
 {
-    tCV = fC.Get() ? 1 : 0;
+    tCV = fC ? 1 : 0;
     int signedResult = (sbyte)A + (sbyte)v + tCV;
-    fP.Set((signedResult > 127) || (signedResult < -128));
-    fC.Set((A + v + tCV) > 255);
-    fH.Set(((A & 0xF) + (v & 0xF) + tCV) > 0xF);
+    fP = (signedResult > 127) || (signedResult < -128);
+    fC = (A + v + tCV) > 255;
+    fH = ((A & 0xF) + (v & 0xF) + tCV) > 0xF;
     A += v + tCV;
-    fS.Set(A & 0x80);
-    fZ.Set(A == 0);
-    fN.Set(false);
+    fS = A & 0x80;
+    fZ = A == 0;
+    fN = false;
 }
 
 void Z80::ADC_R(BYTE &reg)
@@ -632,13 +632,13 @@ void Z80::ADC_R(BYTE &reg)
 void Z80::SUB_A_v(BYTE v)
 {
   int signedResult = (sbyte)A - (sbyte)v;
-  fP.Set((signedResult > 127) || (signedResult < -128));
-  fH.Set((A & 0xF) < (v & 0xF));
-  fC.Set(A < v);
+  fP = (signedResult > 127) || (signedResult < -128);
+  fH = (A & 0xF) < (v & 0xF);
+  fC = A < v;
   A -= v;
-  fS.Set((A & 0x80) > 0);
-  fZ.Set(A == 0);
-  fN.Set(true);
+  fS = (A & 0x80) > 0;
+  fZ = A == 0;
+  fN = true;
 }
 
 void Z80::SUB_R(BYTE &reg)
@@ -648,15 +648,15 @@ void Z80::SUB_R(BYTE &reg)
 
 void Z80::SBC_A_v(BYTE v)
 {
-    tCV = fC.Get() ? 1 : 0;
+    tCV = fC ? 1 : 0;
     int signedResult = (sbyte)A - (sbyte)v - tCV;
-    fP.Set((signedResult > 127) || (signedResult < -128));
-    fH.Set((A & 0xF) < ((v & 0xF) + tCV));
-    fC.Set(A < (v + tCV));
+    fP = (signedResult > 127) || (signedResult < -128);
+    fH = (A & 0xF) < ((v & 0xF) + tCV);
+    fC = A < (v + tCV);
     A -= v + tCV;
-    fS.Set((A & 0x80) > 0);
-    fZ.Set(A == 0);
-    fN.Set(true);
+    fS = (A & 0x80) > 0;
+    fZ = A == 0;
+    fN = true;
 }
 
 void Z80::SBC_R(BYTE &reg)
@@ -674,26 +674,26 @@ bool Z80::GetParity(BYTE b)
 
 void Z80::SetFlagsAfterLogicalOp(BYTE b)
 {
-    fP.Set(GetParity(b));
-    fS.Set((b & 0x80) > 0);
-    fZ.Set(b == 0);
-    fN.Set(false);
-    fC.Set(false);
+    fP = GetParity(b);
+    fS = (b & 0x80) > 0;
+    fZ = b == 0;
+    fN = false;
+    fC = false;
 }
 
 void Z80::SetFlagsAfterShiftOp(BYTE b)
 {
-    fP.Set(GetParity(b));
-    fS.Set((b & 0x80) > 0);
-    fZ.Set(b == 0);
-    fH.Set(false);
-    fN.Set(false);
+    fP = GetParity(b);
+    fS = (b & 0x80) > 0;
+    fZ = b == 0;
+    fH = false;
+    fN = false;
 }
 
 void Z80::AND_A_v(BYTE v)
 {
     A &= v;
-    fH.Set(true);
+    fH = true;
     SetFlagsAfterLogicalOp(A);
 }
 
@@ -705,7 +705,7 @@ void Z80::AND_R(BYTE &reg)
 void Z80::XOR_A_v(BYTE v)
 {
   A ^= v;
-  fH.Set(false);
+  fH = false;
   SetFlagsAfterLogicalOp(A);
 }
 
@@ -717,7 +717,7 @@ void Z80::XOR_R(BYTE &reg)
 void Z80::OR_A_v(BYTE v)
 {
   A |= v;
-  fH.Set(false);
+  fH = false;
   SetFlagsAfterLogicalOp(A);
 }
 
@@ -855,24 +855,24 @@ void Z80::RST(BYTE address)
 
 void Z80::RLC_R(BYTE &reg)
 {
-    fC.Set((reg & 0x80) > 0);
+    fC = (reg & 0x80) > 0;
     reg <<= 1;
-    if (fC.Get()) reg++;
+    if (fC) reg++;
     SetFlagsAfterShiftOp(reg);
 }
 
 void Z80::RRC_R(BYTE &reg)
 {
-    fC.Set((reg & 0x01) > 0);
+    fC = (reg & 0x01) > 0;
     reg >>= 1;
-    if (fC.Get()) reg += 0x80;
+    if (fC) reg += 0x80;
     SetFlagsAfterShiftOp(reg);
 }
 
 void Z80::RL_R(BYTE &reg)
 {
-    tC = fC.Get();
-    fC.Set((reg & 0x80) > 0);
+    tC = fC;
+    fC = (reg & 0x80) > 0;
     reg <<= 1;
     if (tC) reg++;
     SetFlagsAfterShiftOp(reg);
@@ -880,8 +880,8 @@ void Z80::RL_R(BYTE &reg)
 
 void Z80::RR_R(BYTE &reg)
 {
-    tC = fC.Get();
-    fC.Set((reg & 0x01) > 0);
+    tC = fC;
+    fC = (reg & 0x01) > 0;
     reg >>= 1;
     if (tC) reg += 0x80;
     SetFlagsAfterShiftOp(reg);
@@ -889,7 +889,7 @@ void Z80::RR_R(BYTE &reg)
 
 void Z80::SLA_R(BYTE &reg)
 {
-    fC.Set((reg & 0x80) > 0);
+    fC = (reg & 0x80) > 0;
     reg <<= 1;
     SetFlagsAfterShiftOp(reg);
 }
@@ -897,7 +897,7 @@ void Z80::SLA_R(BYTE &reg)
 void Z80::SRA_R(BYTE &reg)
 {
     tC = (reg & 0x80) > 0;
-    fC.Set((reg & 0x01) > 0);
+    fC = (reg & 0x01) > 0;
     reg >>= 1;
     if (tC) reg += 0x80;
     SetFlagsAfterShiftOp(reg);
@@ -905,7 +905,7 @@ void Z80::SRA_R(BYTE &reg)
 
 void Z80::SLL_R(BYTE &reg)
 {
-    fC.Set((reg & 0x80) > 0);
+    fC = (reg & 0x80) > 0;
     reg <<= 1;
     reg += 1;
     SetFlagsAfterShiftOp(reg);
@@ -913,7 +913,7 @@ void Z80::SLL_R(BYTE &reg)
 
 void Z80::SRL_R(BYTE &reg)
 {
-    fC.Set((reg & 0x01) > 0);
+    fC = (reg & 0x01) > 0;
     reg >>= 1;
     SetFlagsAfterShiftOp(reg);
 }
@@ -1036,9 +1036,9 @@ void Z80::ShiftOpIndHL(BYTE opCode)
 
 void Z80::BIT_x_R(int X, BYTE * R)
 {
-    fZ.Set((*R & (1 << X)) == 0);
-    fH.Set(true);
-    fN.Set(false);
+    fZ = (*R & (1 << X)) == 0;
+    fH = true;
+    fN = false;
 }
 
 void Z80::RES_x_R(int X, BYTE * R)
@@ -1125,8 +1125,8 @@ void Z80::ADD_IDX_RR(Reg16 reg)
     case 1:
         Z80::mCycleType = MCycleType::ALU;
         t16.Set((*IDX).Get());
-        fC.Set(t16.Get() + reg.Get() > 0xFFFF);
-        fH.Set((t16.Get() & 0xFFF) + (reg.Get() & 0xFFF) > 0xFFF);
+        fC = t16.Get() + reg.Get() > 0xFFFF;
+        fH = (t16.Get() & 0xFFF) + (reg.Get() & 0xFFF) > 0xFFF;
         break;
     case 2:
         t16H += *reg.H;
@@ -1134,7 +1134,7 @@ void Z80::ADD_IDX_RR(Reg16 reg)
         t16L += *reg.L;
         break;
     case 3:
-        fN.Set(false);
+        fN = false;
         (*IDX).Set(t16.Get());
         FinishInstruction();
         break;
@@ -1146,11 +1146,11 @@ void Z80::SBC_HL_RR(Reg16 reg)
   switch(mCycle)
   {
     case 1:
-      tCV = fC.Get() ? 1 : 0;
+      tCV = fC ? 1 : 0;
       mCycleType = MCycleType::ALU;
-      fC.Set(reg.Get() + tCV > HL.Get());
-      fP.Set(fC.Get());
-      fH.Set((reg.Get() & 0xFFF)  + tCV > (HL.Get() & 0xFFF));
+      fC = reg.Get() + tCV > HL.Get();
+      fP = fC;
+      fH = (reg.Get() & 0xFFF)  + tCV > (HL.Get() & 0xFFF);
       break;
     case 2:
       H -= *reg.H;
@@ -1158,9 +1158,9 @@ void Z80::SBC_HL_RR(Reg16 reg)
       L -= *reg.L + tCV;
       break;
     case 3:
-      fN.Set(true);
-      fZ.Set(H == 0 && L == 0);
-      fS.Set((H & 0x80) > 0);
+      fN = true;
+      fZ = H == 0 && L == 0;
+      fS = (H & 0x80) > 0;
       FinishInstruction();
       break;
   }
@@ -1171,11 +1171,11 @@ void Z80::ADC_HL_RR(Reg16 reg)
     switch(mCycle)
     {
     case 1:
-        tCV = fC.Get() ? 1 : 0;
+        tCV = fC ? 1 : 0;
         mCycleType = MCycleType::ALU;
-        fC.Set(HL.Get() + reg.Get() + tCV > 0xFFFF);
-        fP.Set(HL.Get() + reg.Get() + tCV > 0xFFFF);
-        fH.Set((HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) + tCV > 0xFFF);
+        fC = HL.Get() + reg.Get() + tCV > 0xFFFF;
+        fP = HL.Get() + reg.Get() + tCV > 0xFFFF;
+        fH = (HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) + tCV > 0xFFF;
         break;
     case 2:
         H += *reg.H;
@@ -1183,9 +1183,9 @@ void Z80::ADC_HL_RR(Reg16 reg)
         L += *reg.L + tCV;
         break;
     case 3:
-        fN.Set(false);
-        fS.Set(H & 0x80);
-        fZ.Set(H == 0 && L == 0);
+        fN = false;
+        fS = H & 0x80;
+        fZ = H == 0 && L == 0;
         FinishInstruction();
         break;
     }
@@ -1196,8 +1196,8 @@ void Z80::NEG()
     t8 = A;
     A = 0;
     SUB_R(t8);
-    fC.Set(t8 != 0x00);
-    fP.Set(t8 == 0x80);
+    fC = t8 != 0x00;
+    fP = t8 == 0x80;
 }
 
 void Z80::LDI(bool R)
@@ -1219,9 +1219,9 @@ void Z80::LDI(bool R)
         BC.Set(BC.Get()-1);
         break;
     case 4:
-        fP.Set(BC.Get() != 0);
-        fH.Set(false);
-        fN.Set(false);
+        fP = BC.Get() != 0;
+        fH = false;
+        fN = false;
         if (!R || BC.Get() == 0)
             FinishInstruction();
         break;
@@ -1246,11 +1246,11 @@ void Z80::CPI(bool R)
         BC.Set(BC.Get() - 1);
         break;
     case 3:
-        fH.Set((A & 0x0F) < (DR & 0x0F));
-        fS.Set((A - DR) & 0x80);
-        fZ.Set(A == DR);
-        fP.Set(BC.Get() != 0);
-        fN.Set(true);
+        fH = (A & 0x0F) < (DR & 0x0F);
+        fS = (A - DR) & 0x80;
+        fZ = A == DR;
+        fP = BC.Get() != 0;
+        fN = true;
         break;
     case 4:
         if (!R || BC.Get() == 0 || A == DR) FinishInstruction();
@@ -1281,9 +1281,9 @@ void Z80::LDD(bool R)
         BC.Set(BC.Get()-1);
         break;
     case 4:
-        fP.Set(BC.Get() != 0);
-        fH.Set(false);
-        fN.Set(false);
+        fP = BC.Get() != 0;
+        fH = false;
+        fN = false;
         if (!R || BC.Get() == 0) FinishInstruction();
         break;
     case 5:
@@ -1307,13 +1307,13 @@ void Z80::CPD(bool R)
         BC.Set(BC.Get()-1);
         break;
     case 3:
-        fH.Set((A & 0xF) < (DR & 0xF));
-        fS.Set(((A - DR) & 0x80) > 0);
-        fZ.Set(A == DR);
+        fH = (A & 0xF) < (DR & 0xF);
+        fS = ((A - DR) & 0x80) > 0;
+        fZ = A == DR;
         break;
     case 4:
-        fP.Set(BC.Get() != 0);
-        fN.Set(true);
+        fP = BC.Get() != 0;
+        fN = true;
         if (!R || BC.Get() == 0 || A == DR) FinishInstruction();
         break;
     case 5:
@@ -1325,20 +1325,20 @@ void Z80::CPD(bool R)
 
 void Z80::RLCA()
 {
-    fC.Set((A & 0x80) > 0);
+    fC = (A & 0x80) > 0;
     A <<= 1;
-    if (fC.Get()) A++;
-    fH.Set(false);
-    fN.Set(false);
+    if (fC) A++;
+    fH = false;
+    fN = false;
 }
 
 void Z80::RRCA()
 {
-    fC.Set( (A & 0x01) > 0);
+    fC = (A & 0x01) > 0;
     A >>= 1;
-    if (fC.Get()) A += 0x80;
-    fH.Set(false);
-    fN.Set(false);
+    if (fC) A += 0x80;
+    fH = false;
+    fN = false;
 }
 
 void Z80::LD_A_I_RR(Reg16 reg)
@@ -1356,14 +1356,40 @@ void Z80::LD_A_I_RR(Reg16 reg)
     }
 }
 
+void Z80::EncodeF()
+{
+    F = (fS << 7)
+        + (fZ << 6)
+        + (f5 << 5)
+        + (fH << 4)
+        + (f3 << 3)
+        + (fP << 2)
+        + (fN << 1)
+        + fC;
+}
+
+void Z80::DecodeF()
+{
+    fS = F & 0x80;
+    fZ = F & 0x40;
+    f5 = F & 0x20;
+    fH = F & 0x10;
+    f3 = F & 0x08;
+    fP = F & 0x04;
+    fN = F & 0x02;
+    fC = F & 0x01;
+}
+
 void Z80::EX_AF_AF_()
 {
     BYTE t = A;
     A = A_;
     A_ = t;
+    EncodeF();
     t = F;
     F = F_;
     F_ = t;
+    DecodeF();
 }
 
 void Z80::EX_DE_HL()
@@ -1500,20 +1526,20 @@ void Z80::RLA()
 {
   tC = (A & 0x80) > 0;
   A <<= 1;
-  if (fC.Get()) A++;
-  fC.Set(tC);
-  fH.Set(false);
-  fN.Set(false);
+  if (fC) A++;
+  fC = tC;
+  fH = false;
+  fN = false;
 }
 
 void Z80::RRA()
 {
   tC = (A & 0x01) > 0;
   A >>= 1;
-  if (fC.Get()) A += 0x80;
-  fC.Set(tC);
-  fH.Set(false);
-  fN.Set(false);
+  if (fC) A += 0x80;
+  fC = tC;
+  fH = false;
+  fN = false;
 }
 
 /*
@@ -1543,25 +1569,25 @@ void Z80::DAA()
 {
     BYTE l = A & 0x0F;
     BYTE h = (A & 0xF0) >> 4;
-    if (!fN.Get())
+    if (!fN)
     {
-        if (!fC.Get())
+        if (!fC)
         {
-            if (!fH.Get())
+            if (!fH)
             {
                 if (h < 0x09 && l > 0x09) A += 0x06;
-                else if (h > 0x09 && l < 0x0A) { A += 0x60; fC.Set(1); }
-                else if (h > 0x08 && l > 0x09) { A += 0x66; fC.Set(1); }
+                else if (h > 0x09 && l < 0x0A) { A += 0x60; fC = true; }
+                else if (h > 0x08 && l > 0x09) { A += 0x66; fC = true; }
             }
             else
             {
                 if (h < 0x0A && l < 0x04) A += 0x06;
-                else if (h > 0x09 && l < 0x04) { A += 0x66; fC.Set(1); }
+                else if (h > 0x09 && l < 0x04) { A += 0x66; fC = true; }
             }
         }
         else
         {
-            if (!fH.Get())
+            if (!fH)
             {
                 if (h < 0x03 && l < 0x0A) A += 0x60;
                 else if (h <0x03 && l > 0x09) A += 0x66;
@@ -1574,16 +1600,16 @@ void Z80::DAA()
     }
     else
     {
-        if (!fC.Get())
+        if (!fC)
         {
-            if (fH.Get())
+            if (fH)
             {
                 if (h < 0x09 && l > 0x05) A += 0xFA;
             }
         }
         else
         {
-            if (!fH.Get())
+            if (!fH)
             {
                 if (h > 0x06 && l < 0x0A) A += 0xA0;
             }
@@ -1625,8 +1651,8 @@ void Z80::DAA()
 void Z80::CPL()
 {
   A ^= 0xFF;
-  fH.Set(true);
-  fN.Set(true);
+  fH = true;
+  fN = true;
 }
 
 void Z80::INC_Ind_HL()
@@ -1687,16 +1713,16 @@ void Z80::LD_Ind_HL_n()
 
 void Z80::SCF()
 {
-    fC.Set(true);
-    fN.Set(false);
-    fH.Set(false);
+    fC = true;
+    fN = false;
+    fH = false;
 }
 
 void Z80::CCF()
 {
-    fH.Set(fC.Get());
-    fC.Set(!fC.Get());
-    fN.Set(false);
+    fH = fC;
+    fC = !fC;
+    fN = false;
 }
 
 void Z80::LD_SP_HL()
@@ -1740,11 +1766,11 @@ void Z80::IN_R_PortBC(BYTE &reg)
         reg = DR;
         break;
     case 3:
-        fS.Set((DR & 0x80) > 0);
-        fZ.Set(DR == 0);
-        fH.Set(false);
-        fP.Set(GetParity(DR));
-        fN.Set(false);
+        fS = (DR & 0x80) > 0;
+        fZ = DR == 0;
+        fH = false;
+        fP = GetParity(DR);
+        fN = false;
         FinishInstruction();
         break;
     }
@@ -1777,11 +1803,11 @@ void Z80::LD_A_I()
         A = I;
         break;
     case 2:
-        fZ.Set(A == 0);
-        fS.Set(A & 0x80);
-        fH.Set(false);
-        fN.Set(false);
-        fP.Set(InterruptEnable);
+        fZ = A == 0;
+        fS = A & 0x80;
+        fH = false;
+        fN = false;
+        fP = InterruptEnable;
         FinishInstruction();
         break;
     }
@@ -1810,11 +1836,11 @@ void Z80::LD_A_R()
         A = R;
         break;
     case 2:
-        fP.Set(InterruptEnable);
-        fZ.Set(A == 0);
-        fS.Set(A & 0x80);
-        fH.Set(false);
-        fN.Set(false);
+        fP = InterruptEnable;
+        fZ = A == 0;
+        fS = A & 0x80;
+        fH = false;
+        fN = false;
         FinishInstruction();
         break;
     }
@@ -1852,11 +1878,11 @@ void Z80::RLD()
         A = (BYTE)((A & 0xF0) + (t8 >> 4));
         break;
     case 4:
-        fP.Set((A & 0x01) == 0);
-        fZ.Set(A == 0);
-        fS.Set((A & 0x80) > 0);
-        fH.Set(false);
-        fN.Set(false);
+        fP = (A & 0x01) == 0;
+        fZ = A == 0;
+        fS = (A & 0x80) > 0;
+        fH = false;
+        fN = false;
         FinishInstruction();
         break;
     }
@@ -1880,11 +1906,11 @@ void Z80::RRD()
       A = (BYTE)((A & 0xF0) + (t8 & 0x0F));
     break;
     case 4:
-        fP.Set((A & 0x01) == 0);
-        fZ.Set(A == 0);
-        fS.Set((A & 0x80) > 0);
-        fH.Set(false);
-        fN.Set(false);
+        fP = (A & 0x01) == 0;
+        fZ = A == 0;
+        fS = (A & 0x80) > 0;
+        fH = false;
+        fN = false;
       FinishInstruction();
     break;
   }
@@ -1917,9 +1943,9 @@ void Z80::INI(bool R, bool dir)
         B--;
         break;
     case 4:
-        fS.Set((DR & 0x80) > 0);
-        fZ.Set(B == 0);
-        fN.Set(true);
+        fS = (DR & 0x80) > 0;
+        fZ = B == 0;
+        fN = true;
         if (!R || B == 0)
             FinishInstruction();
         break;
@@ -1951,9 +1977,9 @@ void Z80::OUTI(bool R, bool dir)
         B--;
         break;
     case 4:
-        fS.Set((DR & 0x80) > 0);
-        fZ.Set(B == 0);
-        fN.Set(true);
+        fS = (DR & 0x80) > 0;
+        fZ = B == 0;
+        fN = true;
         if (!R || B == 0)
             FinishInstruction();
         break;

@@ -3,6 +3,14 @@
 
 #include "defs.h"
 
+enum SyncState
+{
+    SSWaitingCRTC,
+    SSDelaying,
+    SSRunning,
+    SSFinished
+};
+
 class GateArray
 {
 public:
@@ -13,13 +21,17 @@ public:
     static bool MWE();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
+
+    static void GenerateHSync();
+    static void GenerateVSync();
+
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
     static BYTE currentPen;
     static const BYTE cH = 255;
     static const BYTE cM = 128;
-    static const BYTE cL = 0;
+    static const BYTE cL = 5;
     static BYTE RMR;
     static BYTE R52;
     static BYTE hsyncDelay;
@@ -27,6 +39,14 @@ public:
     static BYTE mode;
     static bool GA_HSYNC;
     static bool GA_VSYNC;
+    static BYTE pi;
+    static BYTE decodedPen[4][8][256];
+    static bool hsyncTrigger;
+    static bool vsyncTrigger;
+    static SyncState hsyncState;
+    static SyncState vsyncState;
+
+    constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
     constexpr static const BYTE Palette[3 * 32] =
         {
             cM, cM, cM, // White
@@ -64,7 +84,6 @@ public:
     };
 
 private:
-    static void GenerateSyncAndInterrupt();
     static void SetPixel();
     static void ReadByte();
     static void IO_Clock();

@@ -24,7 +24,6 @@ public:
     static CRTStage stage;
 private:
     static int hPos, vPos;
-    static bool lastHSYNC, lastVSYNC;
 };
 
 #endif // CRTSCREEN_H
