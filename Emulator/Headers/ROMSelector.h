@@ -7,7 +7,7 @@ class ROMSelector
 {
 public:
     static void Init();
-    static void IOClock();
+    static void Clock_IO_WR();
     static BYTE SelectedROM;
 };
 

@@ -11,18 +11,12 @@ RAM::RAM()
     //MEM = new BYTE[65536];
 }
 
-void RAM::Clock()
+void RAM::Clock_RD()
 {
-    if (!GateArray::RAMRD())
-        CPC::DataBUS = MEM[CPC::AddressBUS];
-    else
-        if (!GateArray::MWE())
-    {
-            MEM[CPC::AddressBUS] = CPC::DataBUS;
-        if (CPC::AddressBUS == 0x00EE)
-            {
-                word t = Z80::PC;
-                Z80::PC = t;
-            }
-    }
+    CPC::DataBUS = MEM[CPC::AddressBUS];
+}
+
+void RAM::Clock_WR()
+{
+    MEM[CPC::AddressBUS] = CPC::DataBUS;
 }

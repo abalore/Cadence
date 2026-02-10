@@ -30,28 +30,29 @@ void CRTC::Init()
 
 }
 
-void CRTC::IOClock()
+void CRTC::Clock_IO_RD()
 {
-    if (!Z80::IORQ && (CPC::AddressBUS & 0x4000) == 0)
+    switch((CPC::AddressBUS & 0x0300) >> 8)
     {
-        if (!(Z80::WR && Z80::RD))
-        {
-            switch((CPC::AddressBUS & 0x0300) >> 8)
-            {
-            case 0: // Index in
-                Index = CPC::DataBUS;
-                break;
-            case 1: // Data in
-                Registers[Index] = CPC::DataBUS;
-                break;
-            case 2: // Status out
-                //////////////////////////////////////////
-                break;
-            case 3: // Data out
-                CPC::DataBUS = Registers[Index];
-                break;
-            }
-        }
+    case 2: // Status out
+        //////////////////////////////////////////
+        break;
+    case 3: // Data out
+        CPC::DataBUS = Registers[Index];
+        break;
+    }
+}
+
+void CRTC::Clock_IO_WR()
+{
+    switch((CPC::AddressBUS & 0x0300) >> 8)
+    {
+    case 0: // Index in
+        Index = CPC::DataBUS;
+        break;
+    case 1: // Data in
+        Registers[Index] = CPC::DataBUS;
+        break;
     }
 }
 
@@ -103,7 +104,7 @@ void CRTC::DoVSync()
 }
 
 
-void CRTC::CRTClock()
+void CRTC::Clock()
 {
     HCC++;
     CheckHSync();

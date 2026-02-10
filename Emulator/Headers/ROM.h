@@ -7,7 +7,7 @@ class ROM
 {
 public:
     ROM(BYTE number);
-    void Clock();
+    void Clock_RD();
     BYTE *MEM;
 private:
     word Location;

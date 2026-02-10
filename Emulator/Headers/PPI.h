@@ -7,7 +7,8 @@ class PPI
 {
 public:
     static void Init();
-    static void IOClock();
+    static void Clock_IO_RD();
+    static void Clock_IO_WR();
     static BYTE controlWord;
     static BYTE PortA;
     static BYTE PortB;

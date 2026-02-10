@@ -83,7 +83,7 @@ void PSG::Init()
 void PSG::Clock()
 {
     //if (envelopeDivider == 0)
-        UpdateEnvelope();
+    UpdateEnvelope();
     //envelopeDivider++;
     divider++;
     if (divider == 16)
@@ -147,7 +147,19 @@ void PSG::SelectFunction(bool bdir, bool bc1)
     BC1 = bc1;
 }
 
-void PSG::Clock_IO()
+void PSG::Clock_IO_RD()
+{
+    if (!BDIR && BC1)
+    {
+        if (selectedRegister < 0x0E)
+            outputRegister = registers[selectedRegister];
+        else if (selectedRegister == 0x0E)
+            outputRegister = Keyboard::Read();
+    }
+    else outputRegister = 0xFF;
+}
+
+void PSG::Clock_IO_WR()
 {
     if (BDIR)
     {
@@ -207,17 +219,6 @@ void PSG::Clock_IO()
                 break;
             }
         }
-    }
-    else
-    {
-        if (BC1)
-        {
-            if (selectedRegister < 0x0E)
-                outputRegister = registers[selectedRegister];
-            else if (selectedRegister == 0x0E)
-                outputRegister = Keyboard::Read();
-        }
-        else outputRegister = 0xFF;
     }
 }
 
