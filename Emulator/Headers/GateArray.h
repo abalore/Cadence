@@ -17,8 +17,6 @@ public:
     static void Init();
     static void Clock();
     static bool ROMEN();
-    static bool RAMRD();
-    static bool MWE();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
 
@@ -86,7 +84,7 @@ public:
 private:
     static void SetPixel();
     static void ReadByte();
-    static void IO_Clock();
+    static void Clock_IO_WR();
     // static void PrintDebugLine();
     static BYTE MMR;
     static bool borderSelected;

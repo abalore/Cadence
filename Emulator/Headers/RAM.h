@@ -7,7 +7,8 @@ class RAM
 {
 public:
     RAM();
-    void Clock();
+    void Clock_RD();
+    void Clock_WR();
     BYTE MEM[65536];
 };
 

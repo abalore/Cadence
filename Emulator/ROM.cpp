@@ -12,8 +12,7 @@ ROM::ROM(BYTE number)
     Number = number;
 }
 
-void ROM::Clock()
+void ROM::Clock_RD()
 {
-    if (!GateArray::ROMEN())
-        CPC::DataBUS = MEM[CPC::AddressBUS - Location];
+    CPC::DataBUS = MEM[CPC::AddressBUS - Location];
 }

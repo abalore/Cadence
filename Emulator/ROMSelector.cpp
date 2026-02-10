@@ -9,11 +9,7 @@ void ROMSelector::Init()
     SelectedROM = 0;
 }
 
-void ROMSelector::IOClock()
+void ROMSelector::Clock_IO_WR()
 {
-    if (!Z80::IORQ && (CPC::AddressBUS & 0x2000) == 0)
-    {
-        if (!Z80::WR)
-            SelectedROM = CPC::DataBUS;
-    }
+    SelectedROM = CPC::DataBUS;
 }

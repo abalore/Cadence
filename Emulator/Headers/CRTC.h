@@ -7,8 +7,9 @@ class CRTC
 {
 public:
     static void Init();
-    static void CRTClock();
-    static void IOClock();
+    static void Clock();
+    static void Clock_IO_RD();
+    static void Clock_IO_WR();
     static BYTE Registers[18];
     static BYTE Index;
     static BYTE RA;

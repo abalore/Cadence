@@ -18,6 +18,7 @@ SOURCES += \
     CDT.cpp \
     Debugger.cpp \
     Emulator/CRTScreen.cpp \
+    Emulator/FDC.cpp \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
@@ -58,6 +59,7 @@ HEADERS += \
     Emulator/Headers/CRTScreen.h \
     Emulator/Headers/Disassembler.h \
     Emulator/Headers/Emulator.h \
+    Emulator/Headers/FDC.h \
     Emulator/Headers/Flag.h \
     Emulator/Headers/GateArray.h \
     Emulator/Headers/Keyboard.h \
