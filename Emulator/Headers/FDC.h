@@ -56,13 +56,14 @@ public:
     static void Clock();
     static void Clock_IO_RD();
     static void Clock_IO_WR();
-    static void ProcessInput(BYTE data);
-    static FloppyDrive GetDrive(int number);
+    static FloppyDrive *GetDrive(int number);
 private:
     static void ProcessCommand(BYTE data);
     static void ProcessExecution();
     static void ProcessResult();
     static void GoToCommandState();
+    static void GoToExecutionState();
+    static void GoToResultState();
     static FDCState state;
     static FDCCommandState commandState;
     static BYTE command;
@@ -84,8 +85,14 @@ private:
     static BYTE result[7];
     static BYTE resultCount;
     static BYTE resultIndex;
-    static BYTE mainStatusReg;
     static BYTE head;
+    static bool bit7_RQM;
+    static bool bit6_DIO;
+    static bool bit5_NDMA;
+    static bool bit4_BUSY;
+    static bool bits03_FDDBUSY[4];
+    static word executionDelay;
+    static BYTE *sectorData;
 };
 
 #endif // FDC_H

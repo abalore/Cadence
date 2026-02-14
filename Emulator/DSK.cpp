@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-bool DSK::Init(BYTE *dskFileData, unsigned int size)
+bool DSK::Init(BYTE *dskFileData)
 {
     data = dskFileData;
     tracks = dskFileData[0x30];
@@ -31,5 +31,11 @@ TrackInfo DSK::GetTrackInfo(int track, int side)
     }
     else
         offset = trackSize * (track * sides + side) + 0x0100;
-    return TrackInfo{data[offset + 0x14], data[offset + 0x15]};
+    return TrackInfo{ data[offset + 0x14], data[offset + 0x15] };
+}
+
+BYTE *DSK::GetSectorData(BYTE track, BYTE sector)
+{
+    TrackInfo trackInfo = GetTrackInfo(track, 0);
+    trackInfo.NumberOfSectors = 0;
 }

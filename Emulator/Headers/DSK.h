@@ -20,8 +20,9 @@ public:
 class DSK
 {
 public:
-    bool Init(BYTE *dskFileData, unsigned int size);
+    bool Init(BYTE *dskFileData);
     TrackInfo GetTrackInfo(int track, int side);
+    BYTE *GetSectorData(BYTE track, BYTE sector);
     BYTE *data;
     BYTE tracks;
     BYTE sides;

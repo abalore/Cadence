@@ -124,7 +124,7 @@ void MainWindow::onMenuDiscLoadDSK()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
     {
-        if (FDC::GetDrive(0).InsertDSK((char *)fileName.toUtf8().data()))
+        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data()))
         {
 
         }
