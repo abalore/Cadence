@@ -20,7 +20,6 @@ public:
     static BYTE R12, R13;
 private:
     static void CheckHSync();
-    static void DoVSync();
 };
 
 #endif // CRTC_H

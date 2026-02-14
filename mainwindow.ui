@@ -9,12 +9,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1200</width>
+    <height>850</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -42,17 +42,20 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>0</y>
-      <width>768</width>
-      <height>528</height>
+      <y>20</y>
+      <width>1152</width>
+      <height>792</height>
      </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>550</y>
+      <y>807</y>
       <width>66</width>
       <height>18</height>
      </rect>
@@ -67,7 +70,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1200</width>
      <height>23</height>
     </rect>
    </property>
@@ -78,26 +81,46 @@
     <addaction name="actionPause"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
-    <addaction name="separator"/>
-    <addaction name="actionInspect_graphics"/>
-    <addaction name="actionCRT_Screen_view"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>System</string>
     </property>
     <addaction name="actionLoad_binary"/>
+    <addaction name="actionAmstrad_CPC464"/>
+    <addaction name="actionAmstrad_CPC664"/>
+    <addaction name="actionAmstrad_CPC6128"/>
    </widget>
    <widget class="QMenu" name="menuTape">
     <property name="title">
      <string>Tape</string>
     </property>
-    <addaction name="actionLoad_WAV"/>
-    <addaction name="actionLoad_CDT"/>
+    <addaction name="actionLoad_File"/>
+   </widget>
+   <widget class="QMenu" name="menuScreen">
+    <property name="title">
+     <string>Screen</string>
+    </property>
+    <addaction name="actionSmooth"/>
+    <addaction name="actionInspect_video_memory"/>
+   </widget>
+   <widget class="QMenu" name="menuMemory">
+    <property name="title">
+     <string>Memory</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuDisc">
+    <property name="title">
+     <string>Disc</string>
+    </property>
+    <addaction name="actionLoad_DSK"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuTape"/>
+   <addaction name="menuScreen"/>
+   <addaction name="menuMemory"/>
+   <addaction name="menuDisc"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -144,24 +167,51 @@
     <string>F2</string>
    </property>
   </action>
-  <action name="actionLoad_WAV">
+  <action name="actionLoad_File">
    <property name="text">
-    <string>Load WAV</string>
+    <string>Load File</string>
    </property>
   </action>
-  <action name="actionInspect_graphics">
+  <action name="actionSmooth">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Inspect graphics</string>
+    <string>Smooth</string>
    </property>
   </action>
-  <action name="actionLoad_CDT">
+  <action name="actionInspect_video_memory">
    <property name="text">
-    <string>Load CDT</string>
+    <string>Inspect video memory</string>
    </property>
   </action>
-  <action name="actionCRT_Screen_view">
+  <action name="actionAmstrad_CPC464">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>CRT Screen view</string>
+    <string>Amstrad CPC464</string>
+   </property>
+   <property name="font">
+    <font/>
+   </property>
+  </action>
+  <action name="actionAmstrad_CPC664">
+   <property name="text">
+    <string>Amstrad CPC664</string>
+   </property>
+  </action>
+  <action name="actionAmstrad_CPC6128">
+   <property name="text">
+    <string>Amstrad CPC6128</string>
+   </property>
+  </action>
+  <action name="actionLoad_DSK">
+   <property name="text">
+    <string>Load DSK</string>
    </property>
   </action>
  </widget>

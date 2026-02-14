@@ -1,15 +1,10 @@
 #include "Headers/ROM.h"
 #include "Headers/CPC.h"
-#include "Headers/GateArray.h"
 
-ROM::ROM(BYTE number)
+ROM::ROM(word location)
 {
     MEM = new BYTE[16384];
-    if (number == 0xFF)
-        Location = 0x0000;
-    else
-        Location = 0xC000;
-    Number = number;
+    Location = location;
 }
 
 void ROM::Clock_RD()
