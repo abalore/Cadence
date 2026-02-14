@@ -30,9 +30,10 @@ private slots:
     void onMenuDebugReset();
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
-    void onMenuTapeLoadWAV();
-    void onMenuTapeLoadCDT();
-    void onMenuDebugInspectGraphics();
+    void onMenuTapeLoadFile();
+    void onMenuScreenSmooth();
+    void onMenuScreenInspectGraphics();
+    void onMenuDiscLoadDSK();
 private:
     Ui::MainWindow *ui;
     Debugger *debugger;

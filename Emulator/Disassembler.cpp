@@ -173,17 +173,17 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *l
     switch(bank)
     {
     case 0:
-        m = (GateArray::RMR & 0x04) > 0 ? CPC::InternalRAM->MEM : CPC::LoROM->MEM;
+        m = (GateArray::RMR & 0x04) > 0 ? CPC::ActiveRAM()->MEM : CPC::LoROM.MEM;
         offset = 0x0000;
         break;
     case 1:
     case 2:
         offset = 0x0000;
-        m = CPC::InternalRAM->MEM;
+        m = CPC::ActiveRAM()->MEM;
         break;
     case 3:
         offset = 0xC000;
-        m = (GateArray::RMR & 0x08) > 0  ? CPC::InternalRAM->MEM : CPC::ActiveROM()->MEM;
+        m = (GateArray::RMR & 0x08) > 0  ? CPC::ActiveRAM()->MEM : CPC::ActiveROM()->MEM;
         break;
     }
     sprintf(buff, "%04X", addr);

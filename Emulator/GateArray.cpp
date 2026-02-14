@@ -123,13 +123,11 @@ void GateArray::Clock()
                     if (!ROMEN())
                         CPC::ActiveROM()->Clock_RD();
                     else
-                        CPC::InternalRAM->Clock_RD();
+                        CPC::ActiveRAM()->Clock_RD();
                 }
                 else
                     if (!Z80::WR)
-                    {
-                        CPC::InternalRAM->Clock_WR();
-                    }
+                        CPC::ActiveRAM()->Clock_WR();
             }
         }
     }
@@ -140,6 +138,7 @@ void GateArray::Clock()
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
+        FDC::Clock();
         GenerateHSync();
     }
     // 2 Mhz
@@ -296,7 +295,7 @@ void GateArray::ReadByte()
     videoAddress += (CRTC::RA & 0x07) << 11;
     videoAddress += (CRTC::MA & 0x3000) << 2;
     videoAddress += CCLK;
-    currentByte = CPC::InternalRAM->MEM[videoAddress];
+    currentByte = CPC::BaseRAM.MEM[videoAddress];
 }
 
 void GateArray::Clock_IO_WR()

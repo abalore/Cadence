@@ -16,6 +16,7 @@ class PboWidget : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     PboWidget(QWidget *parent);
     void updateTexture();
+    void setSmoothing(bool enabled);
 protected:
     void initializeGL() override;
     void paintGL() override;

@@ -12,12 +12,12 @@ public:
     static void Clock();
     static void Reset();
     static ROM *ActiveROM();
+    static RAM *ActiveRAM();
     static word AddressBUS;
     static BYTE DataBUS;
-    static RAM *InternalRAM;
-    static ROM *LoROM;
-    static ROM *HiROM;
-    static ROM *ExpansionROM;
+    static RAM BaseRAM;
+    static ROM LoROM;
+    static ROM HiROM[32];
 };
 
 

@@ -6,12 +6,11 @@
 class ROM
 {
 public:
-    ROM(BYTE number);
+    ROM(word location);
     void Clock_RD();
     BYTE *MEM;
 private:
     word Location;
-    BYTE Number;
 };
 
 #endif // ROM_H

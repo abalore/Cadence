@@ -3,7 +3,7 @@ QT += gui
 QT += opengl
 QT += openglwidgets
 
-LIBS += -lpulse -lpulse-simple
+LIBS += -lpulse -lpulse-simple -lasound
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,7 +18,9 @@ SOURCES += \
     CDT.cpp \
     Debugger.cpp \
     Emulator/CRTScreen.cpp \
+    Emulator/DSK.cpp \
     Emulator/FDC.cpp \
+    Emulator/FloppyDrive.cpp \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
@@ -57,10 +59,12 @@ HEADERS += \
     Emulator/Headers/CPC.h \
     Emulator/Headers/CRTC.h \
     Emulator/Headers/CRTScreen.h \
+    Emulator/Headers/DSK.h \
     Emulator/Headers/Disassembler.h \
     Emulator/Headers/Emulator.h \
     Emulator/Headers/FDC.h \
     Emulator/Headers/Flag.h \
+    Emulator/Headers/FloppyDrive.h \
     Emulator/Headers/GateArray.h \
     Emulator/Headers/Keyboard.h \
     Emulator/Headers/PPI.h \

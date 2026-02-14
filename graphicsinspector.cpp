@@ -24,14 +24,20 @@ GraphicsInspector::~GraphicsInspector()
 
 void GraphicsInspector::UpdateGraphics()
 {
+    word baseAddress = 0xC000;
+    if (ui->radioButton->isChecked()) baseAddress = 0x0000;
+    if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
+    if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
+    int width = ui->inputWidth->text().toInt();
+    int height = ui->inputHeight->text().toInt();
     int mode = GateArray::mode;
     static BYTE Pixels[640 * 400 * 3];
     for (int i = 0; i < 80; i++)
         for  (int j = 0; j < 25; j++)
             for (int k = 0; k < 8; k++)
             {
-                word address = 0xC000 + ((k * 0x0800 + j * 80 + i) % 0x4000);
-                BYTE b = CPC::InternalRAM->MEM[address];
+                word address = baseAddress + ((k * 0x0800 + j * 80 + i) % 0x4000);
+                BYTE b = CPC::BaseRAM.MEM[address];
                 int line = j * 8 + k;
                 for (int l = 0; l < 8; l++)
                 {
@@ -40,11 +46,12 @@ void GraphicsInspector::UpdateGraphics()
                     long pixelBase = (line * 640 * 2 + i * 8 + l) * 3;
                     if (pixelBase < 640 * 400 * 3 - 2)
                         for (int m = 0; m < 3; m++)
-                            Pixels[pixelBase + m] = pen * 15;
-                            //Pixels[pixelBase + m] = color[m];
+                        {
+                            Pixels[pixelBase + m] = color[m];
+                            Pixels[pixelBase + m + 640 * 3] = color[m];
+                        }
                 }
             }
-
     if (pixItem) scene->removeItem(pixItem);
     QImage *image = new QImage(&Pixels[0], 640, 400, QImage::Format_RGB888);
     QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);

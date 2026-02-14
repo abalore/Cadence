@@ -9,7 +9,7 @@ public:
     static void Init();
     static void Clock();
     static void Reset();
-    static void ReadROM(char *filename, BYTE *dest);
+    static void ReadROM(char *filename, int number);
 };
 
 #endif // EMULATOR_H

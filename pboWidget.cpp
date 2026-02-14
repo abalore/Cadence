@@ -36,13 +36,6 @@ void PboWidget::initializeGL()
 
 }
 
-void PboWidget::updateTexture()
-{
-    glBindTexture(GL_TEXTURE_2D, ID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, CRTScreen::Pixels);
-    update();
-}
-
 void PboWidget::paintGL()
 {
     glBindTexture(GL_TEXTURE_2D, ID);
@@ -57,4 +50,25 @@ void PboWidget::paintGL()
     glVertex2f(-1, -1);
     glEnd();
     glFlush();
+}
+
+void PboWidget::updateTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, ID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, CRTScreen::Pixels);
+    update();
+}
+
+void PboWidget::setSmoothing(bool enabled)
+{
+    if (enabled)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
 }

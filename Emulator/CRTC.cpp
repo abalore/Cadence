@@ -27,7 +27,6 @@ void CRTC::Init()
     RA = 0;
     HSYNC = false;
     VSYNC = false;
-
 }
 
 void CRTC::Clock_IO_RD()
@@ -72,12 +71,12 @@ void CRTC::CheckHSync()
                 VCC = 0;
                 R12 = Registers[12];
                 R13 = Registers[13];
-                // MA = ((Registers[12] & 0x3F) << 8) + (Registers[13]);
             }
             if (VCC == Registers[7])
             {
                 VSC = ((BYTE)(Registers[3] >> 4));
                 VSYNC = true;
+                //updateMA = true;
             }
         }
         GateArray::GenerateVSync();
@@ -85,7 +84,11 @@ void CRTC::CheckHSync()
         {
             VSC--;
             if (VSC == 0)
+            {
+                R12 = Registers[12];
+                R13 = Registers[13];
                 VSYNC = false;
+            }
         }
     }
     if (HSC > 0)
@@ -97,12 +100,6 @@ void CRTC::CheckHSync()
         }
     }
 }
-
-void CRTC::DoVSync()
-{
-
-}
-
 
 void CRTC::Clock()
 {

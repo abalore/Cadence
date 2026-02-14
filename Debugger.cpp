@@ -81,14 +81,14 @@ void Debugger::Update()
     for (int i = 0x0000; i <= 0xFFF0; i += 16)
     {
         sprintf(buff, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                i, CPC::InternalRAM->MEM[i], CPC::InternalRAM->MEM[i + 1],
-                CPC::InternalRAM->MEM[i + 2], CPC::InternalRAM->MEM[i + 3],
-                CPC::InternalRAM->MEM[i + 4], CPC::InternalRAM->MEM[i + 5],
-                CPC::InternalRAM->MEM[i + 6], CPC::InternalRAM->MEM[i + 7],
-                CPC::InternalRAM->MEM[i + 8], CPC::InternalRAM->MEM[i + 9],
-                CPC::InternalRAM->MEM[i + 10], CPC::InternalRAM->MEM[i + 11],
-                CPC::InternalRAM->MEM[i + 12], CPC::InternalRAM->MEM[i + 13],
-                CPC::InternalRAM->MEM[i + 14], CPC::InternalRAM->MEM[i + 15]);
+                i, CPC::BaseRAM.MEM[i], CPC::BaseRAM.MEM[i + 1],
+                CPC::BaseRAM.MEM[i + 2], CPC::BaseRAM.MEM[i + 3],
+                CPC::BaseRAM.MEM[i + 4], CPC::BaseRAM.MEM[i + 5],
+                CPC::BaseRAM.MEM[i + 6], CPC::BaseRAM.MEM[i + 7],
+                CPC::BaseRAM.MEM[i + 8], CPC::BaseRAM.MEM[i + 9],
+                CPC::BaseRAM.MEM[i + 10], CPC::BaseRAM.MEM[i + 11],
+                CPC::BaseRAM.MEM[i + 12], CPC::BaseRAM.MEM[i + 13],
+                CPC::BaseRAM.MEM[i + 14], CPC::BaseRAM.MEM[i + 15]);
         listMemory.append(buff);
     }
 
@@ -133,8 +133,8 @@ void Debugger::onStepOutClicked()
 {
     setEnabled(false);
     word address = Z80::SP.Get();
-    BYTE L = CPC::InternalRAM->MEM[address];
-    BYTE H = CPC::InternalRAM->MEM[address + 1];
+    BYTE L = CPC::BaseRAM.MEM[address];
+    BYTE H = CPC::BaseRAM.MEM[address + 1];
     EmulatorWorkerThread::RunTo(L + H * 256);
 }
 

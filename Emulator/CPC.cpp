@@ -8,36 +8,38 @@
 #include "Headers/Z80.h"
 #include "Headers/PPI.h"
 #include "Headers/PSG.h"
+#include "Headers/FDC.h"
 
 word CPC::AddressBUS;
 BYTE CPC::DataBUS;
-RAM *CPC::InternalRAM;
-ROM *CPC::LoROM;
-ROM *CPC::HiROM;
-ROM *CPC::ExpansionROM;
+RAM CPC::BaseRAM;
+ROM CPC::LoROM(0x0000);
+ROM CPC::HiROM[32] = {
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
+    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000)
+};
+
+RAM *CPC::ActiveRAM()
+{
+    return &BaseRAM;
+}
 
 ROM *CPC::ActiveROM()
 {
     if ((AddressBUS & 0xC000) > 0)
-    {
-        switch(ROMSelector::SelectedROM)
-        {
-        case 1:
-            return ExpansionROM;
-        default:
-            return HiROM;
-        }
-    }
+        return &HiROM[ROMSelector::SelectedROM];
     else
-        return LoROM;
+        return &LoROM;
 }
 
 void CPC::Init()
 {
-    InternalRAM = new RAM();
-    LoROM = new ROM(0xFF); // -1 = lower
-    HiROM = new ROM(0);
-    ExpansionROM = new ROM(1);
     Reset();
 }
 
@@ -56,4 +58,6 @@ void CPC::Reset()
     ROMSelector::Init();
     PPI::Init();
     PSG::Init();
+    FDC::Reset();
 }
+

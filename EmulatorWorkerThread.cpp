@@ -48,8 +48,8 @@ string EmulatorWorkerThread::GetZ80StackDebugLine()
     word sp = Z80::SP.Get();
     for (int i = 0; i < 8; i++)
     {
-        BYTE L = CPC::InternalRAM->MEM[sp];
-        BYTE H = CPC::InternalRAM->MEM[sp + 1];
+        BYTE L = CPC::BaseRAM.MEM[sp];
+        BYTE H = CPC::BaseRAM.MEM[sp + 1];
         sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;

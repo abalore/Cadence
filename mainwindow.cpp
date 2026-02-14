@@ -4,6 +4,7 @@
 #include "EmulatorWorkerThread.h"
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/Tape.h"
+#include "Emulator/Headers/FDC.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -34,15 +35,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionPause, &QAction::triggered, this, &MainWindow::onMenuDebugPause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::onMenuDebugReset);
     connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
-    connect(ui->actionLoad_WAV, &QAction::triggered, this, &MainWindow::onMenuTapeLoadWAV);
-    connect(ui->actionLoad_CDT, &QAction::triggered, this, &MainWindow::onMenuTapeLoadCDT);
-    connect(ui->actionInspect_graphics, &QAction::triggered, this, &MainWindow::onMenuDebugInspectGraphics);
+    connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
+    connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
+    connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
+    connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
 
     Instance = this;
 
     //screenView->show();
 
-    setFixedSize(768, 624);
+    //setFixedSize(768, 624);
 
     startTimer(1000, Qt::CoarseTimer);
 }
@@ -72,7 +74,7 @@ void MainWindow::onMenuFileLoadBinary()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::InternalRAM->MEM + 0x100, ba.data(), ba.size());
+        memcpy(CPC::BaseRAM.MEM + 0x100, ba.data(), ba.size());
     }
     file.close();
 }
@@ -87,7 +89,7 @@ void MainWindow::onMenuDebugReset()
     EmulatorWorkerThread::Reset();
 }
 
-void MainWindow::onMenuDebugInspectGraphics()
+void MainWindow::onMenuScreenInspectGraphics()
 {
     if (graphicsInspector->isHidden())
         graphicsInspector->show();
@@ -99,18 +101,34 @@ void MainWindow::onEmulatorFinishedFrame()
     ui->openGLWidget->updateTexture();
 }
 
-void MainWindow::onMenuTapeLoadWAV()
+void MainWindow::onMenuTapeLoadFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("WAV Files (*.wav)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
-        Tape::LoadWAV((char *)fileName.toUtf8().data());
+    {
+        QString extension = fileName.last(3);
+        if (extension == "wav")
+            Tape::LoadWAV((char *)fileName.toUtf8().data());
+        else if (extension == "cdt")
+            Tape::LoadCDT((char *)fileName.toUtf8().data());
+    }
 }
 
-void MainWindow::onMenuTapeLoadCDT()
+void MainWindow::onMenuScreenSmooth()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("CDT Files (*.cdt)"));
+    ui->openGLWidget->setSmoothing(ui->actionSmooth->isChecked());
+}
+
+void MainWindow::onMenuDiscLoadDSK()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        Tape::LoadCDT((char *)fileName.toUtf8().data());
+    {
+        if (FDC::GetDrive(0).InsertDSK((char *)fileName.toUtf8().data()))
+        {
+
+        }
+    }
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)
