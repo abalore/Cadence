@@ -9,6 +9,7 @@ class FloppyDrive
 public:
     bool InsertDSK(char *filename);
     bool RemoveDSK();
+    BYTE *GetSectorData(BYTE track, BYTE sector);
     bool DiskInserted;
 private:
     void FreeBuffer();
