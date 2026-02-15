@@ -92,7 +92,10 @@ private:
     static bool bit4_BUSY;
     static bool bits03_FDDBUSY[4];
     static word executionDelay;
-    static BYTE *sectorData;
+    static SectorInfo *sectorInfo;
+    static int dataIndex;
+    static int dataSize;
+    static BYTE sizeCode;
 };
 
 #endif // FDC_H

@@ -8,13 +8,19 @@ struct TrackInfo
 public:
     int SectorSize;
     int NumberOfSectors;
+    BYTE *SectorInfo;
 };
 
 struct SectorInfo
 {
 public:
-    int ID;
-    int Size;
+    BYTE SI_C;
+    BYTE SI_H;
+    BYTE SI_ID;
+    BYTE SI_size;
+    BYTE SI_reg1;
+    BYTE SI_reg2;
+    BYTE *SectorData;
 };
 
 class DSK
@@ -22,7 +28,7 @@ class DSK
 public:
     bool Init(BYTE *dskFileData);
     TrackInfo GetTrackInfo(int track, int side);
-    BYTE *GetSectorData(BYTE track, BYTE sector);
+    SectorInfo *GetSectorInfo(BYTE track, BYTE sector);
     BYTE *data;
     BYTE tracks;
     BYTE sides;

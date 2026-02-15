@@ -30,12 +30,18 @@ TrackInfo DSK::GetTrackInfo(int track, int side)
             offset += data[0x0034] * 256 + 0x100;
     }
     else
-        offset = trackSize * (track * sides + side) + 0x0100;
-    return TrackInfo{ data[offset + 0x14], data[offset + 0x15] };
+        offset = trackSize * ((track - 1) * sides + side) + 0x0100;
+    return TrackInfo{ data[offset + 0x14], data[offset + 0x15], data + 0x0100 };
 }
 
-BYTE *DSK::GetSectorData(BYTE track, BYTE sector)
+SectorInfo *DSK::GetSectorInfo(BYTE track, BYTE sector)
 {
     TrackInfo trackInfo = GetTrackInfo(track, 0);
-    trackInfo.NumberOfSectors = 0;
+    for (int i = 0; i < trackInfo.NumberOfSectors; i++)
+    {
+        SectorInfo *si = (SectorInfo *) trackInfo.SectorInfo + i * 8;
+        if (si->SI_ID == sector)
+            return si;
+    }
+    return nullptr;
 }
