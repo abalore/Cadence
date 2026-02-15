@@ -40,7 +40,10 @@ bool FDC::bit5_NDMA;
 bool FDC::bit4_BUSY;
 bool FDC::bits03_FDDBUSY[4];
 word FDC::executionDelay;
-BYTE *FDC::sectorData;
+SectorInfo *FDC::sectorInfo;
+int FDC::dataIndex;
+int FDC::dataSize;
+BYTE FDC::sizeCode;
 
 
 void FDC::Reset()
@@ -90,6 +93,9 @@ void FDC::Clock_IO_RD()
             {
             case FDCState::FDC_StateCommand:
             case FDCState::FDC_StateExecution:
+                CPC::DataBUS = sectorInfo->SectorData[dataIndex];
+                if (dataIndex < dataSize)
+                    dataIndex++;
                 break;
             case FDCState::FDC_StateResult:
                 ProcessResult();
@@ -277,7 +283,29 @@ void FDC::ProcessExecution()
     case FDC_CommandReadData:
         // load head
         // wait head settle time
-        sectorData = drives[US].GetSectorData(head, R);
+        sectorInfo = drives[US].GetSectorInfo(head, R);
+        if (sectorInfo != nullptr)
+        {
+            dataIndex = 0;
+            dataSize = sectorInfo->SI_size * 256;
+
+            statusReg0 = 0x00;
+            statusReg1 = sectorInfo->SI_reg1;
+            statusReg2 = sectorInfo->SI_reg2;
+            C = sectorInfo->SI_C;
+            H = sectorInfo->SI_H;
+            N = sectorInfo->SI_size;
+
+            resultCount = 7;
+            result[0] = statusReg0;
+            result[1] = statusReg1;
+            result[2] = statusReg2;
+            result[3] = C;
+            result[4] = H;
+            result[5] = R;
+            result[6] = N;
+            GoToResultState();
+        }
         break;
     case FDC_CommandReadTrack:
     case FDC_CommandReadDeletedData:
