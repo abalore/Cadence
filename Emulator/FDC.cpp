@@ -33,17 +33,18 @@ BYTE FDC::US;
 BYTE FDC::result[7];
 BYTE FDC::resultCount;
 BYTE FDC::resultIndex;
-BYTE FDC::head;
 bool FDC::bit7_RQM;
 bool FDC::bit6_DIO;
 bool FDC::bit5_NDMA;
 bool FDC::bit4_BUSY;
 bool FDC::bits03_FDDBUSY[4];
 word FDC::executionDelay;
-SectorInfo *FDC::sectorInfo;
+SectorInfo FDC::sectorInfo;
 int FDC::dataIndex;
 int FDC::dataSize;
 BYTE FDC::sizeCode;
+BYTE FDC::sectorID;
+BYTE *FDC::data;
 
 
 void FDC::Reset()
@@ -53,7 +54,6 @@ void FDC::Reset()
     bits03_FDDBUSY[1] = 0;
     bits03_FDDBUSY[2] = 0;
     bits03_FDDBUSY[3] = 0;
-    head = 0;
     headSettlingTime = 0;
     bit5_NDMA = 0;
     executionDelay = 0;
@@ -89,13 +89,25 @@ void FDC::Clock_IO_RD()
         }
         else
         {
+            if (state == FDCState::FDC_StateTransfer)
+            {
+                CPC::DataBUS = data[dataIndex];
+                dataIndex++;
+                if (dataIndex == dataSize)
+                {
+                    if (R == EOT)
+                        R = 1;
+                    else
+                        R++;
+                    GoToResultState();
+                }
+                return;
+            }
             switch(state)
             {
             case FDCState::FDC_StateCommand:
             case FDCState::FDC_StateExecution:
-                CPC::DataBUS = sectorInfo->SectorData[dataIndex];
-                if (dataIndex < dataSize)
-                    dataIndex++;
+                CPC::DataBUS = 0x00;
                 break;
             case FDCState::FDC_StateResult:
                 ProcessResult();
@@ -154,8 +166,7 @@ void FDC::ProcessCommand(BYTE data)
             commandState = FDCCommandState::FDC_StateParam;
             break;
         case FDC_CommandSenseInterruptState:
-            executionDelay = 100;
-            GoToExecutionState();
+            GoToExecutionState(20);
             break;
         case FDC_CommandSpecify:
             commandState = FDCCommandState::FDC_StateSRT_HUT;
@@ -183,7 +194,7 @@ void FDC::ProcessCommand(BYTE data)
         case FDC_CommandReadID:
         case FDC_CommandRecalibrate:
         case FDC_CommandSenseDriveStatus:
-            GoToExecutionState();
+            GoToExecutionState(100);
             break;
         case FDC_CommandSeek:
             commandState = FDCCommandState::FDC_StateNCN;
@@ -232,15 +243,15 @@ void FDC::ProcessCommand(BYTE data)
         break;
     case FDCCommandState::FDC_StateDTL:
         DTL = data;
-        GoToExecutionState();
+        GoToExecutionState(100);
         break;
     case FDCCommandState::FDC_StateSTP:
         STP = data;
-        GoToExecutionState();
+        GoToExecutionState(100);
         break;
     case FDCCommandState::FDC_StateNCN:
         NCN = data;
-        GoToExecutionState();
+        GoToExecutionState(100);
         break;
     case FDCCommandState::FDC_StateF_N:
         N = data;
@@ -256,7 +267,7 @@ void FDC::ProcessCommand(BYTE data)
         break;
     case FDCCommandState::FDC_StateF_D:
         D = data;
-        GoToExecutionState();
+        GoToExecutionState(100);
         break;
     case FDCCommandState::FDC_StateSRT_HUT:
         SRT = data >> 4;
@@ -266,35 +277,39 @@ void FDC::ProcessCommand(BYTE data)
     case FDCCommandState::FDC_StateHLT_ND:
         HLT = data >> 1;
         ND = data & 0x01;
-        GoToExecutionState();
+        GoToExecutionState(100);
         break;
     }
 }
 
 void FDC::ProcessExecution()
 {
+    /*
     if (executionDelay > 0)
     {
         executionDelay--;
         return;
     }
+*/
     switch(command)
     {
     case FDC_CommandReadData:
         // load head
         // wait head settle time
-        sectorInfo = drives[US].GetSectorInfo(head, R);
-        if (sectorInfo != nullptr)
+        sectorInfo = drives[US].GetSectorInfo(C, R);
+        if (sectorInfo.SI_C != 0xFF)
         {
+            data = sectorInfo.SectorData;
             dataIndex = 0;
-            dataSize = sectorInfo->SI_size * 256;
+            dataSize = sectorInfo.SI_size * 256;
+
 
             statusReg0 = 0x00;
-            statusReg1 = sectorInfo->SI_reg1;
-            statusReg2 = sectorInfo->SI_reg2;
-            C = sectorInfo->SI_C;
-            H = sectorInfo->SI_H;
-            N = sectorInfo->SI_size;
+            statusReg1 = sectorInfo.SI_reg1;
+            statusReg2 = sectorInfo.SI_reg2;
+            C = sectorInfo.SI_C;
+            H = sectorInfo.SI_H;
+            N = sectorInfo.SI_size;
 
             resultCount = 7;
             result[0] = statusReg0;
@@ -304,7 +319,7 @@ void FDC::ProcessExecution()
             result[4] = H;
             result[5] = R;
             result[6] = N;
-            GoToResultState();
+            GoToTransferState();
         }
         break;
     case FDC_CommandReadTrack:
@@ -326,21 +341,38 @@ void FDC::ProcessExecution()
         GoToResultState();
         break;
     case FDC_CommandRecalibrate:
-        head = 0;
+        C = 0;
         GoToCommandState();
         break;
     case FDC_CommandSeek:
-        head = NCN;
+        C = NCN;
         GoToCommandState();
         break;
     case FDC_CommandSenseInterruptState:
         resultCount = 2;
         result[0] = 0b00100000;
-        result[1] = head;
+        result[1] = C;
         GoToResultState();
         break;
     case FDC_CommandSpecify:
         GoToCommandState();
+        break;
+    case FDC_CommandReadID:
+        R = drives[US].GetSectorID(C);
+
+        statusReg0 = 0x00;
+        statusReg1 = 0x00;
+        statusReg2 = 0x00;
+
+        resultCount = 7;
+        result[0] = statusReg0;
+        result[1] = statusReg1;
+        result[2] = statusReg2;
+        result[3] = C;
+        result[4] = H;
+        result[5] = R;
+        result[6] = N;
+        GoToResultState();
         break;
     default:
         break;
@@ -377,8 +409,9 @@ void FDC::GoToCommandState()
     commandState = FDCCommandState::FDC_StateCommandCode;
 }
 
-void FDC::GoToExecutionState()
+void FDC::GoToExecutionState(int length)
 {
+    executionDelay = length;
     bit7_RQM = 0;
     bit4_BUSY = 1;
     bit5_NDMA = 1;
@@ -386,12 +419,18 @@ void FDC::GoToExecutionState()
     state = FDCState::FDC_StateExecution;
 }
 
+void FDC::GoToTransferState()
+{
+    bit7_RQM = 1;
+    bit6_DIO = 1;
+    state = FDCState::FDC_StateTransfer;
+}
+
 void FDC::GoToResultState()
 {
     bit7_RQM = 1;
     bit6_DIO = 1;
     bit5_NDMA = 0;
-    bit4_BUSY = 0;
     bits03_FDDBUSY[US] = 0;
     state = FDCState::FDC_StateResult;
 }

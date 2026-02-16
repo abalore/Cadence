@@ -9,6 +9,7 @@ public:
     int SectorSize;
     int NumberOfSectors;
     BYTE *SectorInfo;
+    BYTE *SectorData;
 };
 
 struct SectorInfo
@@ -28,12 +29,17 @@ class DSK
 public:
     bool Init(BYTE *dskFileData);
     TrackInfo GetTrackInfo(int track, int side);
-    SectorInfo *GetSectorInfo(BYTE track, BYTE sector);
+    SectorInfo GetSectorInfo(BYTE track, BYTE sector);
+    BYTE GetSectorID(BYTE track);
     BYTE *data;
     BYTE tracks;
     BYTE sides;
     word trackSize;
     bool isExtended;
+private:
+    SectorInfo sectors[100][20];
+    void LoadNormalDSK();
+    void LoadExtendedDSK();
 };
 
 #endif // DSK_H

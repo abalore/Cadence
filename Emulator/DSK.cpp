@@ -8,40 +8,95 @@ bool DSK::Init(BYTE *dskFileData)
     tracks = dskFileData[0x30];
     sides = dskFileData[0x31];
     trackSize = dskFileData[0x32] + dskFileData[0x33] * 256;
+
     if (strncmp("MV - CPC", (const char *)dskFileData, 8) == 0)
     {
-        isExtended = false;
+        LoadNormalDSK();
         return true;
     }
     else if (strncmp("EXTENDED", (const char *)dskFileData, 8) == 0)
     {
-        isExtended = true;
+        LoadExtendedDSK();
         return true;
     }
     return false;
 }
 
-TrackInfo DSK::GetTrackInfo(int track, int side)
+void DSK::LoadNormalDSK()
 {
-    int offset = 0;
-    if (isExtended)
+    int t = 0;
+    isExtended = false;
+    while (t < tracks)
     {
-        for (int i = 0; i < track * sides + side; i++)
-            offset += data[0x0034] * 256 + 0x100;
+        int s = 0;
+        BYTE *trackInfo = (data + 0x100 + t * trackSize);
+        int sz = trackInfo[0x14] * 0x0100;
+        BYTE ns = trackInfo[0x15];
+        while (s < ns)
+        {
+            BYTE *sectorInfo = trackInfo + 0x18 + s * 0x08;
+            BYTE sectorNum = (sectorInfo[2] & 0x3F) - 1;
+            sectors[t][sectorNum] = SectorInfo
+                {
+                    sectorInfo[0],
+                    sectorInfo[1],
+                    sectorInfo[2],
+                    sectorInfo[3],
+                    sectorInfo[4],
+                    sectorInfo[5],
+                    trackInfo + 0x0100 + sz * s
+                };
+            s++;
+        }
+        t++;
     }
-    else
-        offset = trackSize * ((track - 1) * sides + side) + 0x0100;
-    return TrackInfo{ data[offset + 0x14], data[offset + 0x15], data + 0x0100 };
 }
 
-SectorInfo *DSK::GetSectorInfo(BYTE track, BYTE sector)
+void DSK::LoadExtendedDSK()
 {
-    TrackInfo trackInfo = GetTrackInfo(track, 0);
-    for (int i = 0; i < trackInfo.NumberOfSectors; i++)
+    int t = 0;
+    isExtended = true;
+    BYTE *trackInfo = data + 0x0100;
+    while (t < tracks)
     {
-        SectorInfo *si = (SectorInfo *) trackInfo.SectorInfo + i * 8;
-        if (si->SI_ID == sector)
-            return si;
+        if (trackInfo[0] == 'T')
+        {
+            BYTE ns = trackInfo[0x15];
+            int s = 0;
+            int sz = 0;
+            int trackSize = data[0x34 + t] * 0x0100;
+            if (trackSize > 0)
+            {
+                while (s < ns)
+                {
+                    BYTE *sectorInfo = trackInfo + 0x18 + s * 0x08;
+                    BYTE sectorNum = (sectorInfo[2] & 0x3F) - 1;
+                    sectors[t][sectorNum] = SectorInfo
+                        {
+                            sectorInfo[0],
+                            sectorInfo[1],
+                            sectorInfo[2],
+                            sectorInfo[3],
+                            sectorInfo[4],
+                            sectorInfo[5],
+                            trackInfo + 0x0100 + sz
+                        };
+                    sz += sectorInfo[6] + sectorInfo[7] * 0x0100;
+                    s++;
+                }
+            }
+            trackInfo += trackSize;
+            t++;
+        } else break;
     }
-    return nullptr;
+}
+
+SectorInfo DSK::GetSectorInfo(BYTE track, BYTE sector)
+{
+    return sectors[track][(sector & 0x3F) - 1];
+}
+
+BYTE DSK::GetSectorID(BYTE track)
+{
+    return sectors[track][0].SI_ID;
 }

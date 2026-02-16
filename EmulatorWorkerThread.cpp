@@ -8,7 +8,7 @@
 #include "Emulator/Headers/PPI.h"
 #include "Emulator/Headers/Tape.h"
 
-volatile ushort EmulatorWorkerThread::stopPoint = 0x0000;
+volatile ushort EmulatorWorkerThread::stopPoint = 0xC6E7;
 volatile bool EmulatorWorkerThread::running = true;
 RunMode EmulatorWorkerThread::runMode = RunMode::Run;
 volatile bool EmulatorWorkerThread::canDebug = true;
@@ -28,9 +28,10 @@ string EmulatorWorkerThread::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
-    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%08b\n",
+    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
-            Z80::PC, Z80::SP.Get(), Z80::IX.Get(), Z80::IY.Get(), Z80::F);
+            Z80::PC, Z80::SP.Get(), Z80::IX.Get(), Z80::IY.Get(),
+            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC);
     d.append(buff);
     sprintf(buff, "IM:%1d\nInts:%1d", Z80::InterruptMode, Z80::InterruptEnable);
     d.append(buff);

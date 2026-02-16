@@ -8,6 +8,7 @@ enum FDCState
 {
     FDC_StateCommand,
     FDC_StateExecution,
+    FDC_StateTransfer,
     FDC_StateResult,
 };
 
@@ -62,7 +63,8 @@ private:
     static void ProcessExecution();
     static void ProcessResult();
     static void GoToCommandState();
-    static void GoToExecutionState();
+    static void GoToExecutionState(int length);
+    static void GoToTransferState();
     static void GoToResultState();
     static FDCState state;
     static FDCCommandState commandState;
@@ -85,17 +87,18 @@ private:
     static BYTE result[7];
     static BYTE resultCount;
     static BYTE resultIndex;
-    static BYTE head;
     static bool bit7_RQM;
     static bool bit6_DIO;
     static bool bit5_NDMA;
     static bool bit4_BUSY;
     static bool bits03_FDDBUSY[4];
     static word executionDelay;
-    static SectorInfo *sectorInfo;
+    static SectorInfo sectorInfo;
     static int dataIndex;
     static int dataSize;
     static BYTE sizeCode;
+    static BYTE sectorID;
+    static BYTE *data;
 };
 
 #endif // FDC_H
