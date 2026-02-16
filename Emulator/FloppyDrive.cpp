@@ -43,11 +43,25 @@ void FloppyDrive::FreeBuffer()
     }
 }
 
-SectorInfo *FloppyDrive::GetSectorInfo(BYTE track, BYTE sector)
+SectorInfo FloppyDrive::GetSectorInfo(BYTE track, BYTE sector)
 {
     if (DiskInserted)
     {
         return dsk.GetSectorInfo(track, sector);
     }
-    else return nullptr;
+    else
+    {
+        SectorInfo si;
+        si.SI_C = 0xFF;
+        return si;
+    }
+}
+
+BYTE FloppyDrive::GetSectorID(BYTE track)
+{
+    if (DiskInserted)
+    {
+        return dsk.GetSectorID(track);
+    }
+    else return 0x00;
 }
