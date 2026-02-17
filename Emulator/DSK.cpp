@@ -44,6 +44,7 @@ void DSK::LoadNormalDSK()
                     sectorInfo[3],
                     sectorInfo[4],
                     sectorInfo[5],
+                    1,
                     trackInfo + 0x0100 + sz * s
                 };
             s++;
@@ -61,6 +62,7 @@ void DSK::LoadExtendedDSK()
     {
         if (trackInfo[0] == 'T')
         {
+            int ss = trackInfo[0x14] * 0x0100;
             BYTE ns = trackInfo[0x15];
             int s = 0;
             int sz = 0;
@@ -71,6 +73,8 @@ void DSK::LoadExtendedDSK()
                 {
                     BYTE *sectorInfo = trackInfo + 0x18 + s * 0x08;
                     BYTE sectorNum = (sectorInfo[2] & 0x3F) - 1;
+                    int realSize = sectorInfo[6] + sectorInfo[7] * 0x0100;
+                    BYTE copies = realSize / ss;
                     sectors[t][sectorNum] = SectorInfo
                         {
                             sectorInfo[0],
@@ -79,9 +83,10 @@ void DSK::LoadExtendedDSK()
                             sectorInfo[3],
                             sectorInfo[4],
                             sectorInfo[5],
+                            copies,
                             trackInfo + 0x0100 + sz
                         };
-                    sz += sectorInfo[6] + sectorInfo[7] * 0x0100;
+                    sz += realSize;
                     s++;
                 }
             }

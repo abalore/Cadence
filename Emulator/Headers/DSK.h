@@ -21,6 +21,7 @@ public:
     BYTE SI_size;
     BYTE SI_reg1;
     BYTE SI_reg2;
+    BYTE copies;
     BYTE *SectorData;
 };
 

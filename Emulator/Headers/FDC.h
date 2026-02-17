@@ -99,6 +99,7 @@ private:
     static BYTE sizeCode;
     static BYTE sectorID;
     static BYTE *data;
+    static BYTE weakSectorCycle;
 };
 
 #endif // FDC_H
