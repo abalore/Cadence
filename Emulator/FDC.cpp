@@ -45,6 +45,7 @@ int FDC::dataSize;
 BYTE FDC::sizeCode;
 BYTE FDC::sectorID;
 BYTE *FDC::data;
+BYTE FDC::weakSectorCycle;
 
 
 void FDC::Reset()
@@ -96,10 +97,15 @@ void FDC::Clock_IO_RD()
                 if (dataIndex == dataSize)
                 {
                     if (R == EOT)
+                    {
                         R = 1;
+                        GoToResultState();
+                    }
                     else
+                    {
                         R++;
-                    GoToResultState();
+                        GoToExecutionState(0);
+                    }
                 }
                 return;
             }
@@ -294,15 +300,15 @@ void FDC::ProcessExecution()
     switch(command)
     {
     case FDC_CommandReadData:
+    case FDC_CommandReadDeletedData:
         // load head
         // wait head settle time
         sectorInfo = drives[US].GetSectorInfo(C, R);
         if (sectorInfo.SI_C != 0xFF)
         {
-            data = sectorInfo.SectorData;
-            dataIndex = 0;
             dataSize = sectorInfo.SI_size * 256;
-
+            data = sectorInfo.SectorData + (weakSectorCycle++ % sectorInfo.copies) * dataSize;
+            dataIndex = 0;
 
             statusReg0 = 0x00;
             statusReg1 = sectorInfo.SI_reg1;
@@ -323,7 +329,6 @@ void FDC::ProcessExecution()
         }
         break;
     case FDC_CommandReadTrack:
-    case FDC_CommandReadDeletedData:
     case FDC_CommandWriteData:
     case FDC_CommandWriteDeletedData:
     case FDC_CommandScanEqual:
