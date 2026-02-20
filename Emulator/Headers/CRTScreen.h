@@ -3,13 +3,6 @@
 
 #include "defs.h"
 
-enum CRTStage
-{
-    Running,
-    WaitingEmulation,
-    WaitingAudio
-};
-
 class CRTScreen
 {
 public:
@@ -21,9 +14,9 @@ public:
     static const int Stride = PixelWidth * BytesPerPixel;
     static const int DataSize = PixelWidth * PixelHeight * BytesPerPixel;
     static BYTE Pixels[DataSize];
-    static CRTStage stage;
+    static bool frameFinished;
 private:
     static int hPos, vPos;
-};
+    };
 
 #endif // CRTSCREEN_H

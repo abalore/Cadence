@@ -4,12 +4,15 @@
 #include <QDialog>
 #include <QStringListModel>
 #include <QEvent>
+#include <string.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class Debugger;
 }
 QT_END_NAMESPACE
+
+using namespace std;
 
 class Debugger : public QDialog
 {
@@ -25,6 +28,12 @@ private slots:
     void onStepOutClicked();
     void onRunToClicked();
 private:
+
+    string GetZ80RegsDebugLine();
+    string GetZ80StackDebugLine();
+    string GetCRTCDebugLine();
+    string GetGateArrayDebugLine();
+
     Ui::Debugger *ui;
     QStringList listDisassembly;
     QStringListModel *modelDisassembly;

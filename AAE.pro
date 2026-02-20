@@ -15,7 +15,6 @@ CONFIG += qt
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    CDT.cpp \
     Debugger.cpp \
     Emulator/CRTScreen.cpp \
     Emulator/DSK.cpp \
@@ -33,6 +32,7 @@ SOURCES += \
     graphicsinspector.cpp \
     main.cpp \
     mainwindow.cpp \
+    Emulator/CDT.cpp \
     Emulator/CPC.cpp \
     Emulator/CRTC.cpp \
     Emulator/Disassembler.cpp \
@@ -51,7 +51,8 @@ SOURCES += \
     Emulator/Z80_basic.cpp \
     Emulator/Z80_misc.cpp \
     pboWidget.cpp \
-    pboWidget.h
+    pboWidget.h \
+    speedcontroller.cpp
 
 HEADERS += \
     CDT.h \
@@ -80,7 +81,8 @@ HEADERS += \
     KeyPressFilter.h \
     SoundThread.h \
     graphicsinspector.h \
-    mainwindow.h
+    mainwindow.h \
+    speedcontroller.h
 
 FORMS += \
     Debugger.ui \

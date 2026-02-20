@@ -4,12 +4,13 @@
 int CRTScreen::hPos = 0;
 int CRTScreen::vPos = 0;
 BYTE CRTScreen::Pixels[PixelWidth * PixelHeight * BytesPerPixel];
-CRTStage CRTScreen::stage = CRTStage::Running;
+bool CRTScreen::frameFinished;
 
 void CRTScreen::Init()
 {
     hPos = 0;
     vPos = 0;
+    frameFinished = false;
 }
 
 void CRTScreen::Clock()
@@ -24,7 +25,7 @@ void CRTScreen::Clock()
     if ((GateArray::vsyncTrigger/* || vPos == 312*/) && vPos)
     {
         vPos = 0;
-        stage = CRTStage::WaitingEmulation;
+        frameFinished = true;
         GateArray::vsyncTrigger = false;
     }
     int base = vPos + hPos;
