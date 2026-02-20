@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include "Debugger.h"
 #include "EmulatorThread.h"
-#include "speedcontroller.h"
+#include "Emulator/Headers/Emulator.h"
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/Tape.h"
 #include "Emulator/Headers/FDC.h"
@@ -27,8 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     graphicsInspector = new GraphicsInspector(this);
 
     Instance = this;
-    //screenView->show();
-    //setFixedSize(768, 624);
+    setFixedSize(800, 600);
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -36,29 +35,48 @@ MainWindow::MainWindow(QWidget *parent)
     connect(workerThread, &EmulatorThread::OnPause, this, &MainWindow::onEmulatorPaused);
     connect(workerThread, &EmulatorThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
 
-    soundThread->start(QThread::HighPriority);
-    workerThread->start(QThread::HighPriority);
+    StartThreads();
 
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
-    connect(ui->actionReset, &QAction::triggered, workerThread, &EmulatorThread::Reset);
+    connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
     connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
     connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
-
+    connect(ui->actionLoad_fromFile, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
 }
 
 MainWindow::~MainWindow()
+{
+    StopThreads();
+    delete graphicsInspector;
+    delete debugger;
+    delete ui;
+}
+
+void MainWindow::StartThreads()
+{
+    workerThread->end = false;
+    soundThread->end = false;
+    soundThread->start(QThread::HighPriority);
+    workerThread->start(QThread::HighPriority);
+}
+
+void MainWindow::StopThreads()
 {
     workerThread->end = true;
     soundThread->end = true;
     SoundThread::waitCondition.wakeAll();
     workerThread->wait();
     soundThread->wait();
-    delete graphicsInspector;
-    delete debugger;
-    delete ui;
+}
+
+void MainWindow::ResetEmulation()
+{
+    StopThreads();
+    Emulator::Reset();
+    StartThreads();
 }
 
 void MainWindow::onEmulatorPaused()
@@ -115,8 +133,12 @@ void MainWindow::onMenuDiscLoadDSK()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data()))
-        {
+        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data())) {}
+}
 
-        }
+void MainWindow::onMenuROMLoadFromFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load ROM"), ".", tr("ROM Files (*.bin *.rom)"));
+    if (fileName != nullptr)
+        Emulator::ReadROM((char *)fileName.toUtf8().data(), 1);
 }

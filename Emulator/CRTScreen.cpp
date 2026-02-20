@@ -3,7 +3,7 @@
 
 int CRTScreen::hPos = 0;
 int CRTScreen::vPos = 0;
-BYTE CRTScreen::Pixels[PixelWidth * PixelHeight * BytesPerPixel];
+BYTE CRTScreen::Pixels[DataSize];
 bool CRTScreen::frameFinished;
 
 void CRTScreen::Init()
@@ -28,7 +28,7 @@ void CRTScreen::Clock()
         frameFinished = true;
         GateArray::vsyncTrigger = false;
     }
-    int base = vPos + hPos;
+    unsigned int base = vPos + hPos;
     if (base < DataSize)
     {
         Pixels[base] = GateArray::Color[0];

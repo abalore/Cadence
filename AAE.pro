@@ -3,7 +3,10 @@ QT += gui
 QT += opengl
 QT += openglwidgets
 
-LIBS += -lpulse -lpulse-simple -lasound
+QMAKE_CXXFLAGS+=-Wall
+QMAKE_CXXFLAGS+=-Werror
+
+LIBS += -lasound
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -55,8 +58,8 @@ SOURCES += \
     speedcontroller.cpp
 
 HEADERS += \
-    CDT.h \
     Debugger.h \
+    Emulator/Headers/CDT.h \
     Emulator/Headers/CPC.h \
     Emulator/Headers/CRTC.h \
     Emulator/Headers/CRTScreen.h \

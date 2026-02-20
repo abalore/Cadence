@@ -50,14 +50,10 @@ BYTE FDC::weakSectorCycle;
 
 void FDC::Reset()
 {
-    US = 0;
-    bits03_FDDBUSY[0] = 0;
-    bits03_FDDBUSY[1] = 0;
-    bits03_FDDBUSY[2] = 0;
-    bits03_FDDBUSY[3] = 0;
-    headSettlingTime = 0;
-    bit5_NDMA = 0;
     executionDelay = 0;
+    headSettlingTime = 0;
+    headUploadTimeInterval = 0;
+    weakSectorCycle = 0;
     GoToCommandState();
 }
 
@@ -113,6 +109,7 @@ void FDC::Clock_IO_RD()
             {
             case FDCState::FDC_StateCommand:
             case FDCState::FDC_StateExecution:
+            case FDCState::FDC_StateTransfer:
                 CPC::DataBUS = 0x00;
                 break;
             case FDCState::FDC_StateResult:
@@ -140,6 +137,8 @@ void FDC::Clock_IO_WR()
         case FDCState::FDC_StateExecution:
             break;
         case FDCState::FDC_StateResult:
+            break;
+        case FDCState::FDC_StateTransfer:
             break;
         }
     }

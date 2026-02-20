@@ -48,6 +48,7 @@ private:
     static bool envelopeAlternate;
     static word envelopePeriod;
     static word envelopeCounter;
+    static bool envelopeRunning;
     static BYTE noiseDivider;
     static bool noiseLevel;
     static bool bitA;

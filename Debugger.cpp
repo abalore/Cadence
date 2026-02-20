@@ -169,10 +169,6 @@ string Debugger::GetZ80RegsDebugLine()
     d.append(buff);
     sprintf(buff, "IM:%1d\nInts:%1d", Z80::InterruptMode, Z80::InterruptEnable);
     d.append(buff);
-    //    d.append("AF'  BC'  DE'  HL'  R    I    Ints\n");
-    //    sprintf(buff, "%04X %04X %04X %04X %02X   %02X   %01X\n",
-    //            Z80::AF_.Get(), Z80::BC_.Get(), Z80::DE_.Get(), Z80::HL_.Get(), Z80::R, Z80::I, Z80::InterruptEnable);
-    //    d.append(buff);
     return d;
 }
 

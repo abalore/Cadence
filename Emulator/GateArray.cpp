@@ -9,7 +9,7 @@
 #include "Headers/FDC.h"
 
 
-const BYTE *GateArray::Color;
+const BYTE *GateArray::Color = Palette;
 BYTE GateArray::INK[16];
 BYTE GateArray::BORDER = 0;
 BYTE GateArray::RMR;

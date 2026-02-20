@@ -24,13 +24,17 @@ public:
     ~MainWindow();
     static MainWindow *Instance;
 private slots:
-    void onMenuFileLoadBinary();
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
+    void onMenuFileLoadBinary();
     void onMenuTapeLoadFile();
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
     void onMenuDiscLoadDSK();
+    void onMenuROMLoadFromFile();
+    void StartThreads();
+    void StopThreads();
+    void ResetEmulation();
 private:
     Ui::MainWindow *ui;
     Debugger *debugger;
