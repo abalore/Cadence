@@ -1,26 +1,26 @@
-#include "EmulatorWorkerThread.h"
+#include "EmulatorThread.h"
 #include "Emulator/Headers/Emulator.h"
 #include "Emulator/Headers/Z80.h"
 #include "Emulator/Headers/CRTScreen.h"
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorWorkerThread::stopPoint = 0xC6E7;
-volatile bool EmulatorWorkerThread::running = true;
-volatile RunMode EmulatorWorkerThread::runMode = RunMode::Run;
-volatile bool EmulatorWorkerThread::end = false;
+volatile ushort EmulatorThread::stopPoint = 0xC6E7;
+volatile bool EmulatorThread::running = true;
+volatile RunMode EmulatorThread::runMode = RunMode::Run;
+volatile bool EmulatorThread::end = false;
 
-EmulatorWorkerThread::EmulatorWorkerThread(QObject *parent) : QThread(parent)
+EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
     Emulator::Init();
 }
 
-EmulatorWorkerThread::~EmulatorWorkerThread()
+EmulatorThread::~EmulatorThread()
 {
 
 }
 
-void EmulatorWorkerThread::Pause()
+void EmulatorThread::Pause()
 {
     if (running)
     {
@@ -28,7 +28,7 @@ void EmulatorWorkerThread::Pause()
     }
 }
 
-void EmulatorWorkerThread::Run()
+void EmulatorThread::Run()
 {
     if (!running)
     {
@@ -37,7 +37,7 @@ void EmulatorWorkerThread::Run()
     }
 }
 
-void EmulatorWorkerThread::RunStep()
+void EmulatorThread::RunStep()
 {
     if (!running)
     {
@@ -46,7 +46,7 @@ void EmulatorWorkerThread::RunStep()
     }
 }
 
-void EmulatorWorkerThread::RunTo(ushort address)
+void EmulatorThread::RunTo(ushort address)
 {
     if (!running)
     {
@@ -56,14 +56,14 @@ void EmulatorWorkerThread::RunTo(ushort address)
     }
 }
 
-void EmulatorWorkerThread::Stop ()
+void EmulatorThread::Stop ()
 {
     Z80::stopPoint = false;
     running = false;
     emit OnPause();
 }
 
-void EmulatorWorkerThread::run()
+void EmulatorThread::run()
 {
     while (!end)
     {
@@ -94,7 +94,7 @@ void EmulatorWorkerThread::run()
     }
 }
 
-void EmulatorWorkerThread::Reset()
+void EmulatorThread::Reset()
 {
     running = false;
     Emulator::Reset();

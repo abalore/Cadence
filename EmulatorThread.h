@@ -13,12 +13,12 @@ enum RunMode
     StopPoint
 };
 
-class EmulatorWorkerThread : public QThread
+class EmulatorThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit EmulatorWorkerThread(QObject *parent);
-    ~EmulatorWorkerThread();
+    explicit EmulatorThread(QObject *parent);
+    ~EmulatorThread();
     static volatile bool running;
     static volatile ushort stopPoint;
     static volatile bool end;
