@@ -27,7 +27,6 @@ public slots:
     static void Run();
     static void RunStep();
     static void RunTo(ushort address);
-    static void Reset();
     static void Pause();
 protected:
     void run() override;

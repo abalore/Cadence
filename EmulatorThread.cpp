@@ -23,9 +23,7 @@ EmulatorThread::~EmulatorThread()
 void EmulatorThread::Pause()
 {
     if (running)
-    {
         runMode = RunMode::StepByStep;
-    }
 }
 
 void EmulatorThread::Run()
@@ -69,7 +67,7 @@ void EmulatorThread::run()
     {
         if (running)
         {
-            while (!CRTScreen::frameFinished)
+            while (!CRTScreen::frameFinished && running)
             {
                 Emulator::Clock();
                 switch(runMode)
@@ -91,12 +89,6 @@ void EmulatorThread::run()
             emit OnFinishedFrame();
             SpeedController::Run();
         }
+        else QThread::msleep(5);
     }
-}
-
-void EmulatorThread::Reset()
-{
-    running = false;
-    Emulator::Reset();
-    running = true;
 }

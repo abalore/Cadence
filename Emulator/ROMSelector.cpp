@@ -11,5 +11,5 @@ void ROMSelector::Init()
 
 void ROMSelector::Clock_IO_WR()
 {
-    SelectedROM = CPC::DataBUS;
+    SelectedROM = CPC::DataBUS & 0x1F;
 }

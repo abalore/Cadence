@@ -43,25 +43,12 @@
      <rect>
       <x>0</x>
       <y>20</y>
-      <width>1152</width>
-      <height>792</height>
+      <width>768</width>
+      <height>528</height>
      </rect>
     </property>
     <property name="autoFillBackground">
      <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>807</y>
-      <width>66</width>
-      <height>18</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>TextLabel</string>
     </property>
    </widget>
   </widget>
@@ -115,12 +102,19 @@
     </property>
     <addaction name="actionLoad_DSK"/>
    </widget>
+   <widget class="QMenu" name="menuROM">
+    <property name="title">
+     <string>ROM</string>
+    </property>
+    <addaction name="actionLoad_fromFile"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuTape"/>
    <addaction name="menuScreen"/>
    <addaction name="menuMemory"/>
    <addaction name="menuDisc"/>
+   <addaction name="menuROM"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -212,6 +206,11 @@
   <action name="actionLoad_DSK">
    <property name="text">
     <string>Load DSK</string>
+   </property>
+  </action>
+  <action name="actionLoad_fromFile">
+   <property name="text">
+    <string>Load from file</string>
    </property>
   </action>
  </widget>

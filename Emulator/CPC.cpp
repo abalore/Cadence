@@ -33,7 +33,9 @@ RAM *CPC::ActiveRAM()
 ROM *CPC::ActiveROM()
 {
     if ((AddressBUS & 0xC000) > 0)
+    {
         return &HiROM[ROMSelector::SelectedROM];
+    }
     else
         return &LoROM;
 }

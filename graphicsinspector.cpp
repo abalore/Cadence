@@ -28,8 +28,6 @@ void GraphicsInspector::UpdateGraphics()
     if (ui->radioButton->isChecked()) baseAddress = 0x0000;
     if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
     if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
-    int width = ui->inputWidth->text().toInt();
-    int height = ui->inputHeight->text().toInt();
     int mode = GateArray::mode;
     static BYTE Pixels[640 * 400 * 3];
     for (int i = 0; i < 80; i++)

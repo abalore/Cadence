@@ -27,6 +27,7 @@ bool PSG::envelopeHold;
 bool PSG::envelopeAlternate;
 word PSG::envelopePeriod;
 word PSG::envelopeCounter;
+bool PSG::envelopeRunning;
 BYTE PSG::noiseDivider;
 bool PSG::noiseLevel;
 bool PSG::bitA;
@@ -62,6 +63,7 @@ void PSG::Init()
     envelopeLevel = 0;
     envelopeDir = EnvelopeDir::EDNone;
     envelopePeriod = 0;
+    envelopeRunning = false;
     noiseDivider = 0;
     noiseLevel = 0;
 
@@ -82,20 +84,14 @@ void PSG::Init()
 
 void PSG::Clock()
 {
-    //if (envelopeDivider == 0)
-    UpdateEnvelope();
-    //envelopeDivider++;
+
     divider++;
     if (divider == 16)
     {
+        if (envelopeRunning)
+            UpdateEnvelope();
         divider = 0;
         UpdateNoise();
-        counterA++;
-        if (counterA >= periodA)
-        {
-            counterA = 0;
-            bitA = !bitA;
-        }
         tVolA = registers[8];
         if (tVolA & 0x10)
             tVolA = GetCurrentEnvelopeLevel();
@@ -105,10 +101,16 @@ void PSG::Clock()
         tVolC = registers[10];
         if (tVolC & 0x10)
             tVolC = GetCurrentEnvelopeLevel();
-
+        counterA++;
+        if (counterA >= periodA)
+        {
+            counterA = 0;
+            bitA = !bitA;
+        }
         if (mixA)
             outputA = volumes[tVolA * bitA];
         else outputA = 0;
+
         counterB++;
         if (counterB >= periodB)
         {
@@ -118,6 +120,7 @@ void PSG::Clock()
         if (mixB)
             outputB = volumes[tVolB * bitB];
         else outputB = 0;
+
         counterC++;
         if (counterC >= periodC)
         {
@@ -127,12 +130,16 @@ void PSG::Clock()
         if (mixC)
             outputC = volumes[tVolC * bitC];
         else outputC = 0;
+
         if (noiseA)
             outputA += volumes[tVolA * noiseLevel];
+
         if (noiseB)
             outputB += volumes[tVolB * noiseLevel];
+
         if (noiseC)
             outputC += volumes[tVolC * noiseLevel];
+
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
             buffer[bufferIndex] = (outputA + outputB + outputC + Tape::GetLevel() * 10);
@@ -216,6 +223,7 @@ void PSG::Clock_IO_WR()
                 envelopeHold = (registers[13] ^ 0x08) & 0x09;
                 envelopeAlternate = registers[13] & 0x02;
                 envelopeCounter = envelopePeriod;
+                envelopeRunning = true;
                 break;
             }
         }
