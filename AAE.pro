@@ -27,7 +27,7 @@ SOURCES += \
     Emulator/Tape.cpp \
     Emulator/Z80_IDX_3.cpp \
     Emulator/Z80_intexec.cpp \
-    EmulatorWorkerThread.cpp \
+    EmulatorThread.cpp \
     SoundThread.cpp \
     graphicsinspector.cpp \
     main.cpp \
@@ -77,7 +77,7 @@ HEADERS += \
     Emulator/Headers/Tape.h \
     Emulator/Headers/Z80.h \
     Emulator/Headers/defs.h \
-    EmulatorWorkerThread.h \
+    EmulatorThread.h \
     KeyPressFilter.h \
     SoundThread.h \
     graphicsinspector.h \

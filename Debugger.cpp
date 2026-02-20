@@ -1,6 +1,6 @@
 #include "Debugger.h"
 #include "ui_Debugger.h"
-#include "EmulatorWorkerThread.h"
+#include "EmulatorThread.h"
 #include "Emulator/Headers/Disassembler.h"
 #include "Emulator/Headers/Z80.h"
 #include "Emulator/Headers/PPI.h"
@@ -43,7 +43,7 @@ Debugger::~Debugger()
 
 void Debugger::closeEvent(QCloseEvent *event)
 {
-    EmulatorWorkerThread::Run();
+    EmulatorThread::Run();
     setHidden(true);
     event->ignore();
 }
@@ -100,8 +100,6 @@ void Debugger::Update()
     ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
     ui->listMemory->setCurrentIndex(modelMemoryIndex);
 
-    //EmulatorWorkerThread::debugLock.lock();
-
     string debugStringZ80;
     string debugStringStack;
     string debugStringCRTC;
@@ -116,19 +114,19 @@ void Debugger::Update()
     ui->lblStack->setText(debugStringStack.data());
     ui->lblCRTC->setText(debugStringCRTC.data());
     ui->lblGateArray->setText(debugStringGateArray.data());
-    //EmulatorWorkerThread::debugLock.unlock();
+
     setEnabled(true);
 }
 
 void Debugger::onRunClicked()
 {
     hide();
-    EmulatorWorkerThread::Run();
+    EmulatorThread::Run();
 }
 
 void Debugger::onStepInClicked()
 {
-    EmulatorWorkerThread::RunStep();
+    EmulatorThread::RunStep();
 }
 
 void Debugger::onStepOverClicked()
@@ -138,9 +136,9 @@ void Debugger::onStepOverClicked()
         || nextInstructionOpCode == 0xC3
         || nextInstructionOpCode == 0xC9
         || nextInstructionOpCode == 0xE9)
-        EmulatorWorkerThread::RunStep();
+        EmulatorThread::RunStep();
     else
-        EmulatorWorkerThread::RunTo(Z80::PC + nextInstructionLength);
+        EmulatorThread::RunTo(Z80::PC + nextInstructionLength);
 }
 
 void Debugger::onStepOutClicked()
@@ -149,7 +147,7 @@ void Debugger::onStepOutClicked()
     word address = Z80::SP.Get();
     BYTE L = CPC::BaseRAM.MEM[address];
     BYTE H = CPC::BaseRAM.MEM[address + 1];
-    EmulatorWorkerThread::RunTo(L + H * 256);
+    EmulatorThread::RunTo(L + H * 256);
 }
 
 void Debugger::onRunToClicked()
@@ -157,7 +155,7 @@ void Debugger::onRunToClicked()
     setEnabled(false);
     int index = ui->listDisassembly->currentIndex().row();
     QString string = listDisassembly.at(index).mid(18, 4);
-    EmulatorWorkerThread::RunTo(string.toInt(nullptr, 16));
+    EmulatorThread::RunTo(string.toInt(nullptr, 16));
 }
 
 string Debugger::GetZ80RegsDebugLine()

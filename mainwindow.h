@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "EmulatorWorkerThread.h"
+#include "EmulatorThread.h"
 #include "SoundThread.h"
 #include "Debugger.h"
 #include "graphicsinspector.h"
@@ -35,7 +35,7 @@ private:
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
-    EmulatorWorkerThread *workerThread;
+    EmulatorThread *workerThread;
     SoundThread *soundThread;
 };
 #endif // MAINWINDOW_H

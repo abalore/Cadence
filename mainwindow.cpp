@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "Debugger.h"
-#include "EmulatorWorkerThread.h"
+#include "EmulatorThread.h"
 #include "speedcontroller.h"
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/Tape.h"
@@ -30,17 +30,17 @@ MainWindow::MainWindow(QWidget *parent)
     //screenView->show();
     //setFixedSize(768, 624);
 
-    workerThread = new EmulatorWorkerThread(this);
+    workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
 
-    connect(workerThread, &EmulatorWorkerThread::OnPause, this, &MainWindow::onEmulatorPaused);
-    connect(workerThread, &EmulatorWorkerThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
+    connect(workerThread, &EmulatorThread::OnPause, this, &MainWindow::onEmulatorPaused);
+    connect(workerThread, &EmulatorThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
 
     soundThread->start(QThread::HighPriority);
     workerThread->start(QThread::HighPriority);
 
-    connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorWorkerThread::Pause);
-    connect(ui->actionReset, &QAction::triggered, workerThread, &EmulatorWorkerThread::Reset);
+    connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
+    connect(ui->actionReset, &QAction::triggered, workerThread, &EmulatorThread::Reset);
     connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
     connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
