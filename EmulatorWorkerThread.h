@@ -3,7 +3,6 @@
 
 #include <QThread>
 #include <string>
-#include <mutex>
 
 using namespace std;
 
@@ -19,36 +18,24 @@ class EmulatorWorkerThread : public QThread
     Q_OBJECT
 public:
     explicit EmulatorWorkerThread(QObject *parent);
-    static string debugStringZ80;
-    static string debugStringStack;
-    static string debugStringCRTC;
-    static string debugStringGateArray;
+    ~EmulatorWorkerThread();
+    static volatile bool running;
+    static volatile ushort stopPoint;
+    static volatile bool end;
+    static volatile RunMode runMode;
+public slots:
     static void Run();
     static void RunStep();
     static void RunTo(ushort address);
     static void Reset();
     static void Pause();
-    static volatile bool running;
-    static volatile ushort stopPoint;
-    static volatile bool end;
-    static volatile long elapsed;
-    static RunMode runMode;
-    static mutex debugLock;
+protected:
+    void run() override;
 signals:
     void OnPause();
     void OnFinishedFrame();
-    void OnTapeMotorOn();
-    void OnTapeMotorOff();
-protected:
-    void run() override;
 private:
-    static string GetZ80RegsDebugLine();
-    static string GetZ80StackDebugLine();
-    static string GetCRTCDebugLine();
-    static string GetGateArrayDebugLine();
     void Stop();
-    static volatile bool canDebug;
-    static unsigned char nextInstructionLength;
 };
 
 #endif // EMULATORWORKERTHREAD_H

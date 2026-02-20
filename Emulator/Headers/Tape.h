@@ -2,7 +2,7 @@
 #define TAPE_H
 
 #include "defs.h"
-#include "../../CDT.h"
+#include "CDT.h"
 
 enum TapeSource
 {

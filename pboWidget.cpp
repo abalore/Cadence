@@ -29,11 +29,6 @@ void PboWidget::initializeGL()
     glCullFace(GL_FRONT);
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
     glEnable(GL_TEXTURE_2D);
-
-    //glBindTexture(GL_TEXTURE_2D, ID);
-    //pixels = (BYTE *)malloc(100 * 100 * 3 * 2);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 100, 100, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
 }
 
 void PboWidget::paintGL()

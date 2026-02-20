@@ -76,6 +76,7 @@ void GateArray::Clock()
     if ((clockDividerCounter % 4) == 2)
     {
         Z80::Clock();
+        FDC::Clock();
     }
 
     // 1 Mhz
@@ -138,7 +139,7 @@ void GateArray::Clock()
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
-        FDC::Clock();
+
         GenerateHSync();
     }
     // 2 Mhz

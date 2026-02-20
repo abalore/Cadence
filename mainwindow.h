@@ -24,10 +24,7 @@ public:
     ~MainWindow();
     static MainWindow *Instance;
 private slots:
-    void timerEvent(QTimerEvent *event) override;
     void onMenuFileLoadBinary();
-    void onMenuDebugPause();
-    void onMenuDebugReset();
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
     void onMenuTapeLoadFile();
