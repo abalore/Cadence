@@ -6,16 +6,16 @@ void Z80::Step_IDX_3()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         index = (sbyte)DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
-        tAddr++;
-        PC = tAddr;
-        tAddr = IDX->Get() + index;
+        AR++;
+        PC = AR;
+        AR = IDX->Get() + index;
         mCycleType = MCycleType::WRITE;
         break;
     case 4:

@@ -1,6 +1,4 @@
 #include "Headers/CPC.h"
-#include "Headers/ROM.h"
-#include "Headers/CRTScreen.h"
 #include "Headers/GateArray.h"
 #include "Headers/Keyboard.h"
 #include "Headers/ROMSelector.h"
@@ -9,39 +7,35 @@
 #include "Headers/PPI.h"
 #include "Headers/PSG.h"
 #include "Headers/FDC.h"
+#include <stdlib.h>
 
-word CPC::AddressBUS;
-BYTE CPC::DataBUS;
-RAM CPC::BaseRAM;
-ROM CPC::LoROM(0x0000);
-ROM CPC::HiROM[32] = {
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000),
-    ROM(0xC000), ROM(0xC000), ROM(0xC000), ROM(0xC000)
-};
+BYTE *CPC::BaseRAM;
+BYTE *CPC::LoROM;
+BYTE *CPC::HiROM;
+BYTE *CPC::HiROMs[32];
 
-RAM *CPC::ActiveRAM()
+BYTE *CPC::ActiveRAM()
 {
-    return &BaseRAM;
+    return BaseRAM;
 }
 
-ROM *CPC::ActiveROM()
+BYTE *CPC::ActiveROM()
 {
-    if ((AddressBUS & 0xC000) > 0)
+    if (Z80::AR >= 0xC000)
     {
-        return &HiROM[ROMSelector::SelectedROM];
+        return HiROM;
     }
     else
-        return &LoROM;
+        return LoROM;
 }
 
 void CPC::Init()
 {
+    BaseRAM = (BYTE *) malloc(0x10000);
+    LoROM = (BYTE *) malloc(0x10000);
+    for (int i = 0; i < 32; i++)
+        HiROMs[i] = (BYTE *) malloc(0x10000);
+    HiROM = HiROMs[0];
     Reset();
 }
 

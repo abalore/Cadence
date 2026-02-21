@@ -55,8 +55,8 @@ class FDC
 public:
     static void Reset();
     static void Clock();
-    static void Clock_IO_RD();
-    static void Clock_IO_WR();
+    static void RD();
+    static void WR();
     static FloppyDrive *GetDrive(int number);
 private:
     static void ProcessCommand(BYTE data);

@@ -29,28 +29,28 @@ void CRTC::Init()
     VSYNC = false;
 }
 
-void CRTC::Clock_IO_RD()
+void CRTC::RD()
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch((Z80::AR & 0x0300) >> 8)
     {
     case 2: // Status out
         //////////////////////////////////////////
         break;
     case 3: // Data out
-        CPC::DataBUS = Registers[Index];
+        Z80::DR = Registers[Index];
         break;
     }
 }
 
-void CRTC::Clock_IO_WR()
+void CRTC::WR()
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch((Z80::AR & 0x0300) >> 8)
     {
     case 0: // Index in
-        Index = CPC::DataBUS;
+        Index = Z80::DR;
         break;
     case 1: // Data in
-        Registers[Index] = CPC::DataBUS;
+        Registers[Index] = Z80::DR;
         break;
     }
 }

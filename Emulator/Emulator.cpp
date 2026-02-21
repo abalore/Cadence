@@ -11,9 +11,9 @@ void Emulator::ReadROM(char *filename, int number)
 {
     BYTE *dest;
     if (number == -1)
-        dest = CPC::LoROM.MEM;
+        dest = CPC::LoROM;
     else
-        dest = CPC::HiROM[number].MEM;
+        dest = CPC::HiROMs[number];
     FILE *file = fopen(filename, "r");
     if (!fread(dest, 1, 16384, file)) {}
     fclose(file);

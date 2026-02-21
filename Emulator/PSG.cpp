@@ -154,7 +154,7 @@ void PSG::SelectFunction(bool bdir, bool bc1)
     BC1 = bc1;
 }
 
-void PSG::Clock_IO_RD()
+void PSG::RD()
 {
     if (!BDIR && BC1)
     {
@@ -166,7 +166,7 @@ void PSG::Clock_IO_RD()
     else outputRegister = 0xFF;
 }
 
-void PSG::Clock_IO_WR()
+void PSG::WR()
 {
     if (BDIR)
     {

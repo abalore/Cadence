@@ -26,11 +26,11 @@ void Z80::JR(bool condition)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         if (!condition)
             FinishInstruction();
         else
@@ -49,22 +49,22 @@ void Z80::LD_Ind_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = t16.Get();
+        AR++;
+        PC = AR;
+        AR = t16.Get();
         mCycleType = MCycleType::WRITE;
         DR = *reg.L;
         break;
     case 4:
-        tAddr++;
+        AR++;
         DR = *reg.H;
         break;
     case 5:
@@ -79,21 +79,21 @@ void Z80::LD_RR_Ind(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = t16.Get();
+        AR++;
+        PC = AR;
+        AR = t16.Get();
         break;
     case 4:
         *reg.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 5:
         *reg.H = DR;
@@ -108,17 +108,17 @@ void Z80::LD_Ind_A()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = t16.Get();
+        AR++;
+        PC = AR;
+        AR = t16.Get();
         mCycleType = MCycleType::WRITE;
         DR = A;
         break;
@@ -134,17 +134,17 @@ void Z80::LD_A_Ind()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = t16.Get();
+        AR++;
+        PC = AR;
+        AR = t16.Get();
         break;
     case 4:
         A = DR;
@@ -160,7 +160,7 @@ void Z80::LD_R_Ind_HL(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         reg = DR;
@@ -175,7 +175,7 @@ void Z80::LD_Ind_HL_R(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        tAddr = HL.Get();
+        AR = HL.Get();
         DR = reg;
         break;
     case 2:
@@ -190,16 +190,16 @@ void Z80::LD_RR_nn(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         *reg.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *reg.H = DR;
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         FinishInstruction();
         break;
     }
@@ -243,12 +243,12 @@ void Z80::LD_R_n(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         reg = DR;
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         FinishInstruction();
         break;
     }
@@ -260,7 +260,7 @@ void Z80::LD_Ind_RR_A(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        tAddr = reg.Get();
+        AR = reg.Get();
         DR = A;
         break;
     case 2:
@@ -275,17 +275,17 @@ void Z80::PUSH_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        tAddr = SP.Get();
-        tAddr--;
+        AR = SP.Get();
+        AR--;
         DR = *reg.H;
         break;
     case 2:
-        tAddr--;
+        AR--;
         DR = *reg.L;
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        SP.Set(tAddr);
+        SP.Set(AR);
         break;
     case 4:
         FinishInstruction();
@@ -299,16 +299,16 @@ void Z80::POP_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = SP.Get();
+        AR = SP.Get();
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
-        tAddr++;
-        SP.Set(tAddr);
+        AR++;
+        SP.Set(AR);
         reg.Set(t16.Get());
         FinishInstruction();
         break;
@@ -355,11 +355,11 @@ void Z80::ADD_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         ADD_A_v(DR);
         FinishInstruction();
         break;
@@ -372,11 +372,11 @@ void Z80::ADC_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         ADC_A_v(DR);
         FinishInstruction();
         break;
@@ -389,11 +389,11 @@ void Z80::SUB_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         SUB_A_v(DR);
         FinishInstruction();
         break;
@@ -406,11 +406,11 @@ void Z80::SBC_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         SBC_A_v(DR);
         FinishInstruction();
         break;
@@ -423,11 +423,11 @@ void Z80::AND_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         AND_A_v(DR);
         FinishInstruction();
         break;
@@ -440,11 +440,11 @@ void Z80::XOR_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         XOR_A_v(DR);
         FinishInstruction();
         break;
@@ -457,11 +457,11 @@ void Z80::OR_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         OR_A_v(DR);
         FinishInstruction();
         break;
@@ -474,11 +474,11 @@ void Z80::CP_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
+        AR++;
+        PC = AR;
         CP_v(DR);
         FinishInstruction();
         break;
@@ -496,7 +496,7 @@ void Z80::ADD_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       ADD_R(DR);
@@ -511,7 +511,7 @@ void Z80::ADC_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       ADC_R(DR);
@@ -526,7 +526,7 @@ void Z80::SUB_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       SUB_R(DR);
@@ -541,7 +541,7 @@ void Z80::SBC_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       SBC_R(DR);
@@ -556,7 +556,7 @@ void Z80::AND_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       AND_R(DR);
@@ -571,7 +571,7 @@ void Z80::XOR_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       XOR_R(DR);
@@ -586,7 +586,7 @@ void Z80::OR_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       OR_R(DR);
@@ -601,7 +601,7 @@ void Z80::CP_Ind_HL()
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = HL.Get();
+      AR = HL.Get();
       break;
     case 2:
       CP_R(DR);
@@ -744,17 +744,17 @@ void Z80::RET(bool condition)
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = SP.Get();
+      AR = SP.Get();
       break;
     case 2:
       *t16.L = DR;
-      tAddr++;
+      AR++;
       if (!condition) FinishInstruction();
       break;
     case 3:
       *t16.H = DR;
-      tAddr++;
-      SP.Set(tAddr);
+      AR++;
+      SP.Set(AR);
       PC = t16.Get();
       FinishInstruction();
       break;
@@ -767,19 +767,19 @@ void Z80::JP(bool condition)
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = PC;
+      AR = PC;
       break;
     case 2:
       *t16.L = DR;
-      tAddr++;
+      AR++;
       break;
     case 3:
       *t16.H = DR;
-      tAddr++;
+      AR++;
       if (condition)
         PC = t16.Get();
       else
-        PC = tAddr;
+        PC = AR;
       FinishInstruction();
       break;
   }
@@ -791,21 +791,21 @@ void Z80::CALL(bool condition)
   {
     case 1:
       mCycleType = MCycleType::READ;
-      tAddr = PC;
+      AR = PC;
       break;
     case 2:
       *t16.L = DR;
-      tAddr++;
+      AR++;
       break;
     case 3:
       *t16.H = DR;
-      tAddr++;
-      PC = tAddr;
+      AR++;
+      PC = AR;
       if (condition)
       {
         mCycleType = MCycleType::WRITE;
-        tAddr = SP.Get();
-        tAddr--;
+        AR = SP.Get();
+        AR--;
         DR = (BYTE)(PC >> 8);
       }
       else
@@ -814,11 +814,11 @@ void Z80::CALL(bool condition)
       }
       break;
     case 4:
-      tAddr--;
+      AR--;
       DR = (BYTE)(PC & 0xFF);
       break;
     case 5:
-      SP.Set(tAddr);
+      SP.Set(AR);
       PC = t16.Get();
       FinishInstruction();
       break;
@@ -831,17 +831,17 @@ void Z80::RST(BYTE address)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        tAddr = SP.Get();
-        tAddr--;
+        AR = SP.Get();
+        AR--;
         DR = (BYTE)(PC >> 8);
         break;
     case 2:
-        tAddr--;
+        AR--;
         DR = (BYTE)(PC & 0xFF);
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        SP.Set(tAddr);
+        SP.Set(AR);
         break;
     case 4:
         PC = address;
@@ -924,7 +924,7 @@ void Z80::ShiftOpIndHL(BYTE opCode)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         switch(opCode)
@@ -1206,11 +1206,11 @@ void Z80::LDI(bool R)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         mCycleType = MCycleType::WRITE;
-        tAddr = DE.Get();
+        AR = DE.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;
@@ -1238,7 +1238,7 @@ void Z80::CPI(bool R)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         mCycleType = MCycleType::ALU;
@@ -1268,11 +1268,11 @@ void Z80::LDD(bool R)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         mCycleType = MCycleType::WRITE;
-        tAddr = DE.Get();
+        AR = DE.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;
@@ -1299,7 +1299,7 @@ void Z80::CPD(bool R)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         mCycleType = MCycleType::ALU;
@@ -1347,7 +1347,7 @@ void Z80::LD_A_I_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = reg.Get();
+        AR = reg.Get();
         break;
     case 2:
         A = DR;
@@ -1430,11 +1430,11 @@ void Z80::EX_HL_Ind_SP()
      {
      case 1:
          mCycleType = MCycleType::READ;
-         tAddr = SP.Get();
+         AR = SP.Get();
          break;
      case 2:
          *t16.L = DR;
-         tAddr++;
+         AR++;
          break;
      case 3:
          *t16.H = DR;
@@ -1442,7 +1442,7 @@ void Z80::EX_HL_Ind_SP()
          mCycleType = MCycleType::WRITE;
          break;
      case 4:
-         tAddr--;
+         AR--;
          DR = L;
          break;
      case 5:
@@ -1461,11 +1461,11 @@ void Z80::EX_IDX_Ind_SP()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = SP.Get();
+        AR = SP.Get();
         break;
     case 2:
         *t16.L = DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         *t16.H = DR;
@@ -1473,7 +1473,7 @@ void Z80::EX_IDX_Ind_SP()
         mCycleType = MCycleType::WRITE;
         break;
     case 4:
-        tAddr--;
+        AR--;
         DR = *(*IDX).L;
         break;
     case 5:
@@ -1501,12 +1501,12 @@ void Z80::DJNZ()
   switch(mCycle)
   {
     case 1:
-      tAddr = PC;
+      AR = PC;
       mCycleType = MCycleType::READ;
       break;
     case 2:
-      tAddr++;
-      PC = tAddr;
+      AR++;
+      PC = AR;
       B--;
       if (B == 0)
           FinishInstruction();
@@ -1661,7 +1661,7 @@ void Z80::INC_Ind_HL()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         INC_R(DR);
@@ -1679,7 +1679,7 @@ void Z80::DEC_Ind_HL()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         DEC_R(DR);
@@ -1697,12 +1697,12 @@ void Z80::LD_Ind_HL_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
-        tAddr++;
-        PC = tAddr;
-        tAddr = HL.Get();
+        AR++;
+        PC = AR;
+        AR = HL.Get();
         mCycleType = MCycleType::WRITE;
         break;
     case 3:
@@ -1759,7 +1759,7 @@ void Z80::IN_R_PortBC(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::IN;
-        tAddr = BC.Get();
+        AR = BC.Get();
         break;
     case 2:
         mCycleType = MCycleType::ALU;
@@ -1782,7 +1782,7 @@ void Z80::OUT_PortBC_R(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::OUT;
-        tAddr = BC.Get();
+        AR = BC.Get();
         DR = reg;
         break;
     case 2:
@@ -1866,7 +1866,7 @@ void Z80::RLD()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         t8 = DR;
@@ -1894,7 +1894,7 @@ void Z80::RRD()
   {
     case 1:
       mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
     break;
     case 2:
       t8 = DR;
@@ -1928,11 +1928,11 @@ void Z80::INI(bool R, bool dir)
     {
     case 1:
         mCycleType = MCycleType::IN;
-        tAddr = BC.Get();
+        AR = BC.Get();
         break;
     case 2:
         mCycleType = MCycleType::WRITE;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;
@@ -1962,11 +1962,11 @@ void Z80::OUTI(bool R, bool dir)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = HL.Get();
+        AR = HL.Get();
         break;
     case 2:
         mCycleType = MCycleType::OUT;
-        tAddr = BC.Get();
+        AR = BC.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;

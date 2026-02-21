@@ -7,17 +7,17 @@ void Z80::Step_IDX_CB()
     case 1:
         //PC--;
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         index = (sbyte)DR;
-        tAddr++;
+        AR++;
         break;
     case 3:
         t8 = DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = IDX->Get() + index;
+        AR++;
+        PC = AR;
+        AR = IDX->Get() + index;
         break;
     case 4:
         mCycleType = MCycleType::WRITE;

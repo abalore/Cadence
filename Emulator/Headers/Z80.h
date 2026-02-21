@@ -52,6 +52,7 @@ public:
     static BYTE I, R;
     static BYTE IR;
     static BYTE DR;
+    static word AR;
     static IDMode idMode;
     static MCycleType mCycleType;
     static bool InterruptEnable;
@@ -82,7 +83,6 @@ private:
     static BYTE tByte;
     static BYTE opCode;
     static Reg16 *IDX;
-    static word tAddr;
     static BYTE t_cp;
     static bool tC;
     static int tCV;

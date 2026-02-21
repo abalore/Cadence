@@ -1,5 +1,6 @@
 #include "Headers/FDC.h"
 #include "Headers/CPC.h"
+#include "Headers/Z80.h"
 
 FDCState FDC::state;
 FDCCommandState FDC::commandState;
@@ -69,13 +70,13 @@ void FDC::Clock()
     }
 }
 
-void FDC::Clock_IO_RD()
+void FDC::RD()
 {
-    if ((CPC::AddressBUS & 0x0100) != 0)
+    if ((Z80::AR & 0x0100) != 0)
     {
-        if ((CPC::AddressBUS & 0x0001) == 0)
+        if ((Z80::AR & 0x0001) == 0)
         {
-            CPC::DataBUS = (bit7_RQM << 7)
+            Z80::DR = (bit7_RQM << 7)
                            + (bit6_DIO << 6)
                            + (bit5_NDMA << 5)
                            + (bit4_BUSY << 4)
@@ -88,7 +89,7 @@ void FDC::Clock_IO_RD()
         {
             if (state == FDCState::FDC_StateTransfer)
             {
-                CPC::DataBUS = data[dataIndex];
+                Z80::DR = data[dataIndex];
                 dataIndex++;
                 if (dataIndex == dataSize)
                 {
@@ -110,7 +111,7 @@ void FDC::Clock_IO_RD()
             case FDCState::FDC_StateCommand:
             case FDCState::FDC_StateExecution:
             case FDCState::FDC_StateTransfer:
-                CPC::DataBUS = 0x00;
+                Z80::DR = 0x00;
                 break;
             case FDCState::FDC_StateResult:
                 ProcessResult();
@@ -120,14 +121,14 @@ void FDC::Clock_IO_RD()
     }
 }
 
-void FDC::Clock_IO_WR()
+void FDC::WR()
 {
-    BYTE data = CPC::DataBUS;
-    if ((CPC::AddressBUS & 0x0100) == 0)
+    BYTE data = Z80::DR;
+    if ((Z80::AR & 0x0100) == 0)
     {
         // Set motor
     }
-    else if ((CPC::AddressBUS & 0x0001) != 0)
+    else if ((Z80::AR & 0x0001) != 0)
     {
         switch(state)
         {
@@ -387,7 +388,7 @@ void FDC::ProcessResult()
 {
     if (resultCount)
     {
-        CPC::DataBUS = result[resultIndex];
+        Z80::DR = result[resultIndex];
         resultIndex++;
         if (resultIndex == resultCount)
             GoToCommandState();
