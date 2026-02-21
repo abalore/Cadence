@@ -33,63 +33,63 @@ void PPI::Init()
     hC = 0;
 }
 
-void PPI::Clock_IO_RD()
+void PPI::RD()
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch((Z80::AR & 0x0300) >> 8)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-        CPC::DataBUS = aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
+        Z80::DR = aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
         break;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-        CPC::DataBUS = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0x00;
+        Z80::DR = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0x00;
         break;
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {
             // bits 2..0
             if (bMode == 0)
-                CPC::DataBUS = lC;
+                Z80::DR = lC;
             else
-                CPC::DataBUS = bHandshake;
+                Z80::DR = bHandshake;
             // bit 3
             if (aMode != 0)
             {
-                CPC::DataBUS &= 0xF7;
-                CPC::DataBUS |= aHandshake & 0x08;
+                Z80::DR &= 0xF7;
+                Z80::DR |= aHandshake & 0x08;
             }
         }
         else
-            CPC::DataBUS &= 0xF0;
+            Z80::DR &= 0xF0;
         if (!hCIO)
         {
             switch(aMode)
             {
             case 0:
-                CPC::DataBUS |= hC;
+                Z80::DR |= hC;
                 break;
             case 1:
             case 2:
-                CPC::DataBUS |= aHandshake & 0xF0;
+                Z80::DR |= aHandshake & 0xF0;
                 break;
             }
         }
         else
-            CPC::DataBUS &= 0x0F;
+            Z80::DR &= 0x0F;
 
         break;
     case 3: // 8255 PPI Control-Register (W)
-        CPC::DataBUS = 0x00;
+        Z80::DR = 0x00;
         break;
     }
 }
 
-void PPI::Clock_IO_WR()
+void PPI::WR()
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch((Z80::AR & 0x0300) >> 8)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
         if (!aIO || aMode == 2)
-            PSG::WriteData(CPC::DataBUS);
+            PSG::WriteData(Z80::DR);
         break;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
         if (!bIO)
@@ -100,19 +100,19 @@ void PPI::Clock_IO_WR()
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {
-            lC = CPC::DataBUS & 0x0F;
+            lC = Z80::DR & 0x0F;
             ApplyLC();
         }
         if (!hCIO)
         {
-            hC = CPC::DataBUS & 0xF0;
+            hC = Z80::DR & 0xF0;
             ApplyHC();
         }
         break;
     case 3: // 8255 PPI Control-Register (W)
-        if (CPC::DataBUS & 0x80)
+        if (Z80::DR & 0x80)
         {
-            controlWord = CPC::DataBUS;
+            controlWord = Z80::DR;
             PSG::WriteData(0);
             Keyboard::SetRow(0);
             PSG::SelectFunction(false, false);
@@ -126,7 +126,7 @@ void PPI::Clock_IO_WR()
         }
         else
         {
-            BYTE bit = (CPC::DataBUS & 0x0E) >> 1;
+            BYTE bit = (Z80::DR & 0x0E) >> 1;
             if (bit < 4)
             {
                 BYTE value = 1 << bit;
@@ -136,7 +136,7 @@ void PPI::Clock_IO_WR()
             }
             else
             {
-                BYTE value = (CPC::DataBUS & 0x01) << bit;
+                BYTE value = (Z80::DR & 0x01) << bit;
                 hC &= value ^0x0F;
                 hC |= value;
                 ApplyHC();

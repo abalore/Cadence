@@ -42,8 +42,6 @@ SOURCES += \
     Emulator/Emulator.cpp \
     Emulator/Flag.cpp \
     Emulator/GateArray.cpp \
-    Emulator/RAM.cpp \
-    Emulator/ROM.cpp \
     Emulator/Reg16.cpp \
     Emulator/Z80.cpp \
     Emulator/Z80_CB.cpp \
@@ -73,8 +71,6 @@ HEADERS += \
     Emulator/Headers/Keyboard.h \
     Emulator/Headers/PPI.h \
     Emulator/Headers/PSG.h \
-    Emulator/Headers/RAM.h \
-    Emulator/Headers/ROM.h \
     Emulator/Headers/ROMSelector.h \
     Emulator/Headers/Reg16.h \
     Emulator/Headers/Tape.h \

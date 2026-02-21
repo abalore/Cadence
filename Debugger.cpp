@@ -84,14 +84,14 @@ void Debugger::Update()
     for (int i = 0x0000; i <= 0xFFF0; i += 16)
     {
         sprintf(buff, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                i, CPC::BaseRAM.MEM[i], CPC::BaseRAM.MEM[i + 1],
-                CPC::BaseRAM.MEM[i + 2], CPC::BaseRAM.MEM[i + 3],
-                CPC::BaseRAM.MEM[i + 4], CPC::BaseRAM.MEM[i + 5],
-                CPC::BaseRAM.MEM[i + 6], CPC::BaseRAM.MEM[i + 7],
-                CPC::BaseRAM.MEM[i + 8], CPC::BaseRAM.MEM[i + 9],
-                CPC::BaseRAM.MEM[i + 10], CPC::BaseRAM.MEM[i + 11],
-                CPC::BaseRAM.MEM[i + 12], CPC::BaseRAM.MEM[i + 13],
-                CPC::BaseRAM.MEM[i + 14], CPC::BaseRAM.MEM[i + 15]);
+                i, CPC::BaseRAM[i], CPC::BaseRAM[i + 1],
+                CPC::BaseRAM[i + 2], CPC::BaseRAM[i + 3],
+                CPC::BaseRAM[i + 4], CPC::BaseRAM[i + 5],
+                CPC::BaseRAM[i + 6], CPC::BaseRAM[i + 7],
+                CPC::BaseRAM[i + 8], CPC::BaseRAM[i + 9],
+                CPC::BaseRAM[i + 10], CPC::BaseRAM[i + 11],
+                CPC::BaseRAM[i + 12], CPC::BaseRAM[i + 13],
+                CPC::BaseRAM[i + 14], CPC::BaseRAM[i + 15]);
         listMemory.append(buff);
     }
 
@@ -145,8 +145,8 @@ void Debugger::onStepOutClicked()
 {
     setEnabled(false);
     word address = Z80::SP.Get();
-    BYTE L = CPC::BaseRAM.MEM[address];
-    BYTE H = CPC::BaseRAM.MEM[address + 1];
+    BYTE L = CPC::BaseRAM[address];
+    BYTE H = CPC::BaseRAM[address + 1];
     EmulatorThread::RunTo(L + H * 256);
 }
 
@@ -179,8 +179,8 @@ string Debugger::GetZ80StackDebugLine()
     word sp = Z80::SP.Get();
     for (int i = 0; i < 8; i++)
     {
-        BYTE L = CPC::BaseRAM.MEM[sp];
-        BYTE H = CPC::BaseRAM.MEM[sp + 1];
+        BYTE L = CPC::BaseRAM[sp];
+        BYTE H = CPC::BaseRAM[sp + 1];
         sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;
@@ -220,7 +220,7 @@ string Debugger::GetGateArrayDebugLine()
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nRMR: %08b  R52: %d  PPI Control: %08b", GateArray::RMR, GateArray::R52, PPI::controlWord);
+    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord);
     d += buff;
     return d;
 }

@@ -99,7 +99,7 @@ void MainWindow::onMenuFileLoadBinary()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::BaseRAM.MEM + 0x100, ba.data(), ba.size());
+        memcpy(CPC::BaseRAM + 0x100, ba.data(), ba.size());
     }
     file.close();
 }

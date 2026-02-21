@@ -2,9 +2,7 @@
 #include "Headers/CPC.h"
 #include "Headers/CRTC.h"
 #include "Headers/Z80.h"
-#include "Headers/PPI.h"
 #include "Headers/PSG.h"
-#include "Headers/ROMSelector.h"
 #include "Headers/Tape.h"
 #include "Headers/FDC.h"
 
@@ -35,20 +33,8 @@ bool GateArray::hsyncTrigger = false;
 bool GateArray::vsyncTrigger = false;
 SyncState GateArray::hsyncState = SyncState::SSWaitingCRTC;
 SyncState GateArray::vsyncState = SyncState::SSWaitingCRTC;
-
-
-bool GateArray::ROMEN()
-{
-    switch((CPC::AddressBUS & 0xC000) >> 14)
-    {
-    case 0:
-        return (RMR & 0x04) != 0;
-    case 3:
-        return (RMR & 0x08) != 0;
-    default:
-        return true;
-    }
-}
+bool GateArray::LoROMActive;
+bool GateArray::HiROMActive;
 
 void GateArray::Init()
 {
@@ -62,6 +48,8 @@ void GateArray::Init()
     GA_HSYNC = true;
     RMR = 0;
     MMR = 0;
+    LoROMActive = false;
+    HiROMActive = false;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
             for (int b = 0; b < 256; b++)
@@ -72,70 +60,11 @@ void GateArray::Clock()
 {
     Z80::stopPoint = false;
 
-    // 4 Mhz
-    if ((clockDividerCounter % 4) == 2)
-    {
-        Z80::Clock();
-        FDC::Clock();
-    }
-
-    // 1 Mhz
-
-    if ((clockDividerCounter % 16) == 8)
-    {
-        if (!Z80::IORQ)
-        {
-            if (!Z80::RD)
-            {
-                if ((CPC::AddressBUS & 0x4000) == 0)
-                    CRTC::Clock_IO_RD();
-                else if ((CPC::AddressBUS & 0x0800) == 0)
-                {
-                    PSG::Clock_IO_RD();
-                    PPI::Clock_IO_RD();
-                }
-                else if ((CPC::AddressBUS & 0x0480) == 0)
-                    FDC::Clock_IO_RD();
-            }
-            else
-                if (!Z80::WR)
-                {
-                    if ((CPC::AddressBUS & 0x8000) == 0)
-                        Clock_IO_WR();
-                    else if ((CPC::AddressBUS & 0x4000) == 0)
-                        CRTC::Clock_IO_WR();
-                    else if ((CPC::AddressBUS & 0x2000) == 0)
-                        ROMSelector::Clock_IO_WR();
-                    else if ((CPC::AddressBUS & 0x0800) == 0)
-                    {
-                        PPI::Clock_IO_WR();
-                        PSG::Clock_IO_WR();
-                    }
-                    else if ((CPC::AddressBUS & 0x0480) == 0)
-                        FDC::Clock_IO_WR();
-                }
-        }
-        else
-        {
-            if (!Z80::MREQ)
-            {
-                if (!Z80::RD)
-                {
-                    if (!ROMEN())
-                        CPC::ActiveROM()->Clock_RD();
-                    else
-                        CPC::ActiveRAM()->Clock_RD();
-                }
-                else
-                    if (!Z80::WR)
-                        CPC::ActiveRAM()->Clock_WR();
-            }
-        }
-    }
-
     // 1Mhz
     if ((clockDividerCounter % 16) == 0)
     {
+        Z80::Clock();
+        FDC::Clock();
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
@@ -296,35 +225,37 @@ void GateArray::ReadByte()
     videoAddress += (CRTC::RA & 0x07) << 11;
     videoAddress += (CRTC::MA & 0x3000) << 2;
     videoAddress += CCLK;
-    currentByte = CPC::BaseRAM.MEM[videoAddress];
+    currentByte = CPC::BaseRAM[videoAddress];
 }
 
-void GateArray::Clock_IO_WR()
+void GateArray::WR()
 {
-    switch(CPC::DataBUS & 0xC0)
+    switch(Z80::DR & 0xC0)
     {
     case 0x00: // PEN
-        if ((CPC::DataBUS & 0x10) > 0)
+        if ((Z80::DR & 0x10) > 0)
             borderSelected = true;
         else
         {
             borderSelected = false;
-            currentPen = CPC::DataBUS & 0x0F;
+            currentPen = Z80::DR & 0x0F;
         }
         break;
     case 0x40: // INK
         if (borderSelected)
-            BORDER = CPC::DataBUS & 0x1F;
+            BORDER = Z80::DR & 0x1F;
         else
-            INK[currentPen] = CPC::DataBUS & 0x1F;
+            INK[currentPen] = Z80::DR & 0x1F;
         break;
     case 0x80: // RMR
-        RMR = CPC::DataBUS & 0x3F;
-        if ((CPC::DataBUS & 0x10) > 0)
+        RMR = Z80::DR & 0x3F;
+        if ((Z80::DR & 0x10) > 0)
             R52 = 0;
+        LoROMActive = (RMR & 0x04) != 0;
+        HiROMActive = (RMR & 0x08) != 0;
         break;
     case 0xC0: // MMR
-        MMR = CPC::DataBUS & 0x3F;
+        MMR = Z80::DR & 0x3F;
         break;
     }
 }

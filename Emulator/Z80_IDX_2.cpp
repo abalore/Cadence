@@ -6,15 +6,15 @@ void Z80::Step_IDX_2()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        tAddr = PC;
+        AR = PC;
         break;
     case 2:
         index = (sbyte)DR;
-        tAddr++;
-        PC = tAddr;
-        tAddr = IDX->Get();
+        AR++;
+        PC = AR;
+        AR = IDX->Get();
         t16.Set(index);
-        tAddr += t16.Get();
+        AR += t16.Get();
         break;
     case 3:
         mCycleType = MCycleType::ALU;

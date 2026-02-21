@@ -16,13 +16,11 @@ class GateArray
 public:
     static void Init();
     static void Clock();
-    static bool ROMEN();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
-
     static void GenerateHSync();
     static void GenerateVSync();
-
+    static void WR();
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
@@ -30,7 +28,6 @@ public:
     static const BYTE cH = 255;
     static const BYTE cM = 128;
     static const BYTE cL = 5;
-    static BYTE RMR;
     static BYTE R52;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;
@@ -43,6 +40,8 @@ public:
     static bool vsyncTrigger;
     static SyncState hsyncState;
     static SyncState vsyncState;
+    static bool LoROMActive;
+    static bool HiROMActive;
 
     constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
     constexpr static const BYTE Palette[3 * 32] =
@@ -84,8 +83,8 @@ public:
 private:
     static void SetPixel();
     static void ReadByte();
-    static void Clock_IO_WR();
     // static void PrintDebugLine();
+    static BYTE RMR;
     static BYTE MMR;
     static bool borderSelected;
     static word videoAddress;

@@ -35,7 +35,7 @@ void GraphicsInspector::UpdateGraphics()
             for (int k = 0; k < 8; k++)
             {
                 word address = baseAddress + ((k * 0x0800 + j * 80 + i) % 0x4000);
-                BYTE b = CPC::BaseRAM.MEM[address];
+                BYTE b = CPC::BaseRAM[address];
                 int line = j * 8 + k;
                 for (int l = 0; l < 8; l++)
                 {

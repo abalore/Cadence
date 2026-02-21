@@ -9,7 +9,8 @@ void ROMSelector::Init()
     SelectedROM = 0;
 }
 
-void ROMSelector::Clock_IO_WR()
+void ROMSelector::WR()
 {
-    SelectedROM = CPC::DataBUS & 0x1F;
+    SelectedROM = Z80::DR & 0x1F;
+    CPC::HiROM = CPC::HiROMs[SelectedROM];
 }

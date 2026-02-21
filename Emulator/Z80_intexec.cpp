@@ -6,13 +6,13 @@ void Z80::Step_Int_Exec()
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        tAddr = SP.Get();
-        tAddr--;
+        AR = SP.Get();
+        AR--;
         DR = (BYTE)(PC >> 8);
         break;
     case 2:
-        tAddr--;
-        SP.Set(tAddr);
+        AR--;
+        SP.Set(AR);
         DR = (BYTE)(PC & 0xFF);
         break;
     case 3:
@@ -24,7 +24,7 @@ void Z80::Step_Int_Exec()
             mCycleType = MCycleType::ALU;
             break;
         case 2:
-            tAddr = I * 256;
+            AR = I * 256;
             mCycleType = MCycleType::READ;
             break;
         }
@@ -34,7 +34,7 @@ void Z80::Step_Int_Exec()
         {
         case 2:
             *t16.L = DR;
-            tAddr++;
+            AR++;
             break;
         }
         break;

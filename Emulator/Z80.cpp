@@ -1,5 +1,12 @@
 #include "Headers/Z80.h"
 #include "Headers/CPC.h"
+#include "Headers/CRTC.h"
+#include "Headers/PPI.h"
+#include "Headers/PSG.h"
+#include "Headers/CRTC.h"
+#include "Headers/FDC.h"
+#include "Headers/GateArray.h"
+#include "Headers/ROMSelector.h"
 
 using namespace std;
 
@@ -66,7 +73,7 @@ sbyte Z80::index = 0;
 BYTE Z80::tByte = 0;
 BYTE Z80::opCode = 0;
 Reg16 *Z80::IDX = &IX;
-word Z80::tAddr = 0;
+word Z80::AR = 0;
 bool Z80::InterruptEnable = false;
 bool Z80::InterruptRequest = true;
 BYTE Z80::InterruptMode = 0;
@@ -78,13 +85,7 @@ int Z80::tCV = 0;
 
 void Z80::Init()
 {
-    tCycle = 1;
     mCycle = 1;
-    MREQ = true;
-    RD = true;
-    WR = true;
-    IORQ = true;
-    M1 = true;
     PC = 0;
     idMode = IDMode::BASIC;
     mCycleType = MCycleType::FETCH;
@@ -111,118 +112,83 @@ void Z80::Step()
 
 void Z80::ProcessINT()
 {
-    if (tCycle == 3 && InterruptMode == 1) IR = 0xFF;
+    if (InterruptMode == 1) IR = 0xFF;
 }
 
 void Z80::ProcessFETCH()
 {
-    switch (tCycle)
+    if (idMode == IDMode::BASIC)
+        stopPoint = true;
+    t8 = R & 0x80;
+    R++;
+    R = (R & 0x7F) + t8;
+    AR = PC;
+    ProcessREAD();
+    if (halted)
+        IR = 0x00;
+    else
     {
-    case 1:
-        if (idMode == IDMode::BASIC)
-        {
-            stopPoint = true;
-            M1 = false;
-        }
-        t8 = R & 0x80;
-        R++;
-        R = (R & 0x7F) + t8;
-        CPC::AddressBUS = PC;
-        MREQ = false;
-        RD = false;
-        break;
-    case 3:
-        M1 = true;
-        RD = true;
-        MREQ = true;
-        if (halted)
-            IR = 0x00;
-        else
-        {
-            IR = CPC::DataBUS;
-            PC++;
-        }
-
-        MREQ = false;
-        break;
-    case 4:
-        MREQ = true;
-        break;
+        IR = DR;
+        PC++;
     }
 }
 
 void Z80::ProcessREAD()
 {
-    switch (tCycle)
+    switch((AR & 0xC000) >> 14)
     {
+    case 0:
+        if (!GateArray::LoROMActive)
+            DR = CPC::LoROM[AR];
+        else
+            DR = CPC::ActiveRAM()[AR];
+        break;
     case 1:
-        CPC::AddressBUS = tAddr;
-        MREQ = false;
-        RD = false;
+    case 2:
+        DR = CPC::ActiveRAM()[AR];
         break;
     case 3:
-        DR = CPC::DataBUS;
-        RD = true;
-        MREQ = true;
-        break;
+        if (!GateArray::HiROMActive)
+            DR = CPC::ActiveROM()[AR - 0xC000];
+        else
+            DR = CPC::ActiveRAM()[AR];
     }
+
 }
 
 void Z80::ProcessWRITE()
 {
-    switch (tCycle)
-    {
-    case 1:
-        CPC::AddressBUS = tAddr;
-        MREQ = false;
-        CPC::DataBUS = DR;
-        break;
-    case 2:
-        WR = false;
-        break;
-    case 3:
-        WR = true;
-        MREQ = true;
-        break;
-    }
+    CPC::ActiveRAM()[AR] = DR;
 }
 
 void Z80::ProcessIN()
 {
-    switch (tCycle)
+    if ((AR & 0x4000) == 0)
+        CRTC::RD();
+    else if ((AR & 0x0800) == 0)
     {
-    case 1:
-        CPC::AddressBUS = tAddr;
-        break;
-    case 2:
-        IORQ = false;
-        RD = false;
-        break;
-    case 4:
-        DR = CPC::DataBUS;
-        RD = true;
-        IORQ = true;
-        break;
+        PSG::RD();
+        PPI::RD();
     }
+    else if ((AR & 0x0480) == 0)
+        FDC::RD();
 }
 
 void Z80::ProcessOUT()
 {
-    switch (tCycle)
+    if ((AR & 0x8000) == 0)
+        GateArray::WR();
+    else if ((AR & 0x4000) == 0)
+        CRTC::WR();
+    else if ((AR & 0x2000) == 0)
+        ROMSelector::WR();
+    else if ((AR & 0x0800) == 0)
     {
-    case 1:
-        CPC::AddressBUS = tAddr;
-        CPC::DataBUS = DR;
-        break;
-    case 2:
-        IORQ = false;
-        WR = false;
-        break;
-    case 4:
-        WR = true;
-        IORQ = true;
-        break;
+        PPI::WR();
+        PSG::WR();
     }
+    else if ((AR & 0x0480) == 0)
+        FDC::WR();
 }
 
 void Z80::Clock()
@@ -237,28 +203,22 @@ void Z80::Clock()
     case MCycleType::OUT: ProcessOUT(); break;
     case MCycleType::ALU: break;
     }
-    if (tCycle == 4)
+    Step();
+    if (mCycleType == MCycleType::FETCH)
     {
-        Step();
-        tCycle = 1;
-        if (mCycleType == MCycleType::FETCH)
+        mCycle = 1;
+        if (!InterruptRequest && InterruptEnable && idMode == IDMode::BASIC)
         {
-            mCycle = 1;
-            if (!InterruptRequest && InterruptEnable && idMode == IDMode::BASIC)
-            {
-                InterruptEnable = false;
-                InterruptRequest = true;
-                IR = 0xFF;
-                mCycleType = MCycleType::INT;
-                halted = false;
-                idMode = IDMode::INTEXEC;
-            }
+            InterruptEnable = false;
+            InterruptRequest = true;
+            IR = 0xFF;
+            mCycleType = MCycleType::INT;
+            halted = false;
+            idMode = IDMode::INTEXEC;
         }
-        else
-            mCycle++;
     }
     else
-        tCycle++;
+        mCycle++;
 }
 
 void Z80::FinishInstruction()
