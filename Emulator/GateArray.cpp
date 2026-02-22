@@ -5,6 +5,7 @@
 #include "Headers/PSG.h"
 #include "Headers/Tape.h"
 #include "Headers/FDC.h"
+#include "Headers/Emulator.h"
 
 
 const BYTE *GateArray::Color = Palette;
@@ -225,7 +226,8 @@ void GateArray::ReadByte()
     videoAddress += (CRTC::RA & 0x07) << 11;
     videoAddress += (CRTC::MA & 0x3000) << 2;
     videoAddress += CCLK;
-    currentByte = CPC::BaseRAM[videoAddress];
+    int ramIndex = videoAddress >> 14;
+    currentByte = CPC::RAM[ramIndex][videoAddress & 0x3FFF];
 }
 
 void GateArray::WR()
@@ -255,7 +257,46 @@ void GateArray::WR()
         HiROMActive = (RMR & 0x08) != 0;
         break;
     case 0xC0: // MMR
-        MMR = Z80::DR & 0x3F;
+        if (Emulator::cpcType == CPCType::CPC6128)
+        {
+            MMR = Z80::DR & 0x3F;
+            switch(MMR & 0x07)
+            {
+            case 0:
+                CPC::RAM[0] = CPC::RAMs[0];
+                CPC::RAM[1] = CPC::RAMs[1];
+                CPC::RAM[2] = CPC::RAMs[2];
+                CPC::RAM[3] = CPC::RAMs[3];
+                break;
+            case 1:
+                CPC::RAM[0] = CPC::RAMs[0];
+                CPC::RAM[1] = CPC::RAMs[1];
+                CPC::RAM[2] = CPC::RAMs[2];
+                CPC::RAM[3] = CPC::RAMs[7];
+                break;
+            case 2:
+                CPC::RAM[0] = CPC::RAMs[4];
+                CPC::RAM[1] = CPC::RAMs[5];
+                CPC::RAM[2] = CPC::RAMs[6];
+                CPC::RAM[3] = CPC::RAMs[7];
+                break;
+            case 3:
+                CPC::RAM[0] = CPC::RAMs[0];
+                CPC::RAM[1] = CPC::RAMs[3];
+                CPC::RAM[2] = CPC::RAMs[2];
+                CPC::RAM[3] = CPC::RAMs[7];
+                break;
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                CPC::RAM[0] = CPC::RAMs[0];
+                CPC::RAM[1] = CPC::RAMs[MMR & 0x07];
+                CPC::RAM[2] = CPC::RAMs[2];
+                CPC::RAM[3] = CPC::RAMs[3];
+                break;
+            }
+        }
         break;
     }
 }

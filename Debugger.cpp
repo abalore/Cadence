@@ -83,15 +83,18 @@ void Debugger::Update()
     listMemory.clear();
     for (int i = 0x0000; i <= 0xFFF0; i += 16)
     {
+        int bank = i >> 14;
+        int address = i & 0x3FFF;
+        BYTE *mem = CPC::RAM[bank];
         sprintf(buff, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                i, CPC::BaseRAM[i], CPC::BaseRAM[i + 1],
-                CPC::BaseRAM[i + 2], CPC::BaseRAM[i + 3],
-                CPC::BaseRAM[i + 4], CPC::BaseRAM[i + 5],
-                CPC::BaseRAM[i + 6], CPC::BaseRAM[i + 7],
-                CPC::BaseRAM[i + 8], CPC::BaseRAM[i + 9],
-                CPC::BaseRAM[i + 10], CPC::BaseRAM[i + 11],
-                CPC::BaseRAM[i + 12], CPC::BaseRAM[i + 13],
-                CPC::BaseRAM[i + 14], CPC::BaseRAM[i + 15]);
+                i, mem[address], mem[address + 1],
+                mem[address + 2], mem[address + 3],
+                mem[address + 4], mem[address + 5],
+                mem[address + 6], mem[address + 7],
+                mem[address + 8], mem[address + 9],
+                mem[address + 10], mem[address + 11],
+                mem[address + 12], mem[address + 13],
+                mem[address + 14], mem[address + 14]);
         listMemory.append(buff);
     }
 
@@ -145,8 +148,8 @@ void Debugger::onStepOutClicked()
 {
     setEnabled(false);
     word address = Z80::SP.Get();
-    BYTE L = CPC::BaseRAM[address];
-    BYTE H = CPC::BaseRAM[address + 1];
+    BYTE L = CPC::GetByteAt(address);
+    BYTE H = CPC::GetByteAt(address + 1);
     EmulatorThread::RunTo(L + H * 256);
 }
 
@@ -179,8 +182,8 @@ string Debugger::GetZ80StackDebugLine()
     word sp = Z80::SP.Get();
     for (int i = 0; i < 8; i++)
     {
-        BYTE L = CPC::BaseRAM[sp];
-        BYTE H = CPC::BaseRAM[sp + 1];
+        BYTE L = CPC::GetByteAt(sp);
+        BYTE H = CPC::GetByteAt(sp + 1);
         sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;

@@ -1,5 +1,6 @@
 #include "Headers/Disassembler.h"
 #include "Headers/CPC.h"
+#include "Headers/Z80.h"
 #include "Headers/GateArray.h"
 #include <stdlib.h>
 
@@ -34,7 +35,7 @@ char buff[100];
 
 void Disassembler::Init()
 {
-/*
+    /*
     // Oh mummy routines
     AddNewLabel(0x66ED, "GameLoop");
     AddNewLabel(0x7578, "UpdateMummies");       // returns fC = Game Over
@@ -112,10 +113,11 @@ void Disassembler::Init()
 
 BYTE Disassembler::ReadNext()
 {
-    BYTE b = m[addr++ - offset];
+    BYTE b = GetActiveMemory();
     sprintf(buff, "%02hhX ", static_cast<unsigned char>(b));
     bytes += buff;
     length++;
+    addr++;
     return b;
 }
 
@@ -161,6 +163,31 @@ void Disassembler::AddNewLabel(word address, string label)
     labels->insert_or_assign(address, label);
 }
 
+BYTE Disassembler::GetActiveMemory()
+{
+    int bank = addr >> 14;
+    int address = addr & 0x3FFF;
+    switch(bank)
+    {
+    case 0:
+        if (!GateArray::LoROMActive)
+            return CPC::LoROM[address];
+        else
+            return CPC::RAM[bank][address];
+        break;
+    case 1:
+    case 2:
+        return CPC::RAM[bank][address];
+        break;
+    case 3:
+        if (!GateArray::HiROMActive)
+            return CPC::HiROM[address];
+        else
+            return CPC::RAM[bank][address];
+    }
+    return 0;
+}
+
 void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *label, string *addressStr, string *bytesStr, string *instrStr)
 {
     auto pos = labels->find(addr);
@@ -169,23 +196,6 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *l
     else
         *label = (string)"";
     length = 0;
-    BYTE bank = (BYTE)((addr & 0xC000) >> 14);
-    switch(bank)
-    {
-    case 0:
-        m = (GateArray::LoROMActive) > 0 ? CPC::ActiveRAM() : CPC::LoROM;
-        offset = 0x0000;
-        break;
-    case 1:
-    case 2:
-        offset = 0x0000;
-        m = CPC::ActiveRAM();
-        break;
-    case 3:
-        offset = 0xC000;
-        m = (GateArray::HiROMActive) > 0  ? CPC::ActiveRAM() : CPC::ActiveROM();
-        break;
-    }
     sprintf(buff, "%04X", addr);
     *addressStr = (string)buff;
     instr = "??";

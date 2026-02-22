@@ -16,13 +16,13 @@ void CRTScreen::Init()
 void CRTScreen::Clock()
 {
     hPos += 3;
-    if (GateArray::hsyncTrigger/* || hPos == 1024*/)
+    if (GateArray::hsyncTrigger || hPos == 1024)
     {
         hPos = 0;
         vPos += Stride;
         GateArray::hsyncTrigger = false;
     }
-    if ((GateArray::vsyncTrigger/* || vPos == 312*/) && vPos)
+    if ((GateArray::vsyncTrigger || vPos == 312) && vPos)
     {
         vPos = 0;
         frameFinished = true;

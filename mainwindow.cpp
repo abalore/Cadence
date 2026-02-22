@@ -39,12 +39,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
-    connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
     connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
     connect(ui->actionLoad_fromFile, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
+
+    connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
+    connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
+    connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
 }
 
 MainWindow::~MainWindow()
@@ -75,7 +78,6 @@ void MainWindow::StopThreads()
 void MainWindow::ResetEmulation()
 {
     StopThreads();
-    Emulator::Reset();
     StartThreads();
 }
 
@@ -99,7 +101,7 @@ void MainWindow::onMenuFileLoadBinary()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::BaseRAM + 0x100, ba.data(), ba.size());
+        memcpy(CPC::RAM[0] + 0x100, ba.data(), ba.size());
     }
     file.close();
 }
@@ -141,4 +143,22 @@ void MainWindow::onMenuROMLoadFromFile()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load ROM"), ".", tr("ROM Files (*.bin *.rom)"));
     if (fileName != nullptr)
         Emulator::ReadROM((char *)fileName.toUtf8().data(), 1);
+}
+
+void MainWindow::SetCPC464()
+{
+    Emulator::cpcType = CPCType::CPC464;
+    ResetEmulation();
+}
+
+void MainWindow::SetCPC664()
+{
+    Emulator::cpcType = CPCType::CPC664;
+    ResetEmulation();
+}
+
+void MainWindow::SetCPC6128()
+{
+    Emulator::cpcType = CPCType::CPC6128;
+    ResetEmulation();
 }

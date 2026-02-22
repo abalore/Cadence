@@ -16,12 +16,19 @@ void SpeedController::Run()
     t = duration_cast<microseconds>(now).count();
     elapsed = t - lastT;
     lastElapsed = elapsed;
-    while (elapsed < 19968)
+    if (elapsed > 19968)
     {
         QThread::usleep(0);
-        duration now = high_resolution_clock::now().time_since_epoch();
-        t = duration_cast<microseconds>(now).count();
-        elapsed = t - lastT;
-    };
+    }
+    else
+    {
+        while (elapsed < 19968)
+        {
+            QThread::usleep(0);
+            duration now = high_resolution_clock::now().time_since_epoch();
+            t = duration_cast<microseconds>(now).count();
+            elapsed = t - lastT;
+        }
+    }
     lastT = t;
 }

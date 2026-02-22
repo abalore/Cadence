@@ -7,10 +7,14 @@ BYTE ROMSelector::SelectedROM;
 void ROMSelector::Init()
 {
     SelectedROM = 0;
+    CPC::HiROM = CPC::HiROMs[0];
 }
 
 void ROMSelector::WR()
 {
     SelectedROM = Z80::DR & 0x1F;
-    CPC::HiROM = CPC::HiROMs[SelectedROM];
+    if (CPC::HiROMs[SelectedROM] != nullptr)
+        CPC::HiROM = CPC::HiROMs[SelectedROM];
+    else
+        CPC::HiROM = CPC::HiROMs[0];
 }
