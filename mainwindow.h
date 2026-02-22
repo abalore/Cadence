@@ -35,6 +35,10 @@ private slots:
     void StartThreads();
     void StopThreads();
     void ResetEmulation();
+
+    void SetCPC464();
+    void SetCPC664();
+    void SetCPC6128();
 private:
     Ui::MainWindow *ui;
     Debugger *debugger;

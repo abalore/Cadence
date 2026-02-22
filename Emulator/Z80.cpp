@@ -7,6 +7,7 @@
 #include "Headers/FDC.h"
 #include "Headers/GateArray.h"
 #include "Headers/ROMSelector.h"
+#include "Headers/Emulator.h"
 
 using namespace std;
 
@@ -96,20 +97,6 @@ void Z80::Init()
     halted = false;
 }
 
-void Z80::Step()
-{
-    switch(idMode)
-    {
-    case IDMode::BASIC: Step_basic(); break;
-    case IDMode::MISC: Step_misc(); break;
-    case IDMode::BIT: Step_CB(); break;
-    case IDMode::IDX: Step_IDX(); break;
-    case IDMode::IDX2: Step_IDX_2(); break;
-    case IDMode::IDXBIT: Step_IDX_CB(); break;
-    case IDMode::INTEXEC: Step_Int_Exec(); break;
-    }
-}
-
 void Z80::ProcessINT()
 {
     if (InterruptMode == 1) IR = 0xFF;
@@ -117,8 +104,6 @@ void Z80::ProcessINT()
 
 void Z80::ProcessFETCH()
 {
-    if (idMode == IDMode::BASIC)
-        stopPoint = true;
     t8 = R & 0x80;
     R++;
     R = (R & 0x7F) + t8;
@@ -135,60 +120,28 @@ void Z80::ProcessFETCH()
 
 void Z80::ProcessREAD()
 {
-    switch((AR & 0xC000) >> 14)
-    {
-    case 0:
-        if (!GateArray::LoROMActive)
-            DR = CPC::LoROM[AR];
-        else
-            DR = CPC::ActiveRAM()[AR];
-        break;
-    case 1:
-    case 2:
-        DR = CPC::ActiveRAM()[AR];
-        break;
-    case 3:
-        if (!GateArray::HiROMActive)
-            DR = CPC::ActiveROM()[AR - 0xC000];
-        else
-            DR = CPC::ActiveRAM()[AR];
-    }
-
+    DR = CPC::GetByteAt(AR);
 }
 
 void Z80::ProcessWRITE()
 {
-    CPC::ActiveRAM()[AR] = DR;
+    CPC::SetByteAt(AR, DR);
 }
 
 void Z80::ProcessIN()
 {
-    if ((AR & 0x4000) == 0)
-        CRTC::RD();
-    else if ((AR & 0x0800) == 0)
-    {
-        PSG::RD();
-        PPI::RD();
-    }
-    else if ((AR & 0x0480) == 0)
-        FDC::RD();
+    if ((AR & 0x4000) == 0) CRTC::RD();
+    else if ((AR & 0x0800) == 0) { PSG::RD(); PPI::RD(); }
+    else if ((AR & 0x0480) == 0 && Emulator::cpcType != CPCType::CPC464) FDC::RD();
 }
 
 void Z80::ProcessOUT()
 {
-    if ((AR & 0x8000) == 0)
-        GateArray::WR();
-    else if ((AR & 0x4000) == 0)
-        CRTC::WR();
-    else if ((AR & 0x2000) == 0)
-        ROMSelector::WR();
-    else if ((AR & 0x0800) == 0)
-    {
-        PPI::WR();
-        PSG::WR();
-    }
-    else if ((AR & 0x0480) == 0)
-        FDC::WR();
+    if ((AR & 0x8000) == 0) GateArray::WR();
+    else if ((AR & 0x4000) == 0) CRTC::WR();
+    else if ((AR & 0x2000) == 0) ROMSelector::WR();
+    else if ((AR & 0x0800) == 0) { PPI::WR(); PSG::WR(); }
+    else if ((AR & 0x0480) == 0 && Emulator::cpcType != CPCType::CPC464) FDC::WR();
 }
 
 void Z80::Clock()
@@ -203,18 +156,31 @@ void Z80::Clock()
     case MCycleType::OUT: ProcessOUT(); break;
     case MCycleType::ALU: break;
     }
-    Step();
+    switch(idMode)
+    {
+    case IDMode::BASIC: Step_basic(); break;
+    case IDMode::MISC: Step_misc(); break;
+    case IDMode::BIT: Step_CB(); break;
+    case IDMode::IDX: Step_IDX(); break;
+    case IDMode::IDX2: Step_IDX_2(); break;
+    case IDMode::IDXBIT: Step_IDX_CB(); break;
+    case IDMode::INTEXEC: Step_Int_Exec(); break;
+    }
     if (mCycleType == MCycleType::FETCH)
     {
         mCycle = 1;
-        if (!InterruptRequest && InterruptEnable && idMode == IDMode::BASIC)
+        if (idMode == IDMode::BASIC)
         {
-            InterruptEnable = false;
-            InterruptRequest = true;
-            IR = 0xFF;
-            mCycleType = MCycleType::INT;
-            halted = false;
-            idMode = IDMode::INTEXEC;
+            stopPoint = true;
+            if (!InterruptRequest && InterruptEnable)
+            {
+                InterruptEnable = false;
+                InterruptRequest = true;
+                //IR = 0xFF;
+                mCycleType = MCycleType::INT;
+                halted = false;
+                idMode = IDMode::INTEXEC;
+            }
         }
     }
     else

@@ -1,5 +1,4 @@
 #include "Headers/FDC.h"
-#include "Headers/CPC.h"
 #include "Headers/Z80.h"
 
 FDCState FDC::state;
@@ -178,7 +177,7 @@ void FDC::ProcessCommand(BYTE data)
             commandState = FDCCommandState::FDC_StateSRT_HUT;
             break;
         default:
-            // Invalid codes: Do nothing
+            GoToExecutionState(20);
             break;
         }
         break;
@@ -380,6 +379,9 @@ void FDC::ProcessExecution()
         GoToResultState();
         break;
     default:
+        resultCount = 1;
+        result[0] = command | 0x80;
+        GoToResultState();
         break;
     }
 }

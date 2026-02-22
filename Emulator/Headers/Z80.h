@@ -61,7 +61,6 @@ public:
     static bool halted;
     static BYTE InterruptMode;
 private:
-    static void Step();;
     static void Step_basic();
     static void Step_misc();
     static void Step_CB();

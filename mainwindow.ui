@@ -73,7 +73,6 @@
     <property name="title">
      <string>System</string>
     </property>
-    <addaction name="actionLoad_binary"/>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
@@ -147,18 +146,6 @@
    </property>
    <property name="shortcut">
     <string>F4</string>
-   </property>
-  </action>
-  <action name="actionLoad_binary">
-   <property name="icon">
-    <iconset>
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Load binary</string>
-   </property>
-   <property name="shortcut">
-    <string>F2</string>
    </property>
   </action>
   <action name="actionLoad_File">
