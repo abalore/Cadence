@@ -40,7 +40,6 @@ SOURCES += \
     Emulator/CRTC.cpp \
     Emulator/Disassembler.cpp \
     Emulator/Emulator.cpp \
-    Emulator/Flag.cpp \
     Emulator/GateArray.cpp \
     Emulator/Reg16.cpp \
     Emulator/Z80.cpp \
@@ -65,7 +64,6 @@ HEADERS += \
     Emulator/Headers/Disassembler.h \
     Emulator/Headers/Emulator.h \
     Emulator/Headers/FDC.h \
-    Emulator/Headers/Flag.h \
     Emulator/Headers/FloppyDrive.h \
     Emulator/Headers/GateArray.h \
     Emulator/Headers/Keyboard.h \

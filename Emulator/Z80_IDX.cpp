@@ -88,7 +88,7 @@ void Z80::Step_IDX()
             Step_IDX_3();
             break;
         case 0x9: // ADD IX,SP
-            ADD_IDX_RR(SP);
+            ADD_IDX_WW(SP);
             break;
         case 0xC: // INC A
         case 0xD: // DEC A

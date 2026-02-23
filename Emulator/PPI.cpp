@@ -41,7 +41,7 @@ void PPI::RD()
         Z80::DR = aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
         break;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-        Z80::DR = bIO ? (Tape::GetLevel() << 7 )+ CRTC::VSYNC + 0x3E : 0x00;
+        Z80::DR = bIO ? (Tape::GetLevel() << 7 ) + CRTC::VSYNC + 0x3E : 0x00;
         break;
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)

@@ -9,8 +9,6 @@
 #include "Headers/ROMSelector.h"
 #include "Headers/Emulator.h"
 
-using namespace std;
-
 BYTE Z80::tCycle = 1;
 BYTE Z80::mCycle = 1;
 bool Z80::MREQ = true;
@@ -19,7 +17,7 @@ bool Z80::WR = true;
 bool Z80::IORQ = true;
 bool Z80::M1 = true;
 word Z80::PC = 0;
-Reg16 Z80::SP(&SPH, &SPL);
+word Z80::SP = 0;
 Reg16 Z80::AF(&A, &F);
 Reg16 Z80::BC(&B, &C);
 Reg16 Z80::DE(&D, &E);
@@ -62,7 +60,7 @@ BYTE Z80::t16H;
 BYTE Z80::t16L;
 BYTE Z80::SPH;
 BYTE Z80::SPL;
-BYTE Z80::I;
+BYTE Z80::I = 0;
 BYTE Z80::R;
 BYTE Z80::IR;
 BYTE Z80::DR;
@@ -75,38 +73,51 @@ BYTE Z80::tByte = 0;
 BYTE Z80::opCode = 0;
 Reg16 *Z80::IDX = &IX;
 word Z80::AR = 0;
-bool Z80::InterruptEnable = false;
+bool Z80::IFF1 = false;
+bool Z80::IFF2 = false;
 bool Z80::InterruptRequest = true;
 BYTE Z80::InterruptMode = 0;
+BYTE Z80::InterruptDelay = 0;
 bool Z80::stopPoint = false;
 BYTE Z80::t_cp = 0;
 bool Z80::halted = false;
 bool Z80::tC = false;
 int Z80::tCV = 0;
+BYTE Z80::t;
+word Z80::w1;
+word Z80::w2;
+word Z80::w3;
+int Z80::i1;
+int Z80::i2;
+int Z80::i3;
+dword Z80::nops;
 
 void Z80::Init()
 {
+    I = 0;
+    R = 0;
     mCycle = 1;
     PC = 0;
+    nops = 0;
     idMode = IDMode::BASIC;
     mCycleType = MCycleType::FETCH;
-    InterruptEnable = true;
+    IFF1 = false;
     InterruptRequest = true;
     InterruptMode = 0;
+    InterruptDelay = 0;
     stopPoint = false;
     halted = false;
 }
 
 void Z80::ProcessINT()
 {
+    R = (R & 0x80) | ((R + 1) & 0x7F);
     if (InterruptMode == 1) IR = 0xFF;
 }
 
 void Z80::ProcessFETCH()
 {
-    t8 = R & 0x80;
-    R++;
-    R = (R & 0x7F) + t8;
+    R = (R & 0x80) | ((R + 1) & 0x7F);
     AR = PC;
     ProcessREAD();
     if (halted)
@@ -166,21 +177,25 @@ void Z80::Clock()
     case IDMode::IDXBIT: Step_IDX_CB(); break;
     case IDMode::INTEXEC: Step_Int_Exec(); break;
     }
+    nops++;
     if (mCycleType == MCycleType::FETCH)
     {
         mCycle = 1;
         if (idMode == IDMode::BASIC)
         {
             stopPoint = true;
-            if (!InterruptRequest && InterruptEnable)
-            {
-                InterruptEnable = false;
-                InterruptRequest = true;
-                //IR = 0xFF;
-                mCycleType = MCycleType::INT;
-                halted = false;
-                idMode = IDMode::INTEXEC;
-            }
+            if (InterruptDelay > 0)
+                InterruptDelay--;
+            else
+                if (!InterruptRequest && IFF1)
+                {
+                    IFF1 = false;
+                    InterruptRequest = true;
+                    //IR = 0xFF;
+                    mCycleType = MCycleType::INT;
+                    halted = false;
+                    idMode = IDMode::INTEXEC;
+                }
         }
     }
     else

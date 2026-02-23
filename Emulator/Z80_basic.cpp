@@ -169,13 +169,13 @@ void Z80::Step_basic()
             JR(!fC);
             break;
         case 0x1: // LD SP,nn   {12T}
-            LD_RR_nn(SP);
+            LD_WW_nn(SP);
             break;
         case 0x2: // LD (nn),A    {16T}
             LD_Ind_A();
             break;
         case 0x3: // INC SP   {8T}
-            INC_RR(SP);
+            INC_WW(SP);
             break;
         case 0x4: // INC (HL)
             INC_Ind_HL();
@@ -193,13 +193,13 @@ void Z80::Step_basic()
             JR(fC);
             break;
         case 0x9: // ADD HL,SP
-            ADD_HL_RR(SP);
+            ADD_HL_WW(SP);
             break;
         case 0xA: // LD A,(nn)
             LD_A_Ind();
             break;
         case 0xB: // DEC SP
-            DEC_RR(SP);
+            DEC_WW(SP);
             break;
         case 0xC: // INC A
             INC_R(A);
@@ -663,12 +663,12 @@ void Z80::Step_basic()
             RET(fZ);
             break;
         case 0x9: // RET
-            RET(true);
+            RET();
             break;
         case 0xA: // JP Z,nn
             JP(fZ);
             break;
-        case 0xB: // BIT OP //////////////////////////////////////
+        case 0xB: // BIT OP
             idMode = IDMode::BIT;
             break;
         case 0xC: // CALL Z,nn
@@ -698,7 +698,7 @@ void Z80::Step_basic()
             JP(!fC);
             break;
         case 0x3: // OUT (n),A
-            //////////////////////////////////////////////////
+            OUT_n_A();
             break;
         case 0x4: // CALL NC,nn
             CALL(!fC);
@@ -722,7 +722,7 @@ void Z80::Step_basic()
             JP(fC);
             break;
         case 0xB: // IN A,(n)
-            //////////////////////////////////////////////////////////
+            IN_A_n();
             break;
         case 0xC: // CALL C,nn
             CALL(fC);
@@ -806,7 +806,8 @@ void Z80::Step_basic()
             JP(!fS);
             break;
         case 0x3: // DI
-            InterruptEnable = false;
+            IFF1 = false;
+            IFF2 = false;
             break;
         case 0x4: // CALL P,nn
             CALL(!fS);
@@ -831,7 +832,9 @@ void Z80::Step_basic()
             JP(fS);
             break;
         case 0xB: // EI
-            InterruptEnable = true;
+            IFF1 = true;
+            IFF2 = true;
+            InterruptDelay = 1;
             break;
         case 0xC: // CALL M,nn
             CALL(fS);

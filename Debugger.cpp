@@ -94,7 +94,7 @@ void Debugger::Update()
                 mem[address + 8], mem[address + 9],
                 mem[address + 10], mem[address + 11],
                 mem[address + 12], mem[address + 13],
-                mem[address + 14], mem[address + 14]);
+                mem[address + 14], mem[address + 15]);
         listMemory.append(buff);
     }
 
@@ -147,7 +147,7 @@ void Debugger::onStepOverClicked()
 void Debugger::onStepOutClicked()
 {
     setEnabled(false);
-    word address = Z80::SP.Get();
+    word address = Z80::SP;
     BYTE L = CPC::GetByteAt(address);
     BYTE H = CPC::GetByteAt(address + 1);
     EmulatorThread::RunTo(L + H * 256);
@@ -167,10 +167,10 @@ string Debugger::GetZ80RegsDebugLine()
     char buff[200];
     sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
-            Z80::PC, Z80::SP.Get(), Z80::IX.Get(), Z80::IY.Get(),
+            Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
             Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC);
     d.append(buff);
-    sprintf(buff, "IM:%1d\nInts:%1d", Z80::InterruptMode, Z80::InterruptEnable);
+    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::InterruptMode, Z80::IFF1, Z80::nops);
     d.append(buff);
     return d;
 }
@@ -179,7 +179,7 @@ string Debugger::GetZ80StackDebugLine()
 {
     string d;
     char buff[100];
-    word sp = Z80::SP.Get();
+    word sp = Z80::SP;
     for (int i = 0; i < 8; i++)
     {
         BYTE L = CPC::GetByteAt(sp);

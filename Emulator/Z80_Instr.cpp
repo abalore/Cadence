@@ -8,6 +8,8 @@ void Z80::INC_R(BYTE &reg)
     fS = reg & 0x80;
     fZ = reg == 0;
     fN = false;
+    f3 = reg & 0x08;
+    f5 = reg & 0x20;
 }
 
 void Z80::DEC_R(BYTE &reg)
@@ -18,6 +20,8 @@ void Z80::DEC_R(BYTE &reg)
     fS = reg & 0x80;
     fZ = reg == 0;
     fN = true;
+    f3 = reg & 0x08;
+    f5 = reg & 0x20;
 }
 
 void Z80::JR(bool condition)
@@ -26,11 +30,9 @@ void Z80::JR(bool condition)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         if (!condition)
             FinishInstruction();
         else
@@ -49,17 +51,14 @@ void Z80::LD_Ind_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        *t16.L = DR;
-        AR++;
+        t8 = DR;
+        AR = PC++;
         break;
     case 3:
-        *t16.H = DR;
-        AR++;
-        PC = AR;
-        AR = t16.Get();
+        AR = DR * 256 + t8;
         mCycleType = MCycleType::WRITE;
         DR = *reg.L;
         break;
@@ -73,23 +72,47 @@ void Z80::LD_Ind_RR(Reg16 reg)
     }
 }
 
+void Z80::LD_Ind_WW(word w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
+    case 2:
+        t8 = DR;
+        AR = PC++;
+        break;
+    case 3:
+        AR = DR * 256 + t8;
+        mCycleType = MCycleType::WRITE;
+        DR = w & 0x00FF;
+        break;
+    case 4:
+        AR++;
+        DR = w / 0x100;
+        break;
+    case 5:
+        FinishInstruction();
+        break;
+    }
+}
+
 void Z80::LD_RR_Ind(Reg16 reg)
 {
     switch(mCycle)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        *t16.L = DR;
-        AR++;
+        t8 = DR;
+        AR = PC++;
         break;
     case 3:
-        *t16.H = DR;
-        AR++;
-        PC = AR;
-        AR = t16.Get();
+        AR = DR * 256 + t8;
         break;
     case 4:
         *reg.L = DR;
@@ -102,23 +125,47 @@ void Z80::LD_RR_Ind(Reg16 reg)
     }
 }
 
+void Z80::LD_WW_Ind(word &w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
+    case 2:
+        t8 = DR;
+        AR = PC++;
+        break;
+    case 3:
+        AR = DR * 256 + t8;
+        break;
+    case 4:
+        w = DR;
+        AR++;
+        break;
+    case 5:
+        w += DR * 256;
+        FinishInstruction();
+        break;
+    }
+}
+
+
 void Z80::LD_Ind_A()
 {
     switch(mCycle)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        *t16.L = DR;
-        AR++;
+        t8 = DR;
+        AR = PC++;
         break;
     case 3:
-        *t16.H = DR;
-        AR++;
-        PC = AR;
-        AR = t16.Get();
+        AR = DR * 256 + t8;
         mCycleType = MCycleType::WRITE;
         DR = A;
         break;
@@ -134,17 +181,14 @@ void Z80::LD_A_Ind()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        *t16.L = DR;
-        AR++;
+        t8 = DR;
+        AR = PC++;
         break;
     case 3:
-        *t16.H = DR;
-        AR++;
-        PC = AR;
-        AR = t16.Get();
+        AR = DR * 256 + t8;
         break;
     case 4:
         A = DR;
@@ -190,16 +234,33 @@ void Z80::LD_RR_nn(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
         *reg.L = DR;
-        AR++;
+        AR = PC++;
         break;
     case 3:
         *reg.H = DR;
-        AR++;
-        PC = AR;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::LD_WW_nn(word &w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
+    case 2:
+        w = DR;
+        AR = PC++;
+        break;
+    case 3:
+        w += DR * 256;
         FinishInstruction();
         break;
     }
@@ -211,11 +272,25 @@ void Z80::INC_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        *reg.L = *reg.L + 1;
         break;
     case 2:
+        *reg.L = *reg.L + 1;
         if (*reg.L == 0)
             *reg.H = *reg.H + 1;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::INC_WW(word &w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::ALU;
+        w++;
+        break;
+    case 2:
         FinishInstruction();
         break;
     }
@@ -227,11 +302,25 @@ void Z80::DEC_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        *reg.L = *reg.L - 1;;
         break;
     case 2:
+        *reg.L = *reg.L - 1;
         if (*reg.L == 0xff)
             *reg.H = *reg.H - 1;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::DEC_WW(word &w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::ALU;
+        w--;
+        break;
+    case 2:
         FinishInstruction();
         break;
     }
@@ -243,12 +332,10 @@ void Z80::LD_R_n(BYTE &reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
         reg = DR;
-        AR++;
-        PC = AR;
         FinishInstruction();
         break;
     }
@@ -275,7 +362,7 @@ void Z80::PUSH_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        AR = SP.Get();
+        AR = SP;
         AR--;
         DR = *reg.H;
         break;
@@ -285,7 +372,7 @@ void Z80::PUSH_RR(Reg16 reg)
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        SP.Set(AR);
+        SP = AR;
         break;
     case 4:
         FinishInstruction();
@@ -299,17 +386,80 @@ void Z80::POP_RR(Reg16 reg)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = SP.Get();
+        AR = SP;
         break;
     case 2:
-        *t16.L = DR;
+        *reg.L = DR;
         AR++;
         break;
     case 3:
-        *t16.H = DR;
+        *reg.H = DR;
         AR++;
-        SP.Set(AR);
-        reg.Set(t16.Get());
+        SP = AR;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::SBC_HL_RR(Reg16 reg)
+{
+    SBC_HL_WW(reg.Get());
+}
+
+void Z80::SBC_HL_WW(word w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        w1 = HL.Get();
+        w2 = w + (fC ? 1 : 0);
+        w3 = w1 - w2;
+        mCycleType = MCycleType::ALU;
+        fC = w2 > w1;
+        fP = ((w1 ^ w2) & 0x8000) && ((w1 ^ w3) & 0x8000);
+        fH = ((w1 & 0xFFF) - (w2 & 0xFFF)) & 0x1000;
+        break;
+    case 2:
+        HL.Set(w3);
+        break;
+    case 3:
+        fN = true;
+        fZ = w3 == 0;
+        fS = (H & 0x80) > 0;
+        f3 = H & 0x08;
+        f5 = H & 0x20;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::ADC_HL_RR(Reg16 reg)
+{
+    ADC_HL_WW(reg.Get());
+}
+
+void Z80::ADC_HL_WW(word w)
+{
+    switch(mCycle)
+    {
+    case 1:
+        w1 = HL.Get();
+        w2 = w + (fC ? 1 : 0);
+        mCycleType = MCycleType::ALU;
+        fC = w1 + w2 > 0xFFFF;
+        tCV = (short)w1 + (short)w2;
+        fP = tCV < -32768 || tCV > 32767;
+        fH = (w1 & 0xFFF) + (w2 & 0xFFF) > 0xFFF;
+        break;
+    case 2:
+        HL.Set(w1 + w2);
+        break;
+    case 3:
+        fN = false;
+        fS = H & 0x80;
+        fZ = H == 0 && L == 0;
+        f3 = H & 0x08;
+        f5 = H & 0x20;
         FinishInstruction();
         break;
     }
@@ -317,21 +467,26 @@ void Z80::POP_RR(Reg16 reg)
 
 void Z80::ADD_HL_RR(Reg16 reg)
 {
+    ADD_HL_WW(reg.Get());
+}
+
+void Z80::ADD_HL_WW(word w)
+{
     switch(mCycle)
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        fC = HL.Get() + reg.Get() > 0xFFFF;
-        fP = HL.Get() + reg.Get() > 0xFFFF;
-        fH = (HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) > 0xFFF;
+        w1 = HL.Get();
+        fC = w1 + w > 0xFFFF;
+        fH = (w1 & 0xFFF) + (w & 0xFFF) > 0xFFF;
         break;
     case 2:
-        H += *reg.H;
-        if ((L + *reg.L) > 255) H++;
-        L += *reg.L;
+        HL.Set(w1 + w);
         break;
     case 3:
         fN = false;
+        f3 = H & 0x08;
+        f5 = H & 0x20;
         FinishInstruction();
         break;
     }
@@ -339,14 +494,16 @@ void Z80::ADD_HL_RR(Reg16 reg)
 
 void Z80::ADD_A_v(BYTE v)
 {
-    int signedResult = (sbyte)A + (sbyte)v;
-    fP = (signedResult > 127) || (signedResult < -128);
-    fC = A + v > 255;
-    fH = ((A & 0xF) + (v & 0xF)) > 0xF;
+    tCV = (sbyte)A + (sbyte)v;
+    fP = (tCV > 127) || (tCV < -128);
+    fC = A + v > 0xFF;
+    fH = ((A & 0xF) + (v & 0xF)) & 0x10;
     A += v;
     fS = A & 0x80;
     fZ = A == 0;
     fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::ADD_n()
@@ -355,11 +512,9 @@ void Z80::ADD_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         ADD_A_v(DR);
         FinishInstruction();
         break;
@@ -372,11 +527,9 @@ void Z80::ADC_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         ADC_A_v(DR);
         FinishInstruction();
         break;
@@ -389,11 +542,9 @@ void Z80::SUB_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         SUB_A_v(DR);
         FinishInstruction();
         break;
@@ -406,11 +557,9 @@ void Z80::SBC_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         SBC_A_v(DR);
         FinishInstruction();
         break;
@@ -423,11 +572,9 @@ void Z80::AND_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         AND_A_v(DR);
         FinishInstruction();
         break;
@@ -440,11 +587,9 @@ void Z80::XOR_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         XOR_A_v(DR);
         FinishInstruction();
         break;
@@ -457,11 +602,9 @@ void Z80::OR_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         OR_A_v(DR);
         FinishInstruction();
         break;
@@ -474,11 +617,9 @@ void Z80::CP_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         CP_v(DR);
         FinishInstruction();
         break;
@@ -487,141 +628,132 @@ void Z80::CP_n()
 
 void Z80::ADD_R(BYTE &reg)
 {
-  ADD_A_v(reg);
+    ADD_A_v(reg);
 }
 
 void Z80::ADD_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      ADD_R(DR);
-      FinishInstruction();
-      break;
-  }
+        ADD_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::ADC_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      ADC_R(DR);
-      FinishInstruction();
-      break;
-  }
+        ADC_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::SUB_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      SUB_R(DR);
-      FinishInstruction();
-      break;
-  }
+        SUB_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::SBC_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      SBC_R(DR);
-      FinishInstruction();
-      break;
-  }
+        SBC_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::AND_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      AND_R(DR);
-      FinishInstruction();
-      break;
-  }
+        AND_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::XOR_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      XOR_R(DR);
-      FinishInstruction();
-      break;
-  }
+        XOR_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::OR_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      OR_R(DR);
-      FinishInstruction();
-      break;
-  }
+        OR_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::CP_Ind_HL()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = HL.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = HL.Get();
+        break;
     case 2:
-      CP_R(DR);
-      FinishInstruction();
-      break;
-  }
+        CP_R(DR);
+        FinishInstruction();
+        break;
+    }
 }
-
 
 void Z80::ADC_A_v(BYTE v)
 {
-    tCV = fC ? 1 : 0;
-    int signedResult = (sbyte)A + (sbyte)v + tCV;
-    fP = (signedResult > 127) || (signedResult < -128);
-    fC = (A + v + tCV) > 255;
-    fH = ((A & 0xF) + (v & 0xF) + tCV) > 0xF;
-    A += v + tCV;
-    fS = A & 0x80;
-    fZ = A == 0;
-    fN = false;
+    ADD_A_v(v + (fC ? 1 : 0));
 }
 
 void Z80::ADC_R(BYTE &reg)
@@ -631,45 +763,39 @@ void Z80::ADC_R(BYTE &reg)
 
 void Z80::SUB_A_v(BYTE v)
 {
-  int signedResult = (sbyte)A - (sbyte)v;
-  fP = (signedResult > 127) || (signedResult < -128);
-  fH = (A & 0xF) < (v & 0xF);
-  fC = A < v;
-  A -= v;
-  fS = (A & 0x80) > 0;
-  fZ = A == 0;
-  fN = true;
+    tCV = (sbyte)A - (sbyte)v;
+    fP = (tCV > 127) || (tCV < -128);
+    fH = (A & 0xF) < (v & 0xF);
+    fC = A < v;
+    A -= v;
+    fS = (A & 0x80) > 0;
+    fZ = A == 0;
+    fN = true;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::SUB_R(BYTE &reg)
 {
-  SUB_A_v(reg);
+    SUB_A_v(reg);
 }
 
 void Z80::SBC_A_v(BYTE v)
 {
-    tCV = fC ? 1 : 0;
-    int signedResult = (sbyte)A - (sbyte)v - tCV;
-    fP = (signedResult > 127) || (signedResult < -128);
-    fH = (A & 0xF) < ((v & 0xF) + tCV);
-    fC = A < (v + tCV);
-    A -= v + tCV;
-    fS = (A & 0x80) > 0;
-    fZ = A == 0;
-    fN = true;
+    SUB_A_v(v + (fC ? 1 : 0));
 }
 
 void Z80::SBC_R(BYTE &reg)
 {
-  SBC_A_v(reg);
+    SUB_A_v(reg + (fC ? 1 : 0));
 }
 
 bool Z80::GetParity(BYTE b)
 {
-  b ^= b >> 4;
-  b ^= b >> 2;
-  b ^= b >> 1;
-  return (b & 0x01) == 0;
+    b ^= b >> 4;
+    b ^= b >> 2;
+    b ^= b >> 1;
+    return !(b & 0x01);
 }
 
 void Z80::SetFlagsAfterLogicalOp(BYTE b)
@@ -679,6 +805,8 @@ void Z80::SetFlagsAfterLogicalOp(BYTE b)
     fZ = b == 0;
     fN = false;
     fC = false;
+    f3 = b & 0x08;
+    f5 = b & 0x20;
 }
 
 void Z80::SetFlagsAfterShiftOp(BYTE b)
@@ -688,6 +816,8 @@ void Z80::SetFlagsAfterShiftOp(BYTE b)
     fZ = b == 0;
     fH = false;
     fN = false;
+    f3 = b & 0x08;
+    f5 = b & 0x20;
 }
 
 void Z80::AND_A_v(BYTE v)
@@ -699,130 +829,157 @@ void Z80::AND_A_v(BYTE v)
 
 void Z80::AND_R(BYTE &reg)
 {
-  AND_A_v(reg);
+    AND_A_v(reg);
 }
 
 void Z80::XOR_A_v(BYTE v)
 {
-  A ^= v;
-  fH = false;
-  SetFlagsAfterLogicalOp(A);
+    A ^= v;
+    fH = false;
+    SetFlagsAfterLogicalOp(A);
 }
 
 void Z80::XOR_R(BYTE &reg)
 {
-  XOR_A_v(reg);
+    XOR_A_v(reg);
 }
 
 void Z80::OR_A_v(BYTE v)
 {
-  A |= v;
-  fH = false;
-  SetFlagsAfterLogicalOp(A);
+    A |= v;
+    fH = false;
+    SetFlagsAfterLogicalOp(A);
 }
 
 void Z80::OR_R(BYTE &reg)
 {
-  OR_A_v(reg);
+    OR_A_v(reg);
 }
 
 void Z80::CP_v(BYTE v)
 {
-  t_cp = A;
-  SUB_A_v(v);
-  A = t_cp;
+    tCV = (sbyte)A - (sbyte)v;
+    fP = (tCV > 127) || (tCV < -128);
+    fH = (A & 0xF) < (v & 0xF);
+    fC = A < v;
+    t_cp = A - v;
+    fS = (t_cp & 0x80) > 0;
+    fZ = t_cp == 0;
+    fN = true;
+    f3 = v & 0x08;
+    f5 = v & 0x20;
 }
 
 void Z80::CP_R(BYTE &reg)
 {
-  CP_v(reg);
+    CP_v(reg);
+}
+
+void Z80::RET()
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = SP;
+        break;
+    case 2:
+        w1 = DR;
+        AR++;
+        break;
+    case 3:
+        w1 += DR * 256;
+        AR++;
+        SP = AR;
+        PC = w1;
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::RET(bool condition)
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = SP.Get();
-      break;
+        mCycleType = MCycleType::READ;
+        AR = SP;
+        break;
     case 2:
-      *t16.L = DR;
-      AR++;
-      if (!condition) FinishInstruction();
-      break;
+        if (!condition) FinishInstruction();
+        w1 = DR;
+        AR++;
+        break;
     case 3:
-      *t16.H = DR;
-      AR++;
-      SP.Set(AR);
-      PC = t16.Get();
-      FinishInstruction();
-      break;
-  }
+        w1 += DR * 256;
+        AR++;
+        mCycleType = MCycleType::ALU;
+        break;
+    case 4:
+        SP = AR;
+        PC = w1;
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::JP(bool condition)
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = PC;
-      break;
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
     case 2:
-      *t16.L = DR;
-      AR++;
-      break;
+        t8 = DR;
+        AR = PC++;
+        break;
     case 3:
-      *t16.H = DR;
-      AR++;
-      if (condition)
-        PC = t16.Get();
-      else
-        PC = AR;
-      FinishInstruction();
-      break;
-  }
+        AR++;
+        if (condition)
+            PC = DR * 256 + t8;
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::CALL(bool condition)
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
-      AR = PC;
-      break;
+        mCycleType = MCycleType::READ;
+        AR = PC;
+        break;
     case 2:
-      *t16.L = DR;
-      AR++;
-      break;
+        *t16.L = DR;
+        AR++;
+        break;
     case 3:
-      *t16.H = DR;
-      AR++;
-      PC = AR;
-      if (condition)
-      {
-        mCycleType = MCycleType::WRITE;
-        AR = SP.Get();
-        AR--;
-        DR = (BYTE)(PC >> 8);
-      }
-      else
-      {
-        FinishInstruction();
-      }
-      break;
+        *t16.H = DR;
+        AR++;
+        PC = AR;
+        if (condition)
+        {
+            mCycleType = MCycleType::WRITE;
+            AR = SP;
+            AR--;
+            DR = (BYTE)(PC >> 8);
+        }
+        else
+            FinishInstruction();
+        break;
     case 4:
-      AR--;
-      DR = (BYTE)(PC & 0xFF);
-      break;
+        AR--;
+        DR = (BYTE)(PC & 0xFF);
+        break;
     case 5:
-      SP.Set(AR);
-      PC = t16.Get();
-      FinishInstruction();
-      break;
-  }
+        SP = AR;
+        PC = t16.Get();
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::RST(BYTE address)
@@ -831,7 +988,7 @@ void Z80::RST(BYTE address)
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        AR = SP.Get();
+        AR = SP;
         AR--;
         DR = (BYTE)(PC >> 8);
         break;
@@ -841,7 +998,7 @@ void Z80::RST(BYTE address)
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        SP.Set(AR);
+        SP = AR;
         break;
     case 4:
         PC = address;
@@ -955,27 +1112,43 @@ void Z80::ShiftOpIndHL(BYTE opCode)
             break;
         case 0x46:
             BIT_x_R(0, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x4E:
             BIT_x_R(1, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x56:
             BIT_x_R(2, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x5E:
             BIT_x_R(3, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x66:
             BIT_x_R(4, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x6E:
             BIT_x_R(5, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x76:
             BIT_x_R(6, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x7E:
             BIT_x_R(7, &DR);
+            f3 = H & 0x08;
+            f5 = H & 0x20;
             break;
         case 0x86:
             RES_x_R(0, &DR);
@@ -1036,9 +1209,13 @@ void Z80::ShiftOpIndHL(BYTE opCode)
 
 void Z80::BIT_x_R(int X, BYTE * R)
 {
-    fZ = (*R & (1 << X)) == 0;
+    fZ = !(*R & (1 << X));
     fH = true;
     fN = false;
+    //f3 = false;
+    //f5 = false;
+    fS = X == 7;
+    fP = fZ;
 }
 
 void Z80::RES_x_R(int X, BYTE * R)
@@ -1104,6 +1281,8 @@ void Z80::SRL_IDX_R(BYTE &reg)
 void Z80::BIT_x_IDX(int X)
 {
     BIT_x_R(X, &tByte);
+    f3 = AR & 0x0800;
+    f5 = AR & 0x2000;
 }
 
 void Z80::RES_x_IDX(int X, BYTE &reg)
@@ -1136,56 +1315,30 @@ void Z80::ADD_IDX_RR(Reg16 reg)
     case 3:
         fN = false;
         (*IDX).Set(t16.Get());
+        f3 = IXH & 0x08;
+        f5 = IXH & 0x20;
         FinishInstruction();
         break;
     }
 }
 
-void Z80::SBC_HL_RR(Reg16 reg)
-{
-  switch(mCycle)
-  {
-    case 1:
-      tCV = fC ? 1 : 0;
-      mCycleType = MCycleType::ALU;
-      fC = reg.Get() + tCV > HL.Get();
-      fP = fC;
-      fH = (reg.Get() & 0xFFF)  + tCV > (HL.Get() & 0xFFF);
-      break;
-    case 2:
-      H -= *reg.H;
-      if (*reg.L + tCV > L) H--;
-      L -= *reg.L + tCV;
-      break;
-    case 3:
-      fN = true;
-      fZ = H == 0 && L == 0;
-      fS = (H & 0x80) > 0;
-      FinishInstruction();
-      break;
-  }
-}
-
-void Z80::ADC_HL_RR(Reg16 reg)
+void Z80::ADD_IDX_WW(word w)
 {
     switch(mCycle)
     {
     case 1:
-        tCV = fC ? 1 : 0;
-        mCycleType = MCycleType::ALU;
-        fC = HL.Get() + reg.Get() + tCV > 0xFFFF;
-        fP = HL.Get() + reg.Get() + tCV > 0xFFFF;
-        fH = (HL.Get() & 0xFFF) + (reg.Get() & 0xFFF) + tCV > 0xFFF;
+        Z80::mCycleType = MCycleType::ALU;
+        w1 = (*IDX).Get();
         break;
     case 2:
-        H += *reg.H;
-        if ((L + *reg.L + tCV) > 255) H++;
-        L += *reg.L + tCV;
+        fC = w1 + w > 0xFFFF;
+        fH = (w1 & 0xFFF) + (w & 0xFFF) > 0xFFF;
+        (*IDX).Set(w1 + w);
         break;
     case 3:
         fN = false;
-        fS = H & 0x80;
-        fZ = H == 0 && L == 0;
+        f3 = IXH & 0x08;
+        f5 = IXH & 0x20;
         FinishInstruction();
         break;
     }
@@ -1193,11 +1346,15 @@ void Z80::ADC_HL_RR(Reg16 reg)
 
 void Z80::NEG()
 {
-    t8 = A;
-    A = 0;
-    SUB_R(t8);
-    fC = t8 != 0x00;
-    fP = t8 == 0x80;
+    fZ = A == 0;
+    fC = A != 0x00;
+    fP = A == 0x80;
+    fH = A & 0xF;
+    A = -A;
+    fS = (A & 0x80) > 0;
+    fN = true;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::LDI(bool R)
@@ -1205,24 +1362,30 @@ void Z80::LDI(bool R)
     switch(mCycle)
     {
     case 1:
+        w1 = BC.Get() - 1;
+        w2 = HL.Get();
+        w3 = DE.Get();
         mCycleType = MCycleType::READ;
-        AR = HL.Get();
+        AR = w2;
         break;
     case 2:
+        t8 = DR + A;
+        f3 = t8 & 0x08;
+        f5 = t8 & 0x02;
         mCycleType = MCycleType::WRITE;
-        AR = DE.Get();
+        AR = w3;
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        DE.Set(DE.Get()+1);
-        HL.Set(HL.Get()+1);
-        BC.Set(BC.Get()-1);
+        DE.Set(w3 + 1);
+        HL.Set(w2 + 1);
         break;
     case 4:
-        fP = BC.Get() != 0;
+        fP = w1 != 0;
         fH = false;
         fN = false;
-        if (!R || BC.Get() == 0)
+        BC.Set(w1);
+        if (!R || w1 == 0)
             FinishInstruction();
         break;
     case 5:
@@ -1251,6 +1414,9 @@ void Z80::CPI(bool R)
         fZ = A == DR;
         fP = BC.Get() != 0;
         fN = true;
+        t8 = (A - DR) + (fH ? 1 : 0);
+        f3 = t8 & 0x08;
+        f5 = t8 & 0x02;
         break;
     case 4:
         if (!R || BC.Get() == 0 || A == DR) FinishInstruction();
@@ -1271,6 +1437,9 @@ void Z80::LDD(bool R)
         AR = HL.Get();
         break;
     case 2:
+        t8 = DR + A;
+        f3 = t8 & 0x08;
+        f5 = t8 & 0x02;
         mCycleType = MCycleType::WRITE;
         AR = DE.Get();
         break;
@@ -1310,6 +1479,9 @@ void Z80::CPD(bool R)
         fH = (A & 0xF) < (DR & 0xF);
         fS = ((A - DR) & 0x80) > 0;
         fZ = A == DR;
+        t8 = (A - DR) + (fH ? 1 : 0);
+        f3 = t8 & 0x08;
+        f5 = t8 & 0x02;
         break;
     case 4:
         fP = BC.Get() != 0;
@@ -1327,18 +1499,22 @@ void Z80::RLCA()
 {
     fC = (A & 0x80) > 0;
     A <<= 1;
-    if (fC) A++;
+    if (fC) A |= 0x01;
     fH = false;
     fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::RRCA()
 {
     fC = (A & 0x01) > 0;
     A >>= 1;
-    if (fC) A += 0x80;
+    if (fC) A |= 0x80;
     fH = false;
     fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::LD_A_I_RR(Reg16 reg)
@@ -1382,78 +1558,58 @@ void Z80::DecodeF()
 
 void Z80::EX_AF_AF_()
 {
-    BYTE t = A;
-    A = A_;
-    A_ = t;
+    t = A; A = A_; A_ = t;
     EncodeF();
-    t = F;
-    F = F_;
-    F_ = t;
+    t = F; F = F_; F_ = t;
     DecodeF();
 }
 
 void Z80::EX_DE_HL()
 {
-    BYTE t = D;
-    D = H;
-    H = t;
-    t = E;
-    E = L;
-    L = t;
+    t = D; D = H; H = t;
+    t = E; E = L; L = t;
 }
 
 void Z80::EXX()
 {
-    BYTE t = B;
-    B = B_;
-    B_ = t;
-    t = C;
-    C = C_;
-    C_ = t;
-    t = D;
-    D = D_;
-    D_ = t;
-    t = E;
-    E = E_;
-    E_ = t;
-    t = H;
-    H = H_;
-    H_ = t;
-    t = L;
-    L = L_;
-    L_ = t;
- }
+    t = B; B = B_; B_ = t;
+    t = C; C = C_; C_ = t;
+    t = D; D = D_; D_ = t;
+    t = E; E = E_; E_ = t;
+    t = H; H = H_; H_ = t;
+    t = L; L = L_; L_ = t;
+}
 
 void Z80::EX_HL_Ind_SP()
- {
-     switch(mCycle)
-     {
-     case 1:
-         mCycleType = MCycleType::READ;
-         AR = SP.Get();
-         break;
-     case 2:
-         *t16.L = DR;
-         AR++;
-         break;
-     case 3:
-         *t16.H = DR;
-         DR = H;
-         mCycleType = MCycleType::WRITE;
-         break;
-     case 4:
-         AR--;
-         DR = L;
-         break;
-     case 5:
-         mCycleType = MCycleType::ALU;
-         HL.Set(t16.Get());
-         break;
-     case 6:
-         FinishInstruction();
-         break;
-     }
- }
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = SP;
+        break;
+    case 2:
+        *t16.L = DR;
+        AR++;
+        break;
+    case 3:
+        *t16.H = DR;
+        DR = H;
+        mCycleType = MCycleType::WRITE;
+        break;
+    case 4:
+        AR--;
+        DR = L;
+        break;
+    case 5:
+        mCycleType = MCycleType::ALU;
+        HL.Set(t16.Get());
+        break;
+    case 6:
+        FinishInstruction();
+        break;
+    }
+}
 
 void Z80::EX_IDX_Ind_SP()
 {
@@ -1461,7 +1617,7 @@ void Z80::EX_IDX_Ind_SP()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = SP.Get();
+        AR = SP;
         break;
     case 2:
         *t16.L = DR;
@@ -1498,161 +1654,86 @@ void Z80::JP_IDX()
 
 void Z80::DJNZ()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      AR = PC;
-      mCycleType = MCycleType::READ;
-      break;
+        AR = PC++;
+        mCycleType = MCycleType::READ;
+        break;
     case 2:
-      AR++;
-      PC = AR;
-      B--;
-      if (B == 0)
-          FinishInstruction();
-      else
-          mCycleType = MCycleType::ALU;
-      break;
+        mCycleType = MCycleType::ALU;
+        break;
     case 3:
-      PC += (sbyte) DR;
-      break;
+        B--;
+        if (B == 0)
+            FinishInstruction();
+        else
+        PC += (sbyte) DR;
+        break;
     case 4:
-      FinishInstruction();
-      break;
-  }
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::RLA()
 {
-  tC = (A & 0x80) > 0;
-  A <<= 1;
-  if (fC) A++;
-  fC = tC;
-  fH = false;
-  fN = false;
+    tC = A & 0x80;
+    A <<= 1;
+    if (fC) A |= 0x01;
+    fC = tC;
+    fH = false;
+    fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::RRA()
 {
-  tC = (A & 0x01) > 0;
-  A >>= 1;
-  if (fC) A += 0x80;
-  fC = tC;
-  fH = false;
-  fN = false;
+    tC = A & 0x01;
+    A >>= 1;
+    if (fC) A |= 0x80;
+    fC = tC;
+    fH = false;
+    fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
-
-/*
-    --------------------------------------------------------------------------------
-    |           | C Flag  | HEX value in | H Flag | HEX value in | Number  | C flag|
-    | Operation | Before  | upper digit  | Before | lower digit  | added   | After |
-    |           | DAA     | (bit 7-4)    | DAA    | (bit 3-0)    | to byte | DAA   |
-    |------------------------------------------------------------------------------|
-    |           |    0    |     0-9      |   0    |     0-9      |   00    |   0   | Do nothing
-    |   ADD     |    0    |     0-8      |   0    |     A-F      |   06    |   0   | Ok
-    |           |    0    |     0-9      |   1    |     0-3      |   06    |   0   | Ok
-    |   ADC     |    0    |     A-F      |   0    |     0-9      |   60    |   1   | Ok
-    |           |    0    |     9-F      |   0    |     A-F      |   66    |   1   | Ok
-    |   INC     |    0    |     A-F      |   1    |     0-3      |   66    |   1   | Ok
-    |           |    1    |     0-2      |   0    |     0-9      |   60    |   1   | Ok
-    |           |    1    |     0-2      |   0    |     A-F      |   66    |   1   | Ok
-    |           |    1    |     0-3      |   1    |     0-3      |   66    |   1   | Ok
-    |------------------------------------------------------------------------------|
-    |   SUB     |    0    |     0-9      |   0    |     0-9      |   00    |   0   |
-    |   SBC     |    0    |     0-8      |   1    |     6-F      |   FA    |   0   |
-    |   DEC     |    1    |     7-F      |   0    |     0-9      |   A0    |   1   |
-    |   NEG     |    1    |     6-F      |   1    |     6-F      |   9A    |   1   |
-    --------------------------------------------------------------------------------
-*/
 
 void Z80::DAA()
 {
-    BYTE l = A & 0x0F;
-    BYTE h = (A & 0xF0) >> 4;
-    if (!fN)
-    {
-        if (!fC)
-        {
-            if (!fH)
-            {
-                if (h < 0x09 && l > 0x09) A += 0x06;
-                else if (h > 0x09 && l < 0x0A) { A += 0x60; fC = true; }
-                else if (h > 0x08 && l > 0x09) { A += 0x66; fC = true; }
-            }
-            else
-            {
-                if (h < 0x0A && l < 0x04) A += 0x06;
-                else if (h > 0x09 && l < 0x04) { A += 0x66; fC = true; }
-            }
-        }
-        else
-        {
-            if (!fH)
-            {
-                if (h < 0x03 && l < 0x0A) A += 0x60;
-                else if (h <0x03 && l > 0x09) A += 0x66;
-            }
-            else
-            {
-                if (h < 0x03 && l < 0x03) A += 0x66;
-            }
-        }
+    t8 = 0;
+    tC = fC;
+    t = A & 0x0F;
+    tByte = A >> 4;
+    if (fH || t > 9)
+        t8 |= 0x06;
+    if (fC || tByte > 9 || (tByte == 9 && t > 9)) {
+        t8 |= 0x60;
+        tC = true;
     }
-    else
-    {
-        if (!fC)
-        {
-            if (fH)
-            {
-                if (h < 0x09 && l > 0x05) A += 0xFA;
-            }
-        }
-        else
-        {
-            if (!fH)
-            {
-                if (h > 0x06 && l < 0x0A) A += 0xA0;
-            }
-            else
-            {
-                if (h > 0x05 && l > 0x05) A += 0x9A;
-            }
-        }
+    if (fN) {
+        fH = (fH && (t < 6));
+        A -= t8;
+    } else {
+        fH = (t > 9);
+        A += t8;
     }
-
-/*
-  BYTE correction = 0;
-  if (A > 0x99 || fC.Get())
-  {
-    correction = 0x60;
-    fC.Set(true);
-  }
-  else
-    fC.Set(false);
-  if ((A & 0xF) > 9 || fH.Get())
-    correction |= 0x6;
-  if (fN.Get())
-  {
-    fH.Set(correction > (A & 0xF));
-    fP.Set(correction > A);
-    A -= correction;
-  }
-  else
-  {
-    fH.Set(correction > 0xF - (A & 0xF));
-    fP.Set(A + correction > 0xFF);
-    A += correction;
-  }
-  fZ.Set(A == 0);
-  fS.Set((A & 0x80) > 0);
-  */
+    fS = (A & 0x80) != 0;
+    fZ = (A == 0x00);
+    fP = GetParity(A);
+    fC = tC;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::CPL()
 {
-  A ^= 0xFF;
-  fH = true;
-  fN = true;
+    A ^= 0xFF;
+    fH = true;
+    fN = true;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::INC_Ind_HL()
@@ -1697,11 +1778,9 @@ void Z80::LD_Ind_HL_n()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        AR++;
-        PC = AR;
         AR = HL.Get();
         mCycleType = MCycleType::WRITE;
         break;
@@ -1716,6 +1795,8 @@ void Z80::SCF()
     fC = true;
     fN = false;
     fH = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::CCF()
@@ -1723,6 +1804,8 @@ void Z80::CCF()
     fH = fC;
     fC = !fC;
     fN = false;
+    f3 = A & 0x08;
+    f5 = A & 0x20;
 }
 
 void Z80::LD_SP_HL()
@@ -1731,7 +1814,7 @@ void Z80::LD_SP_HL()
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        SP.Set(HL.Get());
+        SP = HL.Get();
         break;
     case 2:
         FinishInstruction();
@@ -1745,7 +1828,7 @@ void Z80::LD_SP_IDX()
     {
     case 1:
         mCycleType = MCycleType::ALU;
-        SP.Set((*IDX).Get());
+        SP = (*IDX).Get();
         break;
     case 2:
         FinishInstruction();
@@ -1762,16 +1845,44 @@ void Z80::IN_R_PortBC(BYTE &reg)
         AR = BC.Get();
         break;
     case 2:
-        mCycleType = MCycleType::ALU;
         reg = DR;
+        fS = DR & 0x80;
+        fZ = DR == 0;
+        fH = false;
+        fP = GetParity(DR);
+        fN = false;
+        f3 = reg & 0x08;
+        f5 = reg & 0x20;
+        mCycleType= MCycleType::ALU;
         break;
     case 3:
-        fS = (DR & 0x80) > 0;
+        FinishInstruction();
+        break;
+    }
+}
+
+void Z80::IN_A_n()
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
+    case 2:
+        mCycleType = MCycleType::IN;
+        AR = DR;
+        break;
+    case 3:
+        A = DR;
+        fS = DR & 0x80;
         fZ = DR == 0;
         fH = false;
         fP = GetParity(DR);
         fN = false;
         FinishInstruction();
+        f3 = A & 0x08;
+        f5 = A & 0x20;
         break;
     }
 }
@@ -1794,6 +1905,25 @@ void Z80::OUT_PortBC_R(BYTE &reg)
     }
 }
 
+void Z80::OUT_n_A()
+{
+    switch(mCycle)
+    {
+    case 1:
+        mCycleType = MCycleType::READ;
+        AR = PC++;
+        break;
+    case 2:
+        mCycleType = MCycleType::OUT;
+        AR = DR;
+        DR = A;
+        break;
+    case 3:
+        FinishInstruction();
+        break;
+    }
+}
+
 void Z80::LD_A_I()
 {
     switch(mCycle)
@@ -1807,7 +1937,9 @@ void Z80::LD_A_I()
         fS = A & 0x80;
         fH = false;
         fN = false;
-        fP = InterruptEnable;
+        fP = IFF1;
+        f3 = A & 0x08;
+        f5 = A & 0x20;
         FinishInstruction();
         break;
     }
@@ -1836,11 +1968,13 @@ void Z80::LD_A_R()
         A = R;
         break;
     case 2:
-        fP = InterruptEnable;
+        fP = IFF2;
         fZ = A == 0;
         fS = A & 0x80;
         fH = false;
         fN = false;
+        f3 = A & 0x08;
+        f5 = A & 0x20;
         FinishInstruction();
         break;
     }
@@ -1878,11 +2012,13 @@ void Z80::RLD()
         A = (BYTE)((A & 0xF0) + (t8 >> 4));
         break;
     case 4:
-        fP = (A & 0x01) == 0;
+        fP = GetParity(A);
         fZ = A == 0;
         fS = (A & 0x80) > 0;
         fH = false;
         fN = false;
+        f3 = A & 0x08;
+        f5 = A & 0x20;
         FinishInstruction();
         break;
     }
@@ -1890,30 +2026,32 @@ void Z80::RLD()
 
 void Z80::RRD()
 {
-  switch(mCycle)
-  {
+    switch(mCycle)
+    {
     case 1:
-      mCycleType = MCycleType::READ;
+        mCycleType = MCycleType::READ;
         AR = HL.Get();
-    break;
+        break;
     case 2:
-      t8 = DR;
-      DR = (BYTE)((DR >> 4) + (A << 4));
-      mCycleType = MCycleType::WRITE;
-    break;
+        t8 = DR;
+        DR = (BYTE)((DR >> 4) + (A << 4));
+        mCycleType = MCycleType::WRITE;
+        break;
     case 3:
-      mCycleType = MCycleType::ALU;
-      A = (BYTE)((A & 0xF0) + (t8 & 0x0F));
-    break;
+        mCycleType = MCycleType::ALU;
+        A = (BYTE)((A & 0xF0) + (t8 & 0x0F));
+        break;
     case 4:
-        fP = (A & 0x01) == 0;
+        fP = GetParity(A);
         fZ = A == 0;
         fS = (A & 0x80) > 0;
         fH = false;
         fN = false;
-      FinishInstruction();
-    break;
-  }
+        f3 = A & 0x08;
+        f5 = A & 0x20;
+        FinishInstruction();
+        break;
+    }
 }
 
 void Z80::IM(int mode)
@@ -1931,6 +2069,12 @@ void Z80::INI(bool R, bool dir)
         AR = BC.Get();
         break;
     case 2:
+        if (dir)
+            t8 = DR + ((C + 1) & 0xFF);
+        else
+            t8 = DR + ((C - 1) & 0xFF);
+        f3 = t8 & 0x08;
+        f5 = t8 & 0x20;
         mCycleType = MCycleType::WRITE;
         AR = HL.Get();
         break;
@@ -1989,4 +2133,5 @@ void Z80::OUTI(bool R, bool dir)
         break;
     }
 }
+
 

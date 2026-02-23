@@ -6,33 +6,26 @@ void Z80::Step_IDX_2()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
-        index = (sbyte)DR;
-        AR++;
-        PC = AR;
         AR = IDX->Get();
-        t16.Set(index);
-        AR += t16.Get();
+        AR += (sbyte)DR;
         break;
     case 3:
         mCycleType = MCycleType::ALU;
-        t8 = DR;
         switch(IR >> 4)
         {
         case 0x3:
             switch(IR & 0x0F)
             {
             case 0x4: // 6
-                INC_R(t8);
+                INC_R(DR);
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
                 break;
             case 0x5: // 6
-                DEC_R(t8);
+                DEC_R(DR);
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
                 break;
             }
             break;
@@ -40,10 +33,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6: // 5
-                B = t8;
+                B = DR;
                 break;
             case 0xE: // 5
-                C = t8;
+                C = DR;
                 break;
             }
             break;
@@ -51,10 +44,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6: // 5
-                D = t8;
+                D = DR;
                 break;
             case 0xE: // 5
-                E = t8;
+                E = DR;
                 break;
             }
             break;
@@ -62,10 +55,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6: // 5
-                H = t8;
+                H = DR;
                 break;
             case 0xE: // 5
-                L = t8;
+                L = DR;
                 break;
             }
             break;
@@ -73,42 +66,35 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x0: // LD (IDX+d),B
-                t8 = B; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = B;
                 break;
             case 0x1: // LD (IDX+d),C
-                t8 = C; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = C;
                 break;
             case 0x2: // LD (IDX+d),D
-                t8 = D; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = D;
                 break;
             case 0x3: // LD (IDX+d),E
-                t8 = E; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = E;
                 break;
             case 0x4: // LD (IDX+d),H
-                t8 = H; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = H;
                 break;
             case 0x5: // LD (IDX+d),L
-                t8 = L; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = L;
                 break;
             case 0x7: // LD (IDX+d),A
-                t8 = A; // 5
                 mCycleType = MCycleType::WRITE;
-                DR = t8;
+                DR = A;
                 break;
             case 0xE: // LD A,(IDX+d)
-                A = t8; // 5
+                A = DR; // 5
                 break;
             }
             break;
@@ -116,10 +102,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6:
-                ADD_R(t8); // 5
+                ADD_R(DR); // 5
                 break;
             case 0xE:
-                ADC_R(t8); // 5
+                ADC_R(DR); // 5
                 break;
             }
             break;
@@ -127,10 +113,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6:
-                SUB_R(t8); // 5
+                SUB_R(DR); // 5
                 break;
             case 0xE:
-                SBC_R(t8); // 5
+                SBC_R(DR); // 5
                 break;
             }
             break;
@@ -138,10 +124,10 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6:
-                AND_R(t8); // 5
+                AND_R(DR); // 5
                 break;
             case 0xE:
-                XOR_R(t8); // 5
+                XOR_R(DR); // 5
                 break;
             }
             break;
@@ -149,17 +135,17 @@ void Z80::Step_IDX_2()
             switch(IR & 0x0F)
             {
             case 0x6:
-                OR_R(t8); // 5
+                OR_R(DR); // 5
                 break;
             case 0xE:
-                CP_R(t8); // 5
+                CP_R(DR); // 5
                 break;
             }
             break;
         }
         break;
     case 4:
-        if ((IR >> 4) == 3)
+        if ((IR >> 4) != 0x3)
             FinishInstruction();
         else
             mCycleType = MCycleType::ALU;
