@@ -23,8 +23,8 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0x5: // RETN
-            RET(true);
-            ////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0x6: // IM 0
             IM(0);
@@ -48,8 +48,7 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0xD: // RETI
-            RET(true);
-            /////////////////////////////////////////////////////////
+            RET();
             break;
         case 0xE: // IM 0
             IM(0);
@@ -78,8 +77,8 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0x5: // RETN
-            RET(true);
-            ////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0x6: // IM 1
             IM(1);
@@ -103,8 +102,8 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0xD: // RETN
-            RET(true);
-            /////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0xE: // IM 2
             IM(2);
@@ -133,8 +132,8 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0x5: // RETN
-            RET(true);
-            ////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0x6: // IM 0
             IM(0);
@@ -158,8 +157,8 @@ void Z80::Step_misc()
             NEG();
             break;
         case 0xD: // RETN
-            RET(true);
-            /////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0xE: // IM 0
             IM(0);
@@ -180,17 +179,17 @@ void Z80::Step_misc()
             OUT_PortBC_R(t8);
             break;
         case 0x2: // SBC HL,SP
-            SBC_HL_RR(SP);
+            SBC_HL_WW(SP);
             break;
         case 0x3: // LD (nn),SP
-            LD_Ind_RR(SP);
+            LD_Ind_WW(SP);
             break;
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET(true);
-            ////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0x6: // IM 1
             IM(1);
@@ -205,17 +204,17 @@ void Z80::Step_misc()
             OUT_PortBC_R(A);
             break;
         case 0xA: // ADC HL,SP
-            ADC_HL_RR(SP);
+            ADC_HL_WW(SP);
             break;
         case 0xB: // LD SP,(nn)
-            LD_RR_Ind(SP);
+            LD_WW_Ind(SP);
             break;
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETN
-            RET(true);
-            /////////////////////////////////////////////////////////
+            RET();
+            IFF1 = IFF2;
             break;
         case 0xE: // IM 2
             IM(2);

@@ -6,13 +6,13 @@ void Z80::Step_Int_Exec()
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        AR = SP.Get();
+        AR = SP;
         AR--;
         DR = (BYTE)(PC >> 8);
         break;
     case 2:
         AR--;
-        SP.Set(AR);
+        SP = AR;
         DR = (BYTE)(PC & 0xFF);
         break;
     case 3:

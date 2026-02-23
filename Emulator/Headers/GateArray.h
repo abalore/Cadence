@@ -27,7 +27,7 @@ public:
     static BYTE currentPen;
     static const BYTE cH = 255;
     static const BYTE cM = 128;
-    static const BYTE cL = 5;
+    static const BYTE cL = 0;
     static BYTE R52;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;

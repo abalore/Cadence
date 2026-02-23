@@ -306,7 +306,9 @@ void FDC::ProcessExecution()
         if (sectorInfo.SI_C != 0xFF)
         {
             dataSize = sectorInfo.SI_size * 256;
-            data = sectorInfo.SectorData + (weakSectorCycle++ % sectorInfo.copies) * dataSize;
+            data = sectorInfo.SectorData;
+            if (sectorInfo.copies > 1)
+                data += (weakSectorCycle++ % sectorInfo.copies) * dataSize;
             dataIndex = 0;
 
             statusReg0 = 0x00;

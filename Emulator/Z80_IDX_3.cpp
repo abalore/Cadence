@@ -22,8 +22,6 @@ void Z80::Step_IDX_3()
         mCycleType = MCycleType::ALU;
         break;
     case 5:
-        break;
-    case 6:
         FinishInstruction();
         break;
     }

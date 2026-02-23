@@ -3,9 +3,6 @@
 
 #include "defs.h"
 #include "Reg16.h"
-#include "Flag.h"
-
-using namespace std;
 
 enum MCycleType
 {
@@ -42,8 +39,8 @@ public:
     static bool WR;
     static bool IORQ;
     static bool M1;
-    static word PC;
-    static Reg16 SP, AF, BC, DE, HL, IX, IY;
+    static word PC, SP;
+    static Reg16 AF, BC, DE, HL, IX, IY;
     static Reg16 AF_, BC_, DE_, HL_;
     static bool fS, fZ, fH, fP, fN, fC, f3, f5;
     static BYTE A, F, B, C, D, E, H, L, IXH, IXL, IYH, IYL;
@@ -55,11 +52,15 @@ public:
     static word AR;
     static IDMode idMode;
     static MCycleType mCycleType;
-    static bool InterruptEnable;
+    static bool IFF1;
+    static bool IFF2;
     static bool InterruptRequest;
     static bool stopPoint;
     static bool halted;
     static BYTE InterruptMode;
+    static BYTE InterruptDelay;
+    static dword nops;
+
 private:
     static void Step_basic();
     static void Step_misc();
@@ -77,7 +78,7 @@ private:
     static void ProcessOUT();
     static void FinishInstruction();
     static BYTE t8;
-    static Reg16 t16;
+    static Reg16 t16, tt16;
     static sbyte index;
     static BYTE tByte;
     static BYTE opCode;
@@ -85,6 +86,9 @@ private:
     static BYTE t_cp;
     static bool tC;
     static int tCV;
+    static BYTE t;
+    static word w1, w2, w3;
+    static int i1, i2, i3;
 
     static void INC_R(BYTE &reg);
     static void DEC_R(BYTE &reg);
@@ -139,6 +143,7 @@ private:
     static void OR_R(BYTE &reg);
     static void CP_v(BYTE v);
     static void CP_R(BYTE &reg);
+    static void RET();
     static void RET(bool condition);
     static void JP(bool condition);
     static void CALL(bool condition);
@@ -196,7 +201,9 @@ private:
     static void LD_SP_HL();
     static void LD_SP_IDX();
     static void IN_R_PortBC(BYTE &reg);
+    static void IN_A_n();
     static void OUT_PortBC_R(BYTE &reg);
+    static void OUT_n_A();
     static void LD_A_I();
     static void LD_I_A();
     static void LD_A_R();
@@ -209,6 +216,15 @@ private:
     static void OUTI(bool R, bool dir);
     static void EncodeF();
     static void DecodeF();
+    static void LD_WW_nn(word &w);
+    static void LD_Ind_WW(word w);
+    static void LD_WW_Ind(word &w);
+    static void ADD_HL_WW(word w);
+    static void ADC_HL_WW(word w);
+    static void SBC_HL_WW(word w);
+    static void INC_WW(word &w);
+    static void DEC_WW(word &w);
+    static void ADD_IDX_WW(word w);
 };
 
 #endif // Z80_H

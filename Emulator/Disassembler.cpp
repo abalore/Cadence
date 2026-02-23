@@ -1823,7 +1823,7 @@ void Disassembler::GetNextInstructionMisc()
             instr = "ADC HL,SP";
             break;
         case 0xB: // LD SP,(nn)
-            instr = "SP,LD (" + ReadHex16() + ")";
+            instr = "LD SP,(" + ReadHex16() + ")";
             break;
         case 0xC: // NEG
             instr = "NEG";
