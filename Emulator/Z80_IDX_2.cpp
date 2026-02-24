@@ -1,5 +1,7 @@
 #include "Headers/Z80.h"
 
+#define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
+
 void Z80::Step_IDX_2()
 {
     switch(mCycle)
@@ -16,19 +18,6 @@ void Z80::Step_IDX_2()
         mCycleType = MCycleType::ALU;
         switch(IR >> 4)
         {
-        case 0x3:
-            switch(IR & 0x0F)
-            {
-            case 0x4: // 6
-                INC_R(DR);
-                mCycleType = MCycleType::WRITE;
-                break;
-            case 0x5: // 6
-                DEC_R(DR);
-                mCycleType = MCycleType::WRITE;
-                break;
-            }
-            break;
         case 0x4:
             switch(IR & 0x0F)
             {
@@ -98,60 +87,10 @@ void Z80::Step_IDX_2()
                 break;
             }
             break;
-        case 0x8:
-            switch(IR & 0x0F)
-            {
-            case 0x6:
-                ADD_R(DR); // 5
-                break;
-            case 0xE:
-                ADC_R(DR); // 5
-                break;
-            }
-            break;
-        case 0x9:
-            switch(IR & 0x0F)
-            {
-            case 0x6:
-                SUB_R(DR); // 5
-                break;
-            case 0xE:
-                SBC_R(DR); // 5
-                break;
-            }
-            break;
-        case 0xA:
-            switch(IR & 0x0F)
-            {
-            case 0x6:
-                AND_R(DR); // 5
-                break;
-            case 0xE:
-                XOR_R(DR); // 5
-                break;
-            }
-            break;
-        case 0xB:
-            switch(IR & 0x0F)
-            {
-            case 0x6:
-                OR_R(DR); // 5
-                break;
-            case 0xE:
-                CP_R(DR); // 5
-                break;
-            }
-            break;
         }
         break;
     case 4:
-        if ((IR >> 4) != 0x3)
-            FinishInstruction();
-        else
-            mCycleType = MCycleType::ALU;
-        break;
-    case 5:
-        FinishInstruction();
-        break;
+            FinishInstruction
+            break;
     }
 }

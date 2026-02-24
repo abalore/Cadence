@@ -21,7 +21,6 @@ enum IDMode
     MISC,
     BIT,
     IDX,
-    IDX2,
     IDXBIT,
     INTEXEC
 };
@@ -34,11 +33,7 @@ public:
     static void Clock();
     static BYTE tCycle;
     static BYTE mCycle;
-    static bool MREQ;
-    static bool RD;
-    static bool WR;
-    static bool IORQ;
-    static bool M1;
+    static bool MREQ, IORQ, RD, WR;
     static word PC, SP;
     static Reg16 AF, BC, DE, HL, IX, IY;
     static Reg16 AF_, BC_, DE_, HL_;
@@ -89,9 +84,60 @@ private:
     static BYTE t;
     static word w1, w2, w3;
     static int i1, i2, i3;
+    static short s1;
 
+    // 8 bit arithmetic and logic for A
+    static void ADD_v(BYTE v);
+    static void ADC_v(BYTE v);
+    static void SUB_v(BYTE v);
+    static void SBC_v(BYTE v);
+    static void CP_v(BYTE v);
+    static void AND_v(BYTE v);
+    static void XOR_v(BYTE v);
+    static void OR_v(BYTE v);
     static void INC_R(BYTE &reg);
     static void DEC_R(BYTE &reg);
+    static void ADD_n();
+    static void ADC_n();
+    static void SUB_n();
+    static void SBC_n();
+    static void AND_n();
+    static void XOR_n();
+    static void OR_n();
+    static void CP_n();
+    // 8 bit arithmetic and logic for (HL)
+    static void ADD_Ind_HL();
+    static void ADC_Ind_HL();
+    static void SUB_Ind_HL();
+    static void SBC_Ind_HL();
+    static void CP_Ind_HL();
+    static void AND_Ind_HL();
+    static void XOR_Ind_HL();
+    static void OR_Ind_HL();
+    static void INC_Ind_HL();
+    static void DEC_Ind_HL();
+    // 8 bit arithmetic and logic for (IDX+d)
+    static void ADD_Ind_IDX();
+    static void ADC_Ind_IDX();
+    static void SUB_Ind_IDX();
+    static void SBC_Ind_IDX();
+    static void CP_Ind_IDX();
+    static void AND_Ind_IDX();
+    static void XOR_Ind_IDX();
+    static void OR_Ind_IDX();
+    static void INC_Ind_IDX();
+    static void DEC_Ind_IDX();
+    // 16 bit arithmetic
+    static void ADD_HL_vv(word w);
+    static void ADC_HL_vv(word w);
+    static void SBC_HL_vv(word w);
+    static void ADD_IDX_vv(word w);
+    static void INC_WW(word &w);
+    static void DEC_WW(word &w);
+    static void INC_RR(Reg16 reg);
+    static void DEC_RR(Reg16 reg);
+
+
     static void JR(bool condition);
     static void LD_RR_addr(Reg16 reg);
     static void LD_Ind_RR(Reg16 reg);
@@ -101,48 +147,12 @@ private:
     static void LD_R_Ind_HL(BYTE &reg);
     static void LD_Ind_HL_R(BYTE &reg);
     static void LD_RR_nn(Reg16 reg);
-    static void INC_RR(Reg16 reg);
-    static void DEC_RR(Reg16 reg);
     static void LD_R_n(BYTE &reg);
     static void LD_Ind_RR_A(Reg16 reg);
     static void PUSH_RR(Reg16 reg);
     static void POP_RR(Reg16 reg);
-    static void ADD_HL_RR(Reg16 reg);
-    static void ADD_A_v(BYTE v);
-    static void ADD_n();
-    static void ADC_n();
-    static void SUB_n();
-    static void SBC_n();
-    static void AND_n();
-    static void XOR_n();
-    static void OR_n();
-    static void CP_n();
-    static void ADD_R(BYTE &reg);
-    static void ADD_Ind_HL();
-    static void ADC_Ind_HL();
-    static void SUB_Ind_HL();
-    static void SBC_Ind_HL();
-    static void AND_Ind_HL();
-    static void XOR_Ind_HL();
-    static void OR_Ind_HL();
-    static void CP_Ind_HL();
-    static void ADC_A_v(BYTE v);
-    static void ADC_R(BYTE &reg);
-    static void SUB_A_v(BYTE v);
-    static void SUB_R(BYTE &reg);
-    static void SBC_A_v(BYTE v);
-    static void SBC_R(BYTE &reg);
     static bool GetParity(BYTE b);
-    static void SetFlagsAfterLogicalOp(BYTE b);
     static void SetFlagsAfterShiftOp(BYTE b);
-    static void AND_A_v(BYTE v);
-    static void AND_R(BYTE &reg);
-    static void XOR_A_v(BYTE v);
-    static void XOR_R(BYTE &reg);
-    static void OR_A_v(BYTE v);
-    static void OR_R(BYTE &reg);
-    static void CP_v(BYTE v);
-    static void CP_R(BYTE &reg);
     static void RET();
     static void RET(bool condition);
     static void JP(bool condition);
@@ -171,8 +181,6 @@ private:
     static void RES_x_IDX(int X, BYTE &reg);
     static void SET_x_IDX(int X, BYTE &reg);
     static void ADD_IDX_RR(Reg16 reg);
-    static void SBC_HL_RR(Reg16 reg);
-    static void ADC_HL_RR(Reg16 reg);
     static void NEG();
     static void LDI(bool R);
     static void CPI(bool R);
@@ -193,8 +201,6 @@ private:
     static void RRA();
     static void DAA();
     static void CPL();
-    static void INC_Ind_HL();
-    static void DEC_Ind_HL();
     static void LD_Ind_HL_n();
     static void SCF();
     static void CCF();
@@ -219,12 +225,7 @@ private:
     static void LD_WW_nn(word &w);
     static void LD_Ind_WW(word w);
     static void LD_WW_Ind(word &w);
-    static void ADD_HL_WW(word w);
-    static void ADC_HL_WW(word w);
-    static void SBC_HL_WW(word w);
-    static void INC_WW(word &w);
-    static void DEC_WW(word &w);
-    static void ADD_IDX_WW(word w);
+
 };
 
 #endif // Z80_H

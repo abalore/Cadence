@@ -1,49 +1,6 @@
 #include "Headers/Z80.h"
 
-void Z80::INC_R(BYTE &reg)
-{
-    fH = (reg & 0xF) == 0xF;
-    fP = reg == 0x7F;
-    reg++;
-    fS = reg & 0x80;
-    fZ = reg == 0;
-    fN = false;
-    f3 = reg & 0x08;
-    f5 = reg & 0x20;
-}
-
-void Z80::DEC_R(BYTE &reg)
-{
-    fH = (reg & 0xF) == 0x0;
-    fP = reg == 0x80;
-    reg--;
-    fS = reg & 0x80;
-    fZ = reg == 0;
-    fN = true;
-    f3 = reg & 0x08;
-    f5 = reg & 0x20;
-}
-
-void Z80::JR(bool condition)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        if (!condition)
-            FinishInstruction();
-        else
-            mCycleType = MCycleType::ALU;
-        break;
-    case 3:
-        PC += (sbyte)DR;
-        FinishInstruction();
-        break;
-    }
-}
+#define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
 
 void Z80::LD_Ind_RR(Reg16 reg)
 {
@@ -67,7 +24,7 @@ void Z80::LD_Ind_RR(Reg16 reg)
         DR = *reg.H;
         break;
     case 5:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -94,7 +51,7 @@ void Z80::LD_Ind_WW(word w)
         DR = w / 0x100;
         break;
     case 5:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -120,7 +77,7 @@ void Z80::LD_RR_Ind(Reg16 reg)
         break;
     case 5:
         *reg.H = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -146,7 +103,7 @@ void Z80::LD_WW_Ind(word &w)
         break;
     case 5:
         w += DR * 256;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -170,7 +127,7 @@ void Z80::LD_Ind_A()
         DR = A;
         break;
     case 4:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -192,7 +149,7 @@ void Z80::LD_A_Ind()
         break;
     case 4:
         A = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
 
     }
@@ -208,7 +165,7 @@ void Z80::LD_R_Ind_HL(BYTE &reg)
         break;
     case 2:
         reg = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -223,7 +180,7 @@ void Z80::LD_Ind_HL_R(BYTE &reg)
         DR = reg;
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -242,7 +199,7 @@ void Z80::LD_RR_nn(Reg16 reg)
         break;
     case 3:
         *reg.H = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -261,70 +218,12 @@ void Z80::LD_WW_nn(word &w)
         break;
     case 3:
         w += DR * 256;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
 
-void Z80::INC_RR(Reg16 reg)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::ALU;
-        break;
-    case 2:
-        *reg.L = *reg.L + 1;
-        if (*reg.L == 0)
-            *reg.H = *reg.H + 1;
-        FinishInstruction();
-        break;
-    }
-}
 
-void Z80::INC_WW(word &w)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::ALU;
-        w++;
-        break;
-    case 2:
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::DEC_RR(Reg16 reg)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::ALU;
-        break;
-    case 2:
-        *reg.L = *reg.L - 1;
-        if (*reg.L == 0xff)
-            *reg.H = *reg.H - 1;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::DEC_WW(word &w)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::ALU;
-        w--;
-        break;
-    case 2:
-        FinishInstruction();
-        break;
-    }
-}
 
 void Z80::LD_R_n(BYTE &reg)
 {
@@ -336,7 +235,7 @@ void Z80::LD_R_n(BYTE &reg)
         break;
     case 2:
         reg = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -351,7 +250,7 @@ void Z80::LD_Ind_RR_A(Reg16 reg)
         DR = A;
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -375,7 +274,7 @@ void Z80::PUSH_RR(Reg16 reg)
         SP = AR;
         break;
     case 4:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -396,399 +295,11 @@ void Z80::POP_RR(Reg16 reg)
         *reg.H = DR;
         AR++;
         SP = AR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
 
-void Z80::SBC_HL_RR(Reg16 reg)
-{
-    SBC_HL_WW(reg.Get());
-}
-
-void Z80::SBC_HL_WW(word w)
-{
-    switch(mCycle)
-    {
-    case 1:
-        w1 = HL.Get();
-        w2 = w + (fC ? 1 : 0);
-        w3 = w1 - w2;
-        mCycleType = MCycleType::ALU;
-        fC = w2 > w1;
-        fP = ((w1 ^ w2) & 0x8000) && ((w1 ^ w3) & 0x8000);
-        fH = ((w1 & 0xFFF) - (w2 & 0xFFF)) & 0x1000;
-        break;
-    case 2:
-        HL.Set(w3);
-        break;
-    case 3:
-        fN = true;
-        fZ = w3 == 0;
-        fS = (H & 0x80) > 0;
-        f3 = H & 0x08;
-        f5 = H & 0x20;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADC_HL_RR(Reg16 reg)
-{
-    ADC_HL_WW(reg.Get());
-}
-
-void Z80::ADC_HL_WW(word w)
-{
-    switch(mCycle)
-    {
-    case 1:
-        w1 = HL.Get();
-        w2 = w + (fC ? 1 : 0);
-        mCycleType = MCycleType::ALU;
-        fC = w1 + w2 > 0xFFFF;
-        tCV = (short)w1 + (short)w2;
-        fP = tCV < -32768 || tCV > 32767;
-        fH = (w1 & 0xFFF) + (w2 & 0xFFF) > 0xFFF;
-        break;
-    case 2:
-        HL.Set(w1 + w2);
-        break;
-    case 3:
-        fN = false;
-        fS = H & 0x80;
-        fZ = H == 0 && L == 0;
-        f3 = H & 0x08;
-        f5 = H & 0x20;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADD_HL_RR(Reg16 reg)
-{
-    ADD_HL_WW(reg.Get());
-}
-
-void Z80::ADD_HL_WW(word w)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::ALU;
-        w1 = HL.Get();
-        fC = w1 + w > 0xFFFF;
-        fH = (w1 & 0xFFF) + (w & 0xFFF) > 0xFFF;
-        break;
-    case 2:
-        HL.Set(w1 + w);
-        break;
-    case 3:
-        fN = false;
-        f3 = H & 0x08;
-        f5 = H & 0x20;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADD_A_v(BYTE v)
-{
-    tCV = (sbyte)A + (sbyte)v;
-    fP = (tCV > 127) || (tCV < -128);
-    fC = A + v > 0xFF;
-    fH = ((A & 0xF) + (v & 0xF)) & 0x10;
-    A += v;
-    fS = A & 0x80;
-    fZ = A == 0;
-    fN = false;
-    f3 = A & 0x08;
-    f5 = A & 0x20;
-}
-
-void Z80::ADD_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        ADD_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADC_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        ADC_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::SUB_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        SUB_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::SBC_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        SBC_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::AND_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        AND_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::XOR_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        XOR_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::OR_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        OR_A_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::CP_n()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        CP_v(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADD_R(BYTE &reg)
-{
-    ADD_A_v(reg);
-}
-
-void Z80::ADD_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        ADD_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADC_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        ADC_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::SUB_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        SUB_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::SBC_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        SBC_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::AND_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        AND_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::XOR_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        XOR_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::OR_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        OR_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::CP_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        CP_R(DR);
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::ADC_A_v(BYTE v)
-{
-    ADD_A_v(v + (fC ? 1 : 0));
-}
-
-void Z80::ADC_R(BYTE &reg)
-{
-    ADC_A_v(reg);
-}
-
-void Z80::SUB_A_v(BYTE v)
-{
-    tCV = (sbyte)A - (sbyte)v;
-    fP = (tCV > 127) || (tCV < -128);
-    fH = (A & 0xF) < (v & 0xF);
-    fC = A < v;
-    A -= v;
-    fS = (A & 0x80) > 0;
-    fZ = A == 0;
-    fN = true;
-    f3 = A & 0x08;
-    f5 = A & 0x20;
-}
-
-void Z80::SUB_R(BYTE &reg)
-{
-    SUB_A_v(reg);
-}
-
-void Z80::SBC_A_v(BYTE v)
-{
-    SUB_A_v(v + (fC ? 1 : 0));
-}
-
-void Z80::SBC_R(BYTE &reg)
-{
-    SUB_A_v(reg + (fC ? 1 : 0));
-}
 
 bool Z80::GetParity(BYTE b)
 {
@@ -796,17 +307,6 @@ bool Z80::GetParity(BYTE b)
     b ^= b >> 2;
     b ^= b >> 1;
     return !(b & 0x01);
-}
-
-void Z80::SetFlagsAfterLogicalOp(BYTE b)
-{
-    fP = GetParity(b);
-    fS = (b & 0x80) > 0;
-    fZ = b == 0;
-    fN = false;
-    fC = false;
-    f3 = b & 0x08;
-    f5 = b & 0x20;
 }
 
 void Z80::SetFlagsAfterShiftOp(BYTE b)
@@ -818,195 +318,6 @@ void Z80::SetFlagsAfterShiftOp(BYTE b)
     fN = false;
     f3 = b & 0x08;
     f5 = b & 0x20;
-}
-
-void Z80::AND_A_v(BYTE v)
-{
-    A &= v;
-    fH = true;
-    SetFlagsAfterLogicalOp(A);
-}
-
-void Z80::AND_R(BYTE &reg)
-{
-    AND_A_v(reg);
-}
-
-void Z80::XOR_A_v(BYTE v)
-{
-    A ^= v;
-    fH = false;
-    SetFlagsAfterLogicalOp(A);
-}
-
-void Z80::XOR_R(BYTE &reg)
-{
-    XOR_A_v(reg);
-}
-
-void Z80::OR_A_v(BYTE v)
-{
-    A |= v;
-    fH = false;
-    SetFlagsAfterLogicalOp(A);
-}
-
-void Z80::OR_R(BYTE &reg)
-{
-    OR_A_v(reg);
-}
-
-void Z80::CP_v(BYTE v)
-{
-    tCV = (sbyte)A - (sbyte)v;
-    fP = (tCV > 127) || (tCV < -128);
-    fH = (A & 0xF) < (v & 0xF);
-    fC = A < v;
-    t_cp = A - v;
-    fS = (t_cp & 0x80) > 0;
-    fZ = t_cp == 0;
-    fN = true;
-    f3 = v & 0x08;
-    f5 = v & 0x20;
-}
-
-void Z80::CP_R(BYTE &reg)
-{
-    CP_v(reg);
-}
-
-void Z80::RET()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = SP;
-        break;
-    case 2:
-        w1 = DR;
-        AR++;
-        break;
-    case 3:
-        w1 += DR * 256;
-        AR++;
-        SP = AR;
-        PC = w1;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::RET(bool condition)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = SP;
-        break;
-    case 2:
-        if (!condition) FinishInstruction();
-        w1 = DR;
-        AR++;
-        break;
-    case 3:
-        w1 += DR * 256;
-        AR++;
-        mCycleType = MCycleType::ALU;
-        break;
-    case 4:
-        SP = AR;
-        PC = w1;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::JP(bool condition)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC++;
-        break;
-    case 2:
-        t8 = DR;
-        AR = PC++;
-        break;
-    case 3:
-        AR++;
-        if (condition)
-            PC = DR * 256 + t8;
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::CALL(bool condition)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = PC;
-        break;
-    case 2:
-        *t16.L = DR;
-        AR++;
-        break;
-    case 3:
-        *t16.H = DR;
-        AR++;
-        PC = AR;
-        if (condition)
-        {
-            mCycleType = MCycleType::WRITE;
-            AR = SP;
-            AR--;
-            DR = (BYTE)(PC >> 8);
-        }
-        else
-            FinishInstruction();
-        break;
-    case 4:
-        AR--;
-        DR = (BYTE)(PC & 0xFF);
-        break;
-    case 5:
-        SP = AR;
-        PC = t16.Get();
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::RST(BYTE address)
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::WRITE;
-        AR = SP;
-        AR--;
-        DR = (BYTE)(PC >> 8);
-        break;
-    case 2:
-        AR--;
-        DR = (BYTE)(PC & 0xFF);
-        break;
-    case 3:
-        mCycleType = MCycleType::ALU;
-        SP = AR;
-        break;
-    case 4:
-        PC = address;
-        break;
-    case 5:
-        FinishInstruction();
-        break;
-    }
 }
 
 
@@ -1202,7 +513,7 @@ void Z80::ShiftOpIndHL(BYTE opCode)
         mCycleType = MCycleType::WRITE;
         break;
     case 3:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1212,9 +523,7 @@ void Z80::BIT_x_R(int X, BYTE * R)
     fZ = !(*R & (1 << X));
     fH = true;
     fN = false;
-    //f3 = false;
-    //f5 = false;
-    fS = X == 7;
+    fS = X == 7 ? *R & 0x80 : 0;
     fP = fZ;
 }
 
@@ -1317,12 +626,12 @@ void Z80::ADD_IDX_RR(Reg16 reg)
         (*IDX).Set(t16.Get());
         f3 = IXH & 0x08;
         f5 = IXH & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
 
-void Z80::ADD_IDX_WW(word w)
+void Z80::ADD_IDX_vv(word w)
 {
     switch(mCycle)
     {
@@ -1339,7 +648,7 @@ void Z80::ADD_IDX_WW(word w)
         fN = false;
         f3 = IXH & 0x08;
         f5 = IXH & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1386,11 +695,11 @@ void Z80::LDI(bool R)
         fN = false;
         BC.Set(w1);
         if (!R || w1 == 0)
-            FinishInstruction();
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1419,11 +728,12 @@ void Z80::CPI(bool R)
         f5 = t8 & 0x02;
         break;
     case 4:
-        if (!R || BC.Get() == 0 || A == DR) FinishInstruction();
+        if (!R || BC.Get() == 0 || A == DR)
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1453,11 +763,12 @@ void Z80::LDD(bool R)
         fP = BC.Get() != 0;
         fH = false;
         fN = false;
-        if (!R || BC.Get() == 0) FinishInstruction();
+        if (!R || BC.Get() == 0)
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1486,11 +797,12 @@ void Z80::CPD(bool R)
     case 4:
         fP = BC.Get() != 0;
         fN = true;
-        if (!R || BC.Get() == 0 || A == DR) FinishInstruction();
+        if (!R || BC.Get() == 0 || A == DR)
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1527,7 +839,7 @@ void Z80::LD_A_I_RR(Reg16 reg)
         break;
     case 2:
         A = DR;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1606,7 +918,7 @@ void Z80::EX_HL_Ind_SP()
         HL.Set(t16.Get());
         break;
     case 6:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1637,7 +949,7 @@ void Z80::EX_IDX_Ind_SP()
         (*IDX).Set(t16.Get());
         break;
     case 6:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1666,12 +978,12 @@ void Z80::DJNZ()
     case 3:
         B--;
         if (B == 0)
-            FinishInstruction();
+            FinishInstruction
         else
         PC += (sbyte) DR;
         break;
     case 4:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1736,42 +1048,6 @@ void Z80::CPL()
     f5 = A & 0x20;
 }
 
-void Z80::INC_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        INC_R(DR);
-        mCycleType = MCycleType::WRITE;
-        break;
-    case 3:
-        FinishInstruction();
-        break;
-    }
-}
-
-void Z80::DEC_Ind_HL()
-{
-    switch(mCycle)
-    {
-    case 1:
-        mCycleType = MCycleType::READ;
-        AR = HL.Get();
-        break;
-    case 2:
-        DEC_R(DR);
-        mCycleType = MCycleType::WRITE;
-        break;
-    case 3:
-        FinishInstruction();
-        break;
-    }
-}
-
 void Z80::LD_Ind_HL_n()
 {
     switch(mCycle)
@@ -1785,7 +1061,7 @@ void Z80::LD_Ind_HL_n()
         mCycleType = MCycleType::WRITE;
         break;
     case 3:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1817,7 +1093,7 @@ void Z80::LD_SP_HL()
         SP = HL.Get();
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1831,7 +1107,7 @@ void Z80::LD_SP_IDX()
         SP = (*IDX).Get();
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1856,7 +1132,7 @@ void Z80::IN_R_PortBC(BYTE &reg)
         mCycleType= MCycleType::ALU;
         break;
     case 3:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1871,7 +1147,7 @@ void Z80::IN_A_n()
         break;
     case 2:
         mCycleType = MCycleType::IN;
-        AR = DR;
+        AR = A * 256 + DR;
         break;
     case 3:
         A = DR;
@@ -1880,7 +1156,7 @@ void Z80::IN_A_n()
         fH = false;
         fP = GetParity(DR);
         fN = false;
-        FinishInstruction();
+        FinishInstruction
         f3 = A & 0x08;
         f5 = A & 0x20;
         break;
@@ -1900,7 +1176,7 @@ void Z80::OUT_PortBC_R(BYTE &reg)
         mCycleType = MCycleType::ALU;
         break;
     case 3:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1919,7 +1195,7 @@ void Z80::OUT_n_A()
         DR = A;
         break;
     case 3:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1940,7 +1216,7 @@ void Z80::LD_A_I()
         fP = IFF1;
         f3 = A & 0x08;
         f5 = A & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1954,7 +1230,7 @@ void Z80::LD_I_A()
         I = A;
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1975,7 +1251,7 @@ void Z80::LD_A_R()
         fN = false;
         f3 = A & 0x08;
         f5 = A & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -1989,7 +1265,7 @@ void Z80::LD_R_A()
         R = A;
         break;
     case 2:
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -2019,7 +1295,7 @@ void Z80::RLD()
         fN = false;
         f3 = A & 0x08;
         f5 = A & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -2049,7 +1325,7 @@ void Z80::RRD()
         fN = false;
         f3 = A & 0x08;
         f5 = A & 0x20;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -2091,11 +1367,11 @@ void Z80::INI(bool R, bool dir)
         fZ = B == 0;
         fN = true;
         if (!R || B == 0)
-            FinishInstruction();
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }
@@ -2125,11 +1401,11 @@ void Z80::OUTI(bool R, bool dir)
         fZ = B == 0;
         fN = true;
         if (!R || B == 0)
-            FinishInstruction();
+            FinishInstruction
         break;
     case 5:
         PC -= 2;
-        FinishInstruction();
+        FinishInstruction
         break;
     }
 }

@@ -46,7 +46,8 @@ void Z80::Step_Int_Exec()
             PC = t16.Get();
             break;
         }
-        FinishInstruction();
+        mCycleType = MCycleType::FETCH;
+        idMode = IDMode::BASIC;
         break;
     }
 }

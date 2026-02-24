@@ -81,14 +81,16 @@ void Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0x4: // INC (IX+d)
+            INC_Ind_IDX();
+            break;
         case 0x5: // DEC (IX+d)
-            Step_IDX_2();
+            DEC_Ind_IDX();
             break;
         case 0x6: // LD (IX+d),n
             Step_IDX_3();
             break;
         case 0x9: // ADD IX,SP
-            ADD_IDX_WW(SP);
+            ADD_IDX_vv(SP);
             break;
         case 0xC: // INC A
         case 0xD: // DEC A
@@ -255,21 +257,23 @@ void Z80::Step_IDX()
         case 0xF: //
             Step_basic();
             break;
-        case 0x6: //
-        case 0xE: //
-            Step_IDX_2();
+        case 0x6:
+            ADD_Ind_IDX();
+            break;
+        case 0xE:
+            ADC_Ind_IDX();
             break;
         case 0x4: // ADD IDX.H
-            ADD_R(*(*IDX).H);
+            ADD_v(*(*IDX).H);
             break;
         case 0x5: // ADD IDX.L
-            ADD_R(*(*IDX).L);
+            ADD_v(*(*IDX).L);
             break;
         case 0xC: // ADC IDX.H
-            ADC_R(*(*IDX).H);
+            ADC_v(*(*IDX).H);
             break;
         case 0xD: // ADC IDX.L
-            ADC_R(*(*IDX).L);
+            ADC_v(*(*IDX).L);
             break;
         }
         break;
@@ -288,21 +292,23 @@ void Z80::Step_IDX()
         case 0xF: //
             Step_basic();
             break;
-        case 0x6: //
-        case 0xE: //
-            Step_IDX_2();
+        case 0x6:
+            SUB_Ind_IDX();
+            break;
+        case 0xE:
+            SBC_Ind_IDX();
             break;
         case 0x4: // SUB IDX.H
-            SUB_R(*(*IDX).H);
+            SUB_v(*(*IDX).H);
             break;
         case 0x5: // SUB IDX.L
-            SUB_R(*(*IDX).L);
+            SUB_v(*(*IDX).L);
             break;
         case 0xC: // SBC IDX.H
-            SBC_R(*(*IDX).H);
+            SBC_v(*(*IDX).H);
             break;
         case 0xD: // SBC IDX.L
-            SBC_R(*(*IDX).L);
+            SBC_v(*(*IDX).L);
             break;
         }
         break;
@@ -321,21 +327,23 @@ void Z80::Step_IDX()
         case 0xF: //
             Step_basic();
             break;
-        case 0x6: //
-        case 0xE: //
-            Step_IDX_2();
+        case 0x6:
+            AND_Ind_IDX();
+            break;
+        case 0xE:
+            XOR_Ind_IDX();
             break;
         case 0x4: // AND IDX.H
-            AND_R(*(*IDX).H);
+            AND_v(*(*IDX).H);
             break;
         case 0x5: // AND IDX.L
-            AND_R(*(*IDX).L);
+            AND_v(*(*IDX).L);
             break;
         case 0xC: // XOR IDX.H
-            XOR_R(*(*IDX).H);
+            XOR_v(*(*IDX).H);
             break;
         case 0xD: // XOR IDX.L
-            XOR_R(*(*IDX).L);
+            XOR_v(*(*IDX).L);
             break;
         }
         break;
@@ -354,21 +362,23 @@ void Z80::Step_IDX()
         case 0xF: //
             Step_basic();
             break;
-        case 0x6: //
-        case 0xE: //
-            Step_IDX_2();
+        case 0x6:
+            OR_Ind_IDX();
+            break;
+        case 0xE:
+            CP_Ind_IDX();
             break;
         case 0x4: // OR IDX.H
-            OR_R(*(*IDX).H);
+            OR_v(*(*IDX).H);
             break;
         case 0x5: // OR IDX.L
-            OR_R(*(*IDX).L);
+            OR_v(*(*IDX).L);
             break;
         case 0xC: // CP IDX.H
-            CP_R(*(*IDX).H);
+            CP_v(*(*IDX).H);
             break;
         case 0xD: // CP IDX.L
-            CP_R(*(*IDX).L);
+            CP_v(*(*IDX).L);
             break;
         }
         break;
