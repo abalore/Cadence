@@ -692,7 +692,8 @@ void Z80::Step_IDX_CB()
         DR = tByte;
         break;
     case 5:
-        FinishInstruction();
+        mCycleType = MCycleType::FETCH;
+        idMode = IDMode::BASIC;
         break;
     }
 

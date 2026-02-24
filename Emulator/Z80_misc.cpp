@@ -14,7 +14,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(B);
             break;
         case 0x2: // SBC HL,BC
-            SBC_HL_RR(BC);
+            SBC_HL_vv(BC.Get());
             break;
         case 0x3: // LD (nn),BC
             LD_Ind_RR(BC);
@@ -39,7 +39,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(C);
             break;
         case 0xA: // ADC HL,BC
-            ADC_HL_RR(BC);
+            ADC_HL_vv(BC.Get());
             break;
         case 0xB: // LD BC,(nn)
             LD_RR_Ind(BC);
@@ -68,7 +68,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(D);
             break;
         case 0x2: // SBC HL,DE
-            SBC_HL_RR(DE);
+            SBC_HL_vv(DE.Get());
             break;
         case 0x3: // LD (nn),DE
             LD_Ind_RR(DE);
@@ -93,7 +93,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(E);
             break;
         case 0xA: // ADC HL,DE
-            ADC_HL_RR(DE);
+            ADC_HL_vv(DE.Get());
             break;
         case 0xB: // LD DE,(nn)
             LD_RR_Ind(DE);
@@ -123,7 +123,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(H);
             break;
         case 0x2: // SBC HL,HL
-            SBC_HL_RR(HL);
+            SBC_HL_vv(HL.Get());
             break;
         case 0x3: // LD (nn),HL
             LD_Ind_RR(HL);
@@ -148,7 +148,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(L);
             break;
         case 0xA: // ADC HL,HL
-            ADC_HL_RR(HL);
+            ADC_HL_vv(HL.Get());
             break;
         case 0xB: // LD HL,(nn)
             LD_RR_Ind(HL);
@@ -179,7 +179,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(t8);
             break;
         case 0x2: // SBC HL,SP
-            SBC_HL_WW(SP);
+            SBC_HL_vv(SP);
             break;
         case 0x3: // LD (nn),SP
             LD_Ind_WW(SP);
@@ -204,7 +204,7 @@ void Z80::Step_misc()
             OUT_PortBC_R(A);
             break;
         case 0xA: // ADC HL,SP
-            ADC_HL_WW(SP);
+            ADC_HL_vv(SP);
             break;
         case 0xB: // LD SP,(nn)
             LD_WW_Ind(SP);

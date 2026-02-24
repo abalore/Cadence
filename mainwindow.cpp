@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
+    enterBytesDialog = new EnterBytesDialog(this);
 
     Instance = this;
     setFixedSize(800, 600);
@@ -44,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
     connect(ui->actionLoad_fromFile, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
+    connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
+    connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
+    connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
 
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
@@ -81,6 +85,11 @@ void MainWindow::ResetEmulation()
     StartThreads();
 }
 
+void MainWindow::onMenuMemoryEnterBytes()
+{
+    enterBytesDialog->show();
+}
+
 void MainWindow::onEmulatorPaused()
 {
     if (debugger->isHidden())
@@ -93,7 +102,7 @@ void MainWindow::onEmulatorFinishedFrame()
     ui->openGLWidget->updateTexture();
 }
 
-void MainWindow::onMenuFileLoadBinary()
+void MainWindow::onMenuMemoryLoadBinaryFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), ".", tr("Binary Files (*.bin)"));
     QFile file = QFile(fileName);
@@ -101,7 +110,19 @@ void MainWindow::onMenuFileLoadBinary()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::RAM[0] + 0x100, ba.data(), ba.size());
+        memcpy(CPC::RAM[1], ba.data(), ba.size());
+    }
+    file.close();
+}
+
+void MainWindow::onMenuMemorySaveBinaryFile()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), ".", tr("Binary Files (*.bin)"));
+    QFile file = QFile(fileName);
+    file.open(QIODevice::WriteOnly);
+    if (file.isOpen())
+    {
+        file.write((const char *)CPC::RAM[1] + 0x3000, 0x1000);
     }
     file.close();
 }

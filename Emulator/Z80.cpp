@@ -11,11 +11,7 @@
 
 BYTE Z80::tCycle = 1;
 BYTE Z80::mCycle = 1;
-bool Z80::MREQ = true;
-bool Z80::RD = true;
-bool Z80::WR = true;
-bool Z80::IORQ = true;
-bool Z80::M1 = true;
+bool Z80::MREQ, Z80::IORQ, Z80::RD, Z80::WR;
 word Z80::PC = 0;
 word Z80::SP = 0;
 Reg16 Z80::AF(&A, &F);
@@ -28,40 +24,15 @@ Reg16 Z80::AF_(&A_,&F_);
 Reg16 Z80::BC_(&B_, &C_);
 Reg16 Z80::DE_(&C_, &D_);
 Reg16 Z80::HL_(&H_, &L_);
-bool Z80::fS;
-bool Z80::fZ;
-bool Z80::f5;
-bool Z80::fH;
-bool Z80::f3;
-bool Z80::fP;
-bool Z80::fN;
-bool Z80::fC;
-BYTE Z80::A;
-BYTE Z80::F;
-BYTE Z80::B;
-BYTE Z80::C;
-BYTE Z80::D;
-BYTE Z80::E;
-BYTE Z80::H;
-BYTE Z80::L;
-BYTE Z80::IXH;
-BYTE Z80::IXL;
-BYTE Z80::IYH;
-BYTE Z80::IYL;
-BYTE Z80::A_;
-BYTE Z80::F_;
-BYTE Z80::B_;
-BYTE Z80::C_;
-BYTE Z80::D_;
-BYTE Z80::E_;
-BYTE Z80::H_;
-BYTE Z80::L_;
+bool Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC;
+BYTE Z80::A, Z80::F, Z80::B, Z80::C, Z80::D, Z80::E, Z80::H, Z80::L;
+BYTE Z80::IXH, Z80::IXL, Z80::IYH, Z80::IYL;
+BYTE Z80::A_, Z80::F_, Z80::B_, Z80::C_, Z80::D_, Z80::E_, Z80::H_, Z80::L_;
 BYTE Z80::t16H;
 BYTE Z80::t16L;
 BYTE Z80::SPH;
 BYTE Z80::SPL;
-BYTE Z80::I = 0;
-BYTE Z80::R;
+BYTE Z80::I, Z80::R;
 BYTE Z80::IR;
 BYTE Z80::DR;
 IDMode Z80::idMode = IDMode::BASIC;
@@ -90,10 +61,15 @@ word Z80::w3;
 int Z80::i1;
 int Z80::i2;
 int Z80::i3;
+short Z80::s1;
 dword Z80::nops;
 
 void Z80::Init()
 {
+    Z80::MREQ = true;
+    Z80::IORQ = true;
+    Z80::RD = true;
+    Z80::WR = true;
     I = 0;
     R = 0;
     mCycle = 1;
@@ -141,18 +117,18 @@ void Z80::ProcessWRITE()
 
 void Z80::ProcessIN()
 {
-    if ((AR & 0x4000) == 0) CRTC::RD();
-    else if ((AR & 0x0800) == 0) { PSG::RD(); PPI::RD(); }
-    else if ((AR & 0x0480) == 0 && Emulator::cpcType != CPCType::CPC464) FDC::RD();
+    if (!(AR & 0x4000)) CRTC::RD();
+    else if (!(AR & 0x0800)) { PSG::RD(); PPI::RD(); }
+    else if (!(AR & 0x0480) && Emulator::cpcType != CPCType::CPC464) FDC::RD();
 }
 
 void Z80::ProcessOUT()
 {
-    if ((AR & 0x8000) == 0) GateArray::WR();
-    else if ((AR & 0x4000) == 0) CRTC::WR();
-    else if ((AR & 0x2000) == 0) ROMSelector::WR();
-    else if ((AR & 0x0800) == 0) { PPI::WR(); PSG::WR(); }
-    else if ((AR & 0x0480) == 0 && Emulator::cpcType != CPCType::CPC464) FDC::WR();
+    if (!(AR & 0x8000)) GateArray::WR();
+    else if (!(AR & 0x4000)) CRTC::WR();
+    else if (!(AR & 0x2000)) ROMSelector::WR();
+    else if (!(AR & 0x0800)) { PPI::WR(); PSG::WR(); }
+    else if (!(AR & 0x0480) && Emulator::cpcType != CPCType::CPC464) FDC::WR();
 }
 
 void Z80::Clock()
@@ -173,7 +149,6 @@ void Z80::Clock()
     case IDMode::MISC: Step_misc(); break;
     case IDMode::BIT: Step_CB(); break;
     case IDMode::IDX: Step_IDX(); break;
-    case IDMode::IDX2: Step_IDX_2(); break;
     case IDMode::IDXBIT: Step_IDX_CB(); break;
     case IDMode::INTEXEC: Step_Int_Exec(); break;
     }
@@ -202,9 +177,5 @@ void Z80::Clock()
         mCycle++;
 }
 
-void Z80::FinishInstruction()
-{
-    mCycleType = MCycleType::FETCH;
-    idMode = IDMode::BASIC;
-}
+
 

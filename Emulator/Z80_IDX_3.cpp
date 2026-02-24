@@ -6,15 +6,13 @@ void Z80::Step_IDX_3()
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
         index = (sbyte)DR;
-        AR++;
+        AR = PC++;
         break;
     case 3:
-        AR++;
-        PC = AR;
         AR = IDX->Get() + index;
         mCycleType = MCycleType::WRITE;
         break;
@@ -22,7 +20,8 @@ void Z80::Step_IDX_3()
         mCycleType = MCycleType::ALU;
         break;
     case 5:
-        FinishInstruction();
+        mCycleType = MCycleType::FETCH;
+        idMode = IDMode::BASIC;
         break;
     }
 }

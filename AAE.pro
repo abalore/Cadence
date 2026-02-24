@@ -28,10 +28,14 @@ SOURCES += \
     Emulator/PSG.cpp \
     Emulator/ROMSelector.cpp \
     Emulator/Tape.cpp \
+    Emulator/Z80_16bitAL.cpp \
+    Emulator/Z80_8bitAL.cpp \
     Emulator/Z80_IDX_3.cpp \
+    Emulator/Z80_Jump.cpp \
     Emulator/Z80_intexec.cpp \
     EmulatorThread.cpp \
     SoundThread.cpp \
+    enterbytesdialog.cpp \
     graphicsinspector.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -77,12 +81,14 @@ HEADERS += \
     EmulatorThread.h \
     KeyPressFilter.h \
     SoundThread.h \
+    enterbytesdialog.h \
     graphicsinspector.h \
     mainwindow.h \
     speedcontroller.h
 
 FORMS += \
     Debugger.ui \
+    enterbytesdialog.ui \
     graphicsinspector.ui \
     mainwindow.ui
 

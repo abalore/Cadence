@@ -34,7 +34,7 @@ void Z80::Step_basic()
             EX_AF_AF_();
             break;
         case 0x9: // ADD HL,BC  {12T}
-            ADD_HL_RR(BC);
+            ADD_HL_vv(BC.Get());
             break;
         case 0xA: // LD A,(BC)    {8T}
             LD_A_I_RR(BC);
@@ -87,7 +87,7 @@ void Z80::Step_basic()
             JR(true);
             break;
         case 0x9: // ADD HL,DE    {12T}
-            ADD_HL_RR(DE);
+            ADD_HL_vv(DE.Get());
             break;
         case 0xA: // LD A,(DE)    {8T}
             LD_A_I_RR(DE);
@@ -140,7 +140,7 @@ void Z80::Step_basic()
             JR(fZ);
             break;
         case 0x9: // ADD HL,HL
-            ADD_HL_RR(HL);
+            ADD_HL_vv(HL.Get());
             break;
         case 0xA: // LD HL,(nn)
             LD_RR_Ind(HL);
@@ -193,7 +193,7 @@ void Z80::Step_basic()
             JR(fC);
             break;
         case 0x9: // ADD HL,SP
-            ADD_HL_WW(SP);
+            ADD_HL_vv(SP);
             break;
         case 0xA: // LD A,(nn)
             LD_A_Ind();
@@ -424,52 +424,52 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // ADD A,B
-            ADD_R(B);
+            ADD_v(B);
             break;
         case 0x1: // ADD A,C
-            ADD_R(C);
+            ADD_v(C);
             break;
         case 0x2: // ADD A,D
-            ADD_R(D);
+            ADD_v(D);
             break;
         case 0x3: // ADD A,E
-            ADD_R(E);
+            ADD_v(E);
             break;
         case 0x4: // ADD A,H
-            ADD_R(H);
+            ADD_v(H);
             break;
         case 0x5: // ADD A,L
-            ADD_R(L);
+            ADD_v(L);
             break;
         case 0x6: // ADD A,(HL)
             ADD_Ind_HL();
             break;
         case 0x7: // ADD A,A
-            ADD_R(A);
+            ADD_v(A);
             break;
         case 0x8: // ADC A,B
-            ADC_R(B);
+            ADC_v(B);
             break;
         case 0x9: // ADC A,C
-            ADC_R(C);
+            ADC_v(C);
             break;
         case 0xA: // ADC A,D
-            ADC_R(D);
+            ADC_v(D);
             break;
         case 0xB: // ADC A,E
-            ADC_R(E);
+            ADC_v(E);
             break;
         case 0xC: // ADC A,H
-            ADC_R(H);
+            ADC_v(H);
             break;
         case 0xD: // ADC A,L
-            ADC_R(L);
+            ADC_v(L);
             break;
         case 0xE: // ADC A,(HL)
             ADC_Ind_HL();
             break;
         case 0xF: // ADC A,A
-            ADC_R(A);
+            ADC_v(A);
             break;
         }
         break;
@@ -477,52 +477,52 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // SUB B
-            SUB_R(B);
+            SUB_v(B);
             break;
         case 0x1: // SUB C
-            SUB_R(C);
+            SUB_v(C);
             break;
         case 0x2: // SUB D
-            SUB_R(D);
+            SUB_v(D);
             break;
         case 0x3: // SUB E
-            SUB_R(E);
+            SUB_v(E);
             break;
         case 0x4: // SUB H
-            SUB_R(H);
+            SUB_v(H);
             break;
         case 0x5: // SUB L
-            SUB_R(L);
+            SUB_v(L);
             break;
         case 0x6: // SUB (HL)
             SUB_Ind_HL();
             break;
         case 0x7: // SUB A
-            SUB_R(A);
+            SUB_v(A);
             break;
         case 0x8: // SBC B
-            SBC_R(B);
+            SBC_v(B);
             break;
         case 0x9: // SBC C
-            SBC_R(C);
+            SBC_v(C);
             break;
         case 0xA: // SBC D
-            SBC_R(D);
+            SBC_v(D);
             break;
         case 0xB: // SBC E
-            SBC_R(E);
+            SBC_v(E);
             break;
         case 0xC: // SBC H
-            SBC_R(H);
+            SBC_v(H);
             break;
         case 0xD: // SBC L
-            SBC_R(L);
+            SBC_v(L);
             break;
         case 0xE: // SBC (HL)
             SBC_Ind_HL();
             break;
         case 0xF: // SBC A
-            SBC_R(A);
+            SBC_v(A);
             break;
         }
         break;
@@ -530,52 +530,52 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // AND B
-            AND_R(B);
+            AND_v(B);
             break;
         case 0x1: // AND C
-            AND_R(C);
+            AND_v(C);
             break;
         case 0x2: // AND D
-            AND_R(D);
+            AND_v(D);
             break;
         case 0x3: // AND e
-            AND_R(E);
+            AND_v(E);
             break;
         case 0x4: // AND H
-            AND_R(H);
+            AND_v(H);
             break;
         case 0x5: // AND L
-            AND_R(L);
+            AND_v(L);
             break;
         case 0x6: // AND (HL)
             AND_Ind_HL();
             break;
         case 0x7: // AND A
-            AND_R(A);
+            AND_v(A);
             break;
         case 0x8: // XOR B
-            XOR_R(B);
+            XOR_v(B);
             break;
         case 0x9: // XOR c
-            XOR_R(C);
+            XOR_v(C);
             break;
         case 0xA: // XOR D
-            XOR_R(D);
+            XOR_v(D);
             break;
         case 0xB: // XOR E
-            XOR_R(E);
+            XOR_v(E);
             break;
         case 0xC: // XOR H
-            XOR_R(H);
+            XOR_v(H);
             break;
         case 0xD: // XOR L
-            XOR_R(L);
+            XOR_v(L);
             break;
         case 0xE: // XOR (HL)
             XOR_Ind_HL();
             break;
         case 0xF: // XOR A
-            XOR_R(A);
+            XOR_v(A);
             break;
         }
         break;
@@ -583,52 +583,52 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // OR B
-            OR_R(B);
+            OR_v(B);
             break;
         case 0x1: // OR C
-            OR_R(C);
+            OR_v(C);
             break;
         case 0x2: // OR D
-            OR_R(D);
+            OR_v(D);
             break;
         case 0x3: // OR E
-            OR_R(E);
+            OR_v(E);
             break;
         case 0x4: // OR H
-            OR_R(H);
+            OR_v(H);
             break;
         case 0x5: // OR L
-            OR_R(L);
+            OR_v(L);
             break;
         case 0x6: // OR (HL)
             OR_Ind_HL();
             break;
         case 0x7: // OR A
-            OR_R(A);
+            OR_v(A);
             break;
         case 0x8: // CP B
-            CP_R(B);
+            CP_v(B);
             break;
         case 0x9: // CP C
-            CP_R(C);
+            CP_v(C);
             break;
         case 0xA: // CP D
-            CP_R(D);
+            CP_v(D);
             break;
         case 0xB: // CP E
-            CP_R(E);
+            CP_v(E);
             break;
         case 0xC: // CP H
-            CP_R(H);
+            CP_v(H);
             break;
         case 0xD: // CP L
-            CP_R(L);
+            CP_v(L);
             break;
         case 0xE: // CP (HL)
             CP_Ind_HL();
             break;
         case 0xF: // CP A
-            CP_R(A);
+            CP_v(A);
             break;
         }
         break;
