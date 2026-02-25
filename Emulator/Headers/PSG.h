@@ -44,6 +44,8 @@ private:
     static BYTE envelopeStage;
     static BYTE envelopeLevel;
     static EnvelopeDir envelopeDir;
+    static bool envelopeContinue;
+    static bool envelopeAttack;
     static bool envelopeHold;
     static bool envelopeAlternate;
     static word envelopePeriod;
