@@ -23,6 +23,8 @@ BYTE PSG::envelopeDivider;
 BYTE PSG::envelopeStage;
 BYTE PSG::envelopeLevel;
 EnvelopeDir PSG::envelopeDir;
+bool PSG::envelopeAttack;
+bool PSG::envelopeContinue;
 bool PSG::envelopeHold;
 bool PSG::envelopeAlternate;
 word PSG::envelopePeriod;
@@ -84,61 +86,42 @@ void PSG::Init()
 
 void PSG::Clock()
 {
+    if (envelopeRunning)
+    {
+        if (envelopeDivider == 16)
+        {
+            UpdateEnvelope();
+            envelopeDivider = 0;
+        }
+        else
+            envelopeDivider++;
+    }
 
     divider++;
     if (divider == 16)
     {
-        if (envelopeRunning)
-            UpdateEnvelope();
         divider = 0;
         UpdateNoise();
-        tVolA = registers[8];
-        if (tVolA & 0x10)
-            tVolA = GetCurrentEnvelopeLevel();
-        tVolB = registers[9];
-        if (tVolB & 0x10)
-            tVolB = GetCurrentEnvelopeLevel();
-        tVolC = registers[10];
-        if (tVolC & 0x10)
-            tVolC = GetCurrentEnvelopeLevel();
-        counterA++;
-        if (counterA >= periodA)
-        {
-            counterA = 0;
-            bitA = !bitA;
-        }
-        if (mixA)
-            outputA = volumes[tVolA * bitA];
-        else outputA = 0;
 
-        counterB++;
-        if (counterB >= periodB)
-        {
-            counterB = 0;
-            bitB = !bitB;
-        }
-        if (mixB)
-            outputB = volumes[tVolB * bitB];
-        else outputB = 0;
+        tVolA = registers[8]; if (tVolA & 0x10) tVolA = GetCurrentEnvelopeLevel();
+        tVolB = registers[9]; if (tVolB & 0x10) tVolB = GetCurrentEnvelopeLevel();
+        tVolC = registers[10]; if (tVolC & 0x10) tVolC = GetCurrentEnvelopeLevel();
 
-        counterC++;
-        if (counterC >= periodC)
-        {
-            counterC = 0;
-            bitC = !bitC;
-        }
-        if (mixC)
-            outputC = volumes[tVolC * bitC];
-        else outputC = 0;
+        counterA++; if (counterA >= periodA) { counterA = 0; bitA = !bitA; }
+        counterB++; if (counterB >= periodB) { counterB = 0; bitB = !bitB; }
+        counterC++; if (counterC >= periodC) { counterC = 0; bitC = !bitC; }
 
-        if (noiseA)
-            outputA += volumes[tVolA * noiseLevel];
+        outputA = mixA && bitA;
+        outputB = mixB && bitB;
+        outputC = mixC && bitC;
 
-        if (noiseB)
-            outputB += volumes[tVolB * noiseLevel];
+        if (noiseA) outputA &= noiseLevel;
+        if (noiseB) outputB &= noiseLevel;
+        if (noiseC) outputC &= noiseLevel;
 
-        if (noiseC)
-            outputC += volumes[tVolC * noiseLevel];
+        outputA *= volumes[tVolA];
+        outputB *= volumes[tVolB];
+        outputC *= volumes[tVolC];
 
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
@@ -210,7 +193,13 @@ void PSG::WR()
                 envelopeCounter = envelopePeriod;
                 break;
             case 13:
-                if (registers[13] & 0x04)
+                envelopeContinue = registers[13] & 0x08;
+                envelopeAttack = registers[13] & 0x04;
+                envelopeAlternate = registers[13] & 0x02;
+                envelopeHold = registers[13] & 0x01;
+                envelopeCounter = envelopePeriod;
+                envelopeRunning = true;
+                if (envelopeAttack)
                 {
                     envelopeLevel = 0;
                     envelopeDir = EnvelopeDir::EDUp;
@@ -220,10 +209,6 @@ void PSG::WR()
                     envelopeLevel = 15;
                     envelopeDir = EnvelopeDir::EDDown;
                 }
-                envelopeHold = (registers[13] ^ 0x08) & 0x09;
-                envelopeAlternate = registers[13] & 0x02;
-                envelopeCounter = envelopePeriod;
-                envelopeRunning = true;
                 break;
             }
         }
@@ -254,18 +239,26 @@ void PSG::UpdateEnvelope()
             envelopeLevel++;
             if (envelopeLevel >= 15)
             {
-                if (envelopeHold)
+                if (!envelopeContinue)
                 {
-                    envelopeDir = EnvelopeDir::EDNone;
-                    if (envelopeAlternate)
-                        envelopeLevel = 0;
+                    envelopeRunning = false;
+                    envelopeLevel = 0;
                 }
                 else
                 {
-                    if (envelopeAlternate)
-                        envelopeDir = EnvelopeDir::EDDown;
+                    if (envelopeHold)
+                    {
+                        envelopeRunning = false;
+                        if (envelopeAlternate)
+                            envelopeLevel = 0;
+                    }
                     else
-                        envelopeLevel = 0;
+                    {
+                        if (envelopeAlternate)
+                            envelopeDir = EnvelopeDir::EDDown;
+                        else
+                            envelopeLevel = 0;
+                    }
                 }
             }
             break;
@@ -273,24 +266,33 @@ void PSG::UpdateEnvelope()
             envelopeLevel--;
             if (envelopeLevel == 0)
             {
-                if (envelopeHold)
+                if (!envelopeContinue)
                 {
-                    envelopeDir = EnvelopeDir::EDNone;
-                    if (envelopeAlternate)
-                        envelopeLevel = 15;
+                    envelopeRunning = false;
+                    envelopeLevel = 0;
                 }
                 else
                 {
-                    if (envelopeAlternate)
-                        envelopeDir = EnvelopeDir::EDUp;
+                    if (envelopeHold)
+                    {
+                        envelopeRunning = false;
+                        if (envelopeAlternate)
+                            envelopeLevel = 15;
+                    }
                     else
-                        envelopeLevel = 15;
+                    {
+                        if (envelopeAlternate)
+                            envelopeDir = EnvelopeDir::EDUp;
+                        else
+                            envelopeLevel = 15;
+                    }
                 }
             }
             break;
         }
     }
 }
+
 
 BYTE PSG::GetCurrentEnvelopeLevel()
 {
