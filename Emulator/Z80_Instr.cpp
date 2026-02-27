@@ -1385,6 +1385,7 @@ void Z80::OUTI(bool R, bool dir)
         AR = HL.Get();
         break;
     case 2:
+        B--;
         mCycleType = MCycleType::OUT;
         AR = BC.Get();
         break;
@@ -1394,7 +1395,6 @@ void Z80::OUTI(bool R, bool dir)
             HL.Set(HL.Get() + 1);
         else
             HL.Set(HL.Get() - 1);
-        B--;
         break;
     case 4:
         fS = (DR & 0x80) > 0;
