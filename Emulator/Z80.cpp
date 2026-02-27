@@ -118,7 +118,7 @@ void Z80::ProcessWRITE()
 void Z80::ProcessIN()
 {
     if (!(AR & 0x4000)) CRTC::RD();
-    else if (!(AR & 0x0800)) { PSG::RD(); PPI::RD(); }
+    else if (!(AR & 0x0800)) PPI::RD();
     else if (!(AR & 0x0480) && Emulator::cpcType != CPCType::CPC464) FDC::RD();
 }
 
@@ -127,7 +127,7 @@ void Z80::ProcessOUT()
     if (!(AR & 0x8000)) GateArray::WR();
     else if (!(AR & 0x4000)) CRTC::WR();
     else if (!(AR & 0x2000)) ROMSelector::WR();
-    else if (!(AR & 0x0800)) { PPI::WR(); PSG::WR(); }
+    else if (!(AR & 0x0800)) PPI::WR();
     else if (!(AR & 0x0480) && Emulator::cpcType != CPCType::CPC464) FDC::WR();
 }
 

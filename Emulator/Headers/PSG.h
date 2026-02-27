@@ -17,8 +17,6 @@ class PSG
 public:
     static void Init();
     static void Clock();
-    static void RD();
-    static void WR();
     static void SelectFunction(bool bdir, bool bc1);
     static BYTE ReadData();
     static void WriteData(BYTE data);

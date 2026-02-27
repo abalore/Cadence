@@ -103,10 +103,6 @@ void PSG::Clock()
         divider = 0;
         UpdateNoise();
 
-        tVolA = registers[8]; if (tVolA & 0x10) tVolA = GetCurrentEnvelopeLevel();
-        tVolB = registers[9]; if (tVolB & 0x10) tVolB = GetCurrentEnvelopeLevel();
-        tVolC = registers[10]; if (tVolC & 0x10) tVolC = GetCurrentEnvelopeLevel();
-
         counterA++; if (counterA >= periodA) { counterA = 0; bitA = !bitA; }
         counterB++; if (counterB >= periodB) { counterB = 0; bitB = !bitB; }
         counterC++; if (counterC >= periodC) { counterC = 0; bitC = !bitC; }
@@ -115,13 +111,16 @@ void PSG::Clock()
         outputB = mixB && bitB;
         outputC = mixC && bitC;
 
-        if (noiseA) outputA &= noiseLevel;
-        if (noiseB) outputB &= noiseLevel;
-        if (noiseC) outputC &= noiseLevel;
+        if (noiseA)
+            outputA &= noiseLevel;
+        if (noiseB)
+            outputB &= noiseLevel;
+        if (noiseC)
+            outputC &= noiseLevel;
 
-        outputA *= volumes[tVolA];
-        outputB *= volumes[tVolB];
-        outputC *= volumes[tVolC];
+        outputA *= volumes[tVolA & 0x10 ? envelopeLevel : tVolA];
+        outputB *= volumes[tVolB & 0x10 ? envelopeLevel : tVolB];
+        outputC *= volumes[tVolC & 0x10 ? envelopeLevel : tVolC];
 
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
@@ -133,25 +132,8 @@ void PSG::Clock()
 
 void PSG::SelectFunction(bool bdir, bool bc1)
 {
-    BDIR = bdir;
-    BC1 = bc1;
-}
 
-void PSG::RD()
-{
-    if (!BDIR && BC1)
-    {
-        if (selectedRegister < 0x0E)
-            outputRegister = registers[selectedRegister];
-        else if (selectedRegister == 0x0E)
-            outputRegister = Keyboard::Read();
-    }
-    else outputRegister = 0xFF;
-}
-
-void PSG::WR()
-{
-    if (BDIR)
+    if (BDIR && !bdir)
     {
         if (BC1)
             selectedRegister = inputRegister;
@@ -184,8 +166,13 @@ void PSG::WR()
                 noiseC = !(inputRegister & 0x20);
                 break;
             case 8:
+                tVolA = registers[8];
+                break;
             case 9:
+                tVolB = registers[9];
+                break;
             case 10:
+                tVolC = registers[10];
                 break;
             case 11:
             case 12:
@@ -212,6 +199,16 @@ void PSG::WR()
                 break;
             }
         }
+    }
+
+    BDIR = bdir;
+    BC1 = bc1;
+    if (!BDIR && BC1)
+    {
+        if (selectedRegister < 0x0E)
+            outputRegister = registers[selectedRegister];
+        else if (selectedRegister == 0x0E)
+            outputRegister = Keyboard::Read();
     }
 }
 
