@@ -227,7 +227,7 @@ void GateArray::ReadByte()
     videoAddress += (CRTC::MA & 0x3000) << 2;
     videoAddress += CCLK;
     int ramIndex = videoAddress >> 14;
-    currentByte = CPC::RAM[ramIndex][videoAddress & 0x3FFF];
+    currentByte = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
 }
 
 void GateArray::WR()

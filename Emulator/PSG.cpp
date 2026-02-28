@@ -112,11 +112,11 @@ void PSG::Clock()
         outputC = mixC && bitC;
 
         if (noiseA)
-            outputA &= noiseLevel;
+            outputA |= noiseLevel;
         if (noiseB)
-            outputB &= noiseLevel;
+            outputB |= noiseLevel;
         if (noiseC)
-            outputC &= noiseLevel;
+            outputC |= noiseLevel;
 
         outputA *= volumes[tVolA & 0x10 ? envelopeLevel : tVolA];
         outputB *= volumes[tVolB & 0x10 ? envelopeLevel : tVolB];
