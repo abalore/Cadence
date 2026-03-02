@@ -44,7 +44,7 @@
       <x>0</x>
       <y>20</y>
       <width>768</width>
-      <height>528</height>
+      <height>512</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -89,6 +89,7 @@
     </property>
     <addaction name="actionSmooth"/>
     <addaction name="actionInspect_video_memory"/>
+    <addaction name="actionGreen_monitor"/>
    </widget>
    <widget class="QMenu" name="menuMemory">
     <property name="title">
@@ -110,6 +111,13 @@
     </property>
     <addaction name="actionLoad_fromFile"/>
    </widget>
+   <widget class="QMenu" name="menuCartridge">
+    <property name="title">
+     <string>Cartridge</string>
+    </property>
+    <addaction name="actionEnable_cartridge"/>
+    <addaction name="actionLoad_cartridge"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuTape"/>
@@ -117,6 +125,7 @@
    <addaction name="menuMemory"/>
    <addaction name="menuDisc"/>
    <addaction name="menuROM"/>
+   <addaction name="menuCartridge"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -216,6 +225,27 @@
   <action name="actionSave_binary_file">
    <property name="text">
     <string>Save binary file...</string>
+   </property>
+  </action>
+  <action name="actionEnable_cartridge">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable cartridge</string>
+   </property>
+  </action>
+  <action name="actionLoad_cartridge">
+   <property name="text">
+    <string>Load cartridge...</string>
+   </property>
+  </action>
+  <action name="actionGreen_monitor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Green monitor</string>
    </property>
   </action>
  </widget>

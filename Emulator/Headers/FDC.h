@@ -63,15 +63,19 @@ private:
     static void ProcessExecution();
     static void ProcessResult();
     static void GoToCommandState();
-    static void GoToExecutionState(int length);
+    static void GoToExecutionState();
     static void GoToTransferState();
     static void GoToResultState();
+    static BYTE GetStatusReg0();
+    static BYTE GetStatusReg1();
+    static BYTE GetStatusReg2();
+    static BYTE GetStatusReg3();
     static FDCState state;
     static FDCCommandState commandState;
     static BYTE command;
     static bool HD;
     static BYTE US;
-    static BYTE C, H, R, N, EOT, GPL, DTL, STP, NCN, SC, D;
+    static BYTE PCN, H, R, N, EOT, GPL, DTL, STP, NCN, SC, D;
     static BYTE SRT, HUT, HLT;
     static bool ND;
     static bool MT;
@@ -80,10 +84,6 @@ private:
     static FloppyDrive drives[4];
     static BYTE headSettlingTime;
     static BYTE headUploadTimeInterval;
-    static BYTE statusReg0;
-    static BYTE statusReg1;
-    static BYTE statusReg2;
-    static BYTE statusReg3;
     static BYTE result[7];
     static BYTE resultCount;
     static BYTE resultIndex;
@@ -92,7 +92,6 @@ private:
     static bool bit5_NDMA;
     static bool bit4_BUSY;
     static bool bits03_FDDBUSY[4];
-    static word executionDelay;
     static SectorInfo sectorInfo;
     static int dataIndex;
     static int dataSize;
@@ -100,6 +99,10 @@ private:
     static BYTE sectorID;
     static BYTE *data;
     static BYTE weakSectorCycle;
+    static BYTE INT;
+    static BYTE stIC, stSE, stEC, stNR; // For Reg0
+    static BYTE stEN, stDE, stOR, stND, stNW, stMA; // For Reg1
+    static BYTE stCM, stDD, stWC, stSH, stSN, stBC, stMD; // For Reg2
 };
 
 #endif // FDC_H

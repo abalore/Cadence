@@ -132,78 +132,78 @@ void PSG::Clock()
 
 void PSG::SelectFunction(bool bdir, bool bc1)
 {
-
-    if (BDIR && !bdir)
-    {
-        if (BC1)
-            selectedRegister = inputRegister;
-        else
-        {
-            registers[selectedRegister] = inputRegister;
-            switch (selectedRegister)
-            {
-            case 0:
-            case 1:
-                periodA = ((registers[1] & 0x0F ) * 256 + registers[0]) >> 1;
-                break;
-            case 2:
-            case 3:
-                periodB = ((registers[3] & 0x0F ) * 256 + registers[2]) >> 1;
-                break;
-            case 4:
-            case 5:
-                periodC = ((registers[5] & 0x0F ) * 256 + registers[4]) >> 1;
-                break;
-            case 6:
-                noiseDivider = (registers[6] & 0x1F);
-                break;
-            case 7:
-                mixA = !(inputRegister & 0x01);
-                mixB = !(inputRegister & 0x02);
-                mixC = !(inputRegister & 0x04);
-                noiseA = !(inputRegister & 0x08);
-                noiseB = !(inputRegister & 0x10);
-                noiseC = !(inputRegister & 0x20);
-                break;
-            case 8:
-                tVolA = registers[8];
-                break;
-            case 9:
-                tVolB = registers[9];
-                break;
-            case 10:
-                tVolC = registers[10];
-                break;
-            case 11:
-            case 12:
-                envelopePeriod = registers[12] * 256 + registers[11];
-                envelopeCounter = envelopePeriod;
-                break;
-            case 13:
-                envelopeContinue = registers[13] & 0x08;
-                envelopeAttack = registers[13] & 0x04;
-                envelopeAlternate = registers[13] & 0x02;
-                envelopeHold = registers[13] & 0x01;
-                envelopeCounter = envelopePeriod;
-                envelopeRunning = true;
-                if (envelopeAttack)
-                {
-                    envelopeLevel = 0;
-                    envelopeDir = EnvelopeDir::EDUp;
-                }
-                else
-                {
-                    envelopeLevel = 15;
-                    envelopeDir = EnvelopeDir::EDDown;
-                }
-                break;
-            }
-        }
-    }
-
     BDIR = bdir;
     BC1 = bc1;
-    if (!BDIR && BC1)
+    ApplyChange();
+}
+
+void PSG::ApplyChange()
+{
+    if (BC1 == true && BDIR == true)
+        selectedRegister = inputRegister;
+    else if (BC1 == false && BDIR == true)
+    {
+        registers[selectedRegister] = inputRegister;
+        switch (selectedRegister)
+        {
+        case 0:
+        case 1:
+            periodA = ((registers[1] & 0x0F ) * 256 + registers[0]) >> 1;
+            break;
+        case 2:
+        case 3:
+            periodB = ((registers[3] & 0x0F ) * 256 + registers[2]) >> 1;
+            break;
+        case 4:
+        case 5:
+            periodC = ((registers[5] & 0x0F ) * 256 + registers[4]) >> 1;
+            break;
+        case 6:
+            noiseDivider = (registers[6] & 0x1F);
+            break;
+        case 7:
+            mixA = !(inputRegister & 0x01);
+            mixB = !(inputRegister & 0x02);
+            mixC = !(inputRegister & 0x04);
+            noiseA = !(inputRegister & 0x08);
+            noiseB = !(inputRegister & 0x10);
+            noiseC = !(inputRegister & 0x20);
+            break;
+        case 8:
+            tVolA = registers[8];
+            break;
+        case 9:
+            tVolB = registers[9];
+            break;
+        case 10:
+            tVolC = registers[10];
+            break;
+        case 11:
+        case 12:
+            envelopePeriod = registers[12] * 256 + registers[11];
+            envelopeCounter = envelopePeriod;
+            break;
+        case 13:
+            envelopeContinue = registers[13] & 0x08;
+            envelopeAttack = registers[13] & 0x04;
+            envelopeAlternate = registers[13] & 0x02;
+            envelopeHold = registers[13] & 0x01;
+            envelopeCounter = envelopePeriod;
+            envelopeRunning = true;
+            if (envelopeAttack)
+            {
+                envelopeLevel = 0;
+                envelopeDir = EnvelopeDir::EDUp;
+            }
+            else
+            {
+                envelopeLevel = 15;
+                envelopeDir = EnvelopeDir::EDDown;
+            }
+            break;
+        }
+    }
+    else if (BC1 == true && BDIR == false)
     {
         if (selectedRegister < 0x0E)
             outputRegister = registers[selectedRegister];
@@ -220,6 +220,7 @@ BYTE PSG::ReadData()
 void PSG::WriteData(BYTE data)
 {
     inputRegister = data;
+    ApplyChange();
 }
 
 void PSG::UpdateEnvelope()

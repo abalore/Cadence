@@ -30,6 +30,7 @@ private:
     static void UpdateEnvelope();
     static void UpdateNoise();
     static BYTE GetCurrentEnvelopeLevel();
+    static void ApplyChange();
     static BYTE inputRegister;
     static BYTE outputRegister;
     static BYTE selectedRegister;

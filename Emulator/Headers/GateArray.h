@@ -15,25 +15,25 @@ class GateArray
 {
 public:
     static void Init();
-    static void Clock();
+    static void Clock(int tick);
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
-    static void GenerateHSync();
-    static void GenerateVSync();
+    //static void GenerateHSync();
+    //static void GenerateVSync();
     static void WR();
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
     static BYTE currentPen;
-    static const BYTE cH = 255;
-    static const BYTE cM = 128;
     static const BYTE cL = 0;
+    static const BYTE cMR = 127;
+    static const BYTE cMG = 127;
+    static const BYTE cMB = 127;
+    static const BYTE cHR = 254;
+    static const BYTE cHG = 254;
+    static const BYTE cHB = 254;
     static BYTE R52;
-    static BYTE hsyncDelay;
-    static BYTE vsyncDelay;
     static BYTE mode;
-    static bool GA_HSYNC;
-    static bool GA_VSYNC;
     static BYTE pi;
     static BYTE decodedPen[4][8][256];
     static bool hsyncTrigger;
@@ -42,45 +42,55 @@ public:
     static SyncState vsyncState;
     static bool LoROMActive;
     static bool HiROMActive;
+    static bool Monochrome;
 
     constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
     constexpr static const BYTE Palette[3 * 32] =
         {
-            cM, cM, cM, // White
-            cM, cM, cM, // White
-            cL, cH, cM, // Sea green
-            cH, cH, cM, // Pastel Yellow
-            cL, cL, cM, // Blue
-            cH, cL, cM, // Purple
-            cL, cM, cM, // Cyan
-            cH, cM, cM, // Pink
-            cH, cL, cM, // Purple
-            cH, cH, cM, // Pastel yellow
-            cH, cH, cL, // Bright yellow
-            cH, cH, cH, // Bright white
-            cH, cL, cL, // Bright red
-            cH, cL, cH, // Bright magenta
-            cH, cM, cL, // Orange
-            cH, cM, cH, // Pastel magenta
-            cL, cL, cM, // Blue
-            cL, cH, cM, // Sea green
-            cL, cH, cL, // Bright green
-            cL, cH, cH, // Bright cyan
+            cMR, cMG, cMB, // White
+            cMR, cMG, cMB, // White
+            cL, cHG, cMB, // Sea green
+            cHR, cHG, cMB, // Pastel Yellow
+            cL, cL, cMB, // Blue
+            cHR, cL, cMB, // Purple
+            cL, cMG, cMB, // Cyan
+            cHR, cMG, cMB, // Pink
+            cHR, cL, cMB, // Purple
+            cHR, cHG, cMB, // Pastel yellow
+            cHR, cHG, cL, // Bright yellow
+            cHR, cHG, cHB, // Bright white
+            cHR, cL, cL, // Bright red
+            cHR, cL, cHB, // Bright magenta
+            cHR, cMG, cL, // Orange
+            cHR, cMG, cHB, // Pastel magenta
+            cL, cL, cMB, // Blue
+            cL, cHG, cMB, // Sea green
+            cL, cHG, cL, // Bright green
+            cL, cHG, cHB, // Bright cyan
             cL, cL, cL, // Black
-            cL, cL, cH, // Bright blue
-            cL, cM, cL, // Green
-            cL, cM, cH, // Sky blue
-            cM, cL, cM, // Magenta
-            cM, cH, cM, // Pastel green
-            cM, cH, cL, // Lime
-            cM, cH, cH, // Pastel cyan
-            cM, cL, cL, // Red
-            cM, cL, cH, // Mauve
-            cM, cM, cL, // Yellow
-            cM, cM, cH, // Pastel blue
+            cL, cL, cHB, // Bright blue
+            cL, cMG, cL, // Green
+            cL, cMG, cHB, // Sky blue
+            cMR, cL, cMB, // Magenta
+            cMR, cHG, cMB, // Pastel green
+            cMR, cHG, cL, // Lime
+            cMR, cHG, cHB, // Pastel cyan
+            cMR, cL, cL, // Red
+            cMR, cL, cHB, // Mauve
+            cMR, cMG, cL, // Yellow
+            cMR, cMG, cHB, // Pastel blue
     };
 
+    static constexpr BYTE GreenPalette[3 * 32]
+        {
+            0,159,0, 0,159,0, 0,206,0, 0,248,0, 0,25,0, 0,103,0, 0,132,0, 0,183,0,
+            0,103,0, 0,248,0, 0,241,0, 0,255,0, 0,92,0, 0,113,0, 0,175,0, 0,191,0,
+            0,25,0, 0,206,0, 0,198,0, 0,213,0, 0,0,0, 0,42,0, 0,123,0, 0,141,0,
+            0,69,0, 0,227,0, 0,220,0, 0,234,0, 0,56,0, 0,81,0, 0,150,0, 0,167,0
+        };
+
 private:
+    static void ProcessSync();
     static void SetPixel();
     static void ReadByte();
     // static void PrintDebugLine();
@@ -90,10 +100,15 @@ private:
     static word videoAddress;
     static BYTE currentByte;
     static BYTE pixelIndex;
-    static BYTE videoPen;
-    static BYTE clockDividerCounter;
+    static BYTE currentInk;
     static bool CCLK;
     static bool lastHSYNC;
+    static bool lastVSYNC;
+    static BYTE hsyncDelay;
+    static BYTE vsyncDelay;
+
+    static BYTE monoColor[3];
+
 };
 
 #endif // GATEARRAY_H

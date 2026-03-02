@@ -18,8 +18,9 @@ public:
     static word HCC, VCC;
     static BYTE HSC, VSC;
     static BYTE R12, R13;
+    static BYTE verticalAdjust;
 private:
-    static void CheckHSync();
+    static void Update();
 };
 
 #endif // CRTC_H

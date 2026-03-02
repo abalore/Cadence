@@ -2,11 +2,6 @@
 #include "Headers/CPC.h"
 #include "Headers/CRTC.h"
 #include "Headers/Z80.h"
-#include "Headers/PSG.h"
-#include "Headers/Tape.h"
-#include "Headers/FDC.h"
-#include "Headers/Emulator.h"
-
 
 const BYTE *GateArray::Color = Palette;
 BYTE GateArray::INK[16];
@@ -18,16 +13,14 @@ bool GateArray::borderSelected = false;
 word GateArray::videoAddress = 0;
 BYTE GateArray::currentByte = 0;
 BYTE GateArray::pixelIndex = 0;
-BYTE GateArray::videoPen = 0;
-BYTE GateArray::clockDividerCounter = 0;
+BYTE GateArray::currentInk = 0;
 bool GateArray::CCLK = false;
 bool GateArray::lastHSYNC = false;
+bool GateArray::lastVSYNC = false;
 BYTE GateArray::R52 = 0;
-BYTE GateArray::vsyncDelay = 0;
 BYTE GateArray::hsyncDelay = 0;
+BYTE GateArray::vsyncDelay = 0;
 BYTE GateArray::mode;
-bool GateArray::GA_HSYNC;
-bool GateArray::GA_VSYNC;
 BYTE GateArray::pi;
 BYTE GateArray::decodedPen[4][8][256];
 bool GateArray::hsyncTrigger = false;
@@ -36,17 +29,18 @@ SyncState GateArray::hsyncState = SyncState::SSWaitingCRTC;
 SyncState GateArray::vsyncState = SyncState::SSWaitingCRTC;
 bool GateArray::LoROMActive;
 bool GateArray::HiROMActive;
+bool GateArray::Monochrome;
 
 void GateArray::Init()
 {
+    Monochrome = false;
     currentPen = 0;
     BORDER = 0;
-    clockDividerCounter = 0;
     CCLK = false;
     currentByte = 0;
     pixelIndex = 0x80;
-    GA_HSYNC = false;
-    GA_HSYNC = true;
+    lastHSYNC = false;
+    lastHSYNC = false;
     RMR = 0;
     MMR = 0;
     LoROMActive = false;
@@ -57,138 +51,74 @@ void GateArray::Init()
                 decodedPen[m][i][b] = GetPenForPixel(m, b, i);
 }
 
-void GateArray::Clock()
+void GateArray::Clock(int tick)
 {
-    Z80::stopPoint = false;
-
     // 1Mhz
-    if ((clockDividerCounter % 16) == 0)
+    if ((tick % 16) == 0)
     {
-        Z80::Clock();
-        FDC::Clock();
-        Tape::Clock();
-        PSG::Clock();
-        CRTC::Clock();
-
-        GenerateHSync();
+        mode = RMR & 0x03;
+        ProcessSync();
     }
     // 2 Mhz
-    if ((clockDividerCounter % 8) == 0)
+    if ((tick % 8) == 0)
     {
         ReadByte();
         CCLK = !CCLK;
     }
-    clockDividerCounter++;
     // 16 Mhz
     SetPixel();
 }
 
-void GateArray::GenerateVSync()
+void GateArray::ProcessSync()
 {
-    switch(vsyncState)
+    if (hsyncDelay > 0)
     {
-    case SyncState::SSWaitingCRTC:
-        if (CRTC::VSYNC)
-        {
-            vsyncDelay = 2;
-            vsyncState = SyncState::SSDelaying;
-        }
-        break;
-    case SyncState::SSDelaying:
-        vsyncDelay--;
-        if (vsyncDelay == 0)
-        {
-            GA_VSYNC = true;
-            vsyncTrigger = true;
-            vsyncDelay = 2;
-            vsyncState = SyncState::SSRunning;
-            if (R52 > 32)
-                Z80::InterruptRequest = false;
-            R52 = 0;
-        }
-        break;
-    case SyncState::SSRunning:
-        vsyncDelay--;
-        if (vsyncDelay == 0)
-        {
-            vsyncState = SyncState::SSFinished;
-        }
-        break;
-    case SyncState::SSFinished:
-        if (!CRTC::VSYNC)
-        {
-            GA_VSYNC = false;
-            vsyncState = SyncState::SSWaitingCRTC;
-        }
-        break;
-    }
-}
-
-void GateArray::GenerateHSync()
-{
-    switch(hsyncState)
-    {
-    case SyncState::SSWaitingCRTC:
-        if (CRTC::HSYNC)
-        {
-            hsyncDelay = 2;
-            hsyncState = SyncState::SSDelaying;
-        }
-        break;
-    case SyncState::SSDelaying:
         hsyncDelay--;
-        if (hsyncDelay == 0)
-        {
-            GA_HSYNC = true;
-            hsyncDelay = 4;
-            hsyncState = SyncState::SSRunning;
+        if (!hsyncDelay)
             hsyncTrigger = true;
-        }
-        break;
-    case SyncState::SSRunning:
-        hsyncDelay--;
-        if (hsyncDelay == 0)
+    }
+    if (lastHSYNC && !CRTC::HSYNC) // Falling edge
+    {
+        hsyncDelay = 1;
+        R52++;
+        if (R52 == 52)
         {
-            hsyncState = SyncState::SSFinished;
+            R52 = 0;
+            Z80::InterruptRequest = false;
         }
-        break;
-    case SyncState::SSFinished:
-        if (!CRTC::HSYNC)
+        if (!lastVSYNC && CRTC::VSYNC) // Rising edge
         {
-            GA_HSYNC = false;
-            hsyncState = SyncState::SSWaitingCRTC;
-            mode = RMR & 0x03;
-            R52++;
-            if (R52 == 52)
+            vsyncDelay = 2;
+            vsyncTrigger = true;
+        }
+        if (vsyncDelay > 0)
+        {
+            vsyncDelay--;
+            if (!vsyncDelay)
             {
+                if (R52 > 32)
+                    Z80::InterruptRequest = false;
                 R52 = 0;
-                Z80::InterruptRequest = false;
             }
         }
-        break;
+        lastVSYNC = CRTC::VSYNC;
     }
+    lastHSYNC = CRTC::HSYNC;
 }
 
 void GateArray::SetPixel()
 {
-    if (CRTC::HSYNC)
+    if (CRTC::HSYNC || CRTC::VSYNC)
     {
         Color = &AbsoluteBlack[0];
         return;
     }
-    if (CRTC::BORDER)
-    {
-        //        if (Z80::InterruptEnable && !Z80::InterruptRequest)
-        //            Color = &Palette[26 * 3];
-        //        else
-        Color = &Palette[BORDER * 3];
-    }
+    currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
+    if (++pixelIndex == 8) pixelIndex = 0;
+    if (Monochrome)
+        Color = &GreenPalette[currentInk * 3];
     else
-    {
-        videoPen = decodedPen[mode][pixelIndex][currentByte];
-        if (++pixelIndex == 8) pixelIndex = 0;
-        Color = &Palette[INK[videoPen] * 3];
-    }
+        Color = &Palette[currentInk * 3];
 }
 
 const BYTE *GateArray::GetPaletteEntry(BYTE entry)
@@ -257,46 +187,7 @@ void GateArray::WR()
         HiROMActive = (RMR & 0x08) != 0;
         break;
     case 0xC0: // MMR
-        if (Emulator::cpcType == CPCType::CPC6128)
-        {
-            MMR = Z80::DR & 0x3F;
-            switch(MMR & 0x07)
-            {
-            case 0:
-                CPC::RAM[0] = CPC::RAMs[0];
-                CPC::RAM[1] = CPC::RAMs[1];
-                CPC::RAM[2] = CPC::RAMs[2];
-                CPC::RAM[3] = CPC::RAMs[3];
-                break;
-            case 1:
-                CPC::RAM[0] = CPC::RAMs[0];
-                CPC::RAM[1] = CPC::RAMs[1];
-                CPC::RAM[2] = CPC::RAMs[2];
-                CPC::RAM[3] = CPC::RAMs[7];
-                break;
-            case 2:
-                CPC::RAM[0] = CPC::RAMs[4];
-                CPC::RAM[1] = CPC::RAMs[5];
-                CPC::RAM[2] = CPC::RAMs[6];
-                CPC::RAM[3] = CPC::RAMs[7];
-                break;
-            case 3:
-                CPC::RAM[0] = CPC::RAMs[0];
-                CPC::RAM[1] = CPC::RAMs[3];
-                CPC::RAM[2] = CPC::RAMs[2];
-                CPC::RAM[3] = CPC::RAMs[7];
-                break;
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-                CPC::RAM[0] = CPC::RAMs[0];
-                CPC::RAM[1] = CPC::RAMs[MMR & 0x07];
-                CPC::RAM[2] = CPC::RAMs[2];
-                CPC::RAM[3] = CPC::RAMs[3];
-                break;
-            }
-        }
+        CPC::SelectRAM(Z80::DR & 0x3F);
         break;
     }
 }
