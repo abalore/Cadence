@@ -170,7 +170,7 @@ string Debugger::GetZ80RegsDebugLine()
             Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
             Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC);
     d.append(buff);
-    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::InterruptMode, Z80::IFF1, Z80::nops);
+    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::im, Z80::IFF1, Z80::nops);
     d.append(buff);
     return d;
 }
