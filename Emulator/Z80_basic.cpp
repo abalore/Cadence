@@ -832,9 +832,7 @@ void Z80::Step_basic()
             JP(fS);
             break;
         case 0xB: // EI
-            IFF1 = true;
-            IFF2 = true;
-            InterruptDelay = 1;
+            Z80::EIRequest = true;
             break;
         case 0xC: // CALL M,nn
             CALL(fS);

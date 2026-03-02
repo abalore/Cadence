@@ -122,19 +122,16 @@ void CPC::Clock()
 void CPC::Reset()
 {
     tick = 0;
-    for (int i = 0; i < 4; i++) RAM[i] = RAMs[i];
-    Z80::Init();
-    PPI::Init();
-    CRTC::Init();
-    GateArray::Init();
-    Keyboard::Init();
-    PPI::Init();
-    PSG::Init();
+    SelectRAM(0);
+    SelectROM(0);
+    Z80::Reset();
+    PPI::Reset();
+    CRTC::Reset();
+    GateArray::Reset();
+    Keyboard::Reset();
+    PPI::Reset();
+    PSG::Reset();
     FDC::Reset();
-    if (cartridgeEnabled)
-        HiROM = Cartridge + 0x4000;
-    else
-        HiROM = HiROMs[0];
 }
 
 BYTE CPC::GetRAMByteAt(word address)

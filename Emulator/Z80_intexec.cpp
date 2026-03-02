@@ -16,7 +16,7 @@ void Z80::Step_Int_Exec()
         DR = (BYTE)(PC & 0xFF);
         break;
     case 3:
-        switch(InterruptMode)
+        switch(im)
         {
         case 0:
         case 1:
@@ -30,7 +30,7 @@ void Z80::Step_Int_Exec()
         }
         break;
     case 4:
-        switch(InterruptMode)
+        switch(im)
         {
         case 2:
             *t16.L = DR;
@@ -39,7 +39,7 @@ void Z80::Step_Int_Exec()
         }
         break;
     case 5:
-        switch(InterruptMode)
+        switch(im)
         {
         case 2:
             *t16.H = DR;

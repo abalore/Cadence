@@ -46,8 +46,7 @@ word Z80::AR = 0;
 bool Z80::IFF1 = false;
 bool Z80::IFF2 = false;
 bool Z80::InterruptRequest = true;
-BYTE Z80::InterruptMode = 0;
-BYTE Z80::InterruptDelay = 0;
+BYTE Z80::im = 0;
 bool Z80::stopPoint = false;
 BYTE Z80::t_cp = 0;
 bool Z80::halted = false;
@@ -62,32 +61,35 @@ int Z80::i2;
 int Z80::i3;
 short Z80::s1;
 dword Z80::nops;
+bool Z80::EIRequest;
 
-void Z80::Init()
+void Z80::Reset()
 {
-    Z80::MREQ = true;
-    Z80::IORQ = true;
-    Z80::RD = true;
-    Z80::WR = true;
+    MREQ = true;
+    IORQ = true;
+    RD = true;
+    WR = true;
+    PC = 0;
+    SP = 0;
     I = 0;
     R = 0;
+    im = 0;
     mCycle = 1;
-    PC = 0;
     nops = 0;
     idMode = IDMode::BASIC;
     mCycleType = MCycleType::FETCH;
     IFF1 = false;
+    IFF2 = false;
     InterruptRequest = true;
-    InterruptMode = 0;
-    InterruptDelay = 0;
     stopPoint = false;
     halted = false;
+    EIRequest = false;
 }
 
 void Z80::ProcessINT()
 {
     R = (R & 0x80) | ((R + 1) & 0x7F);
-    if (InterruptMode == 1) IR = 0xFF;
+    if (im == 1) IR = 0xFF;
 }
 
 void Z80::ProcessFETCH()
@@ -158,18 +160,21 @@ void Z80::Clock()
         if (idMode == IDMode::BASIC)
         {
             stopPoint = true;
-            if (InterruptDelay > 0)
-                InterruptDelay--;
-            else
-                if (!InterruptRequest && IFF1)
-                {
-                    IFF1 = false;
-                    InterruptRequest = true;
-                    //IR = 0xFF;
-                    mCycleType = MCycleType::INT;
-                    halted = false;
-                    idMode = IDMode::INTEXEC;
-                }
+            if (!InterruptRequest && IFF1)
+            {
+                IFF1 = false;
+                InterruptRequest = true;
+                //IR = 0xFF;
+                mCycleType = MCycleType::INT;
+                halted = false;
+                idMode = IDMode::INTEXEC;
+            }
+            if (EIRequest)
+            {
+                IFF1 = true;
+                IFF2 = true;
+                EIRequest = false;
+            }
         }
     }
     else

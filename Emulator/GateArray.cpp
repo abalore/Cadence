@@ -25,26 +25,37 @@ BYTE GateArray::pi;
 BYTE GateArray::decodedPen[4][8][256];
 bool GateArray::hsyncTrigger = false;
 bool GateArray::vsyncTrigger = false;
-SyncState GateArray::hsyncState = SyncState::SSWaitingCRTC;
-SyncState GateArray::vsyncState = SyncState::SSWaitingCRTC;
 bool GateArray::LoROMActive;
 bool GateArray::HiROMActive;
 bool GateArray::Monochrome;
 
-void GateArray::Init()
+void GateArray::Reset()
 {
+    Color = AbsoluteBlack;
+    for (int i = 0; i < 16; i++)
+        INK[i] = 0;
     Monochrome = false;
-    currentPen = 0;
     BORDER = 0;
+    currentPen = 0;
+    R52 = 0;
+    mode  = 0;
+    pi = 0;
+    hsyncTrigger = false;
+    vsyncTrigger = false;
+    LoROMActive = false;
+    HiROMActive = false;
+    // private
+    RMR = 0;
+    MMR = 0;
+    borderSelected = false;
     CCLK = false;
+    videoAddress = 0;
     currentByte = 0;
     pixelIndex = 0x80;
     lastHSYNC = false;
     lastHSYNC = false;
-    RMR = 0;
-    MMR = 0;
-    LoROMActive = false;
-    HiROMActive = false;
+    hsyncDelay = 0;
+    vsyncDelay = 0;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
             for (int b = 0; b < 256; b++)
