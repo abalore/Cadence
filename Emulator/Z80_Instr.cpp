@@ -1332,7 +1332,7 @@ void Z80::RRD()
 
 void Z80::IM(int mode)
 {
-    InterruptMode = mode;
+    im = mode;
     idMode = IDMode::BASIC;
 }
 

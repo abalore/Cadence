@@ -18,16 +18,22 @@ BYTE CRTC::R12;
 BYTE CRTC::R13;
 BYTE CRTC::verticalAdjust;
 
-void CRTC::Init()
+void CRTC::Reset()
 {
+    for (int i = 0; i < 18; i++)
+        Registers[i] = 0;
+    Index = 0;
+    RA = 0;
+    MA = 0;
     HCC = 0;
     VCC = 0;
     HSC = 0;
     VSC = 0;
-    MA = 0;
-    RA = 0;
     HSYNC = false;
     VSYNC = false;
+    BORDER = false;
+    R12 = 0;
+    R13 = 0;
     verticalAdjust = 0;
 }
 

@@ -18,7 +18,7 @@ bool PPI::bIO;
 BYTE PPI::lC;
 BYTE PPI::hC;
 
-void PPI::Init()
+void PPI::Reset()
 {
     controlWord = 0;
     aMode = 0;

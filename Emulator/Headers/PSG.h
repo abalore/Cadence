@@ -8,19 +8,17 @@
 enum EnvelopeDir
 {
     EDUp,
-    EDDown,
-    EDNone
+    EDDown
 };
 
 class PSG
 {
 public:
-    static void Init();
+    static void Reset();
     static void Clock();
     static void SelectFunction(bool bdir, bool bc1);
     static BYTE ReadData();
     static void WriteData(BYTE data);
-    static BYTE PortA;
     static BYTE outputA;
     static BYTE outputB;
     static BYTE outputC;

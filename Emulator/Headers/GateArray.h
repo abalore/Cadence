@@ -3,23 +3,13 @@
 
 #include "defs.h"
 
-enum SyncState
-{
-    SSWaitingCRTC,
-    SSDelaying,
-    SSRunning,
-    SSFinished
-};
-
 class GateArray
 {
 public:
-    static void Init();
+    static void Reset();
     static void Clock(int tick);
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
-    //static void GenerateHSync();
-    //static void GenerateVSync();
     static void WR();
     static const BYTE *Color;
     static BYTE INK[16];
@@ -38,8 +28,6 @@ public:
     static BYTE decodedPen[4][8][256];
     static bool hsyncTrigger;
     static bool vsyncTrigger;
-    static SyncState hsyncState;
-    static SyncState vsyncState;
     static bool LoROMActive;
     static bool HiROMActive;
     static bool Monochrome;
@@ -93,7 +81,6 @@ private:
     static void ProcessSync();
     static void SetPixel();
     static void ReadByte();
-    // static void PrintDebugLine();
     static BYTE RMR;
     static BYTE MMR;
     static bool borderSelected;
@@ -106,9 +93,6 @@ private:
     static bool lastVSYNC;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;
-
-    static BYTE monoColor[3];
-
 };
 
 #endif // GATEARRAY_H

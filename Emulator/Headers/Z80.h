@@ -28,7 +28,6 @@ enum IDMode
 class Z80
 {
 public:
-    static void Init();
     static void Reset();
     static void Clock();
     static BYTE tCycle;
@@ -50,10 +49,10 @@ public:
     static bool IFF1;
     static bool IFF2;
     static bool InterruptRequest;
+    static bool EIRequest;
     static bool stopPoint;
     static bool halted;
-    static BYTE InterruptMode;
-    static BYTE InterruptDelay;
+    static BYTE im;
     static dword nops;
 
 private:

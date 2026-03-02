@@ -12,11 +12,13 @@ volatile bool EmulatorThread::end = false;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
+    Emulator::Init();
+
 }
 
 EmulatorThread::~EmulatorThread()
 {
-
+    Emulator::Finalize();
 }
 
 void EmulatorThread::Pause()
@@ -62,7 +64,6 @@ void EmulatorThread::Stop ()
 
 void EmulatorThread::run()
 {
-    Emulator::Init();
     Emulator::Reset();
     while (!end)
     {
@@ -92,5 +93,4 @@ void EmulatorThread::run()
         }
         else QThread::msleep(5);
     }
-    Emulator::Finalize();
 }

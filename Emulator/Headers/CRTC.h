@@ -6,7 +6,7 @@
 class CRTC
 {
 public:
-    static void Init();
+    static void Reset();
     static void Clock();
     static void RD();
     static void WR();
@@ -14,7 +14,7 @@ public:
     static BYTE Index;
     static BYTE RA;
     static word MA;
-    static bool HSYNC, VSYNC, BORDER, WILLVSYNC;
+    static bool HSYNC, VSYNC, BORDER;
     static word HCC, VCC;
     static BYTE HSC, VSC;
     static BYTE R12, R13;

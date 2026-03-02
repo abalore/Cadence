@@ -50,21 +50,38 @@ BYTE FDC::stCM, FDC::stDD, FDC::stWC, FDC::stSH, FDC::stSN, FDC::stBC, FDC::stMD
 
 void FDC::Reset()
 {
-    // Set default status reg 0
-    stIC = 0b11000000;
-    stSE = stEC = stNR = 0;
-    H = 0;
-    US = 0;
-    // Set default status reg 1
-    stEN = stDE = stOR = stND = stNW = stMA = 0;
-    // Set default status reg 2
-    stCM = stDD = stWC = stSH = stSN = stBC = stMD = 0;
-
-    INT = 4;
+    state = FDCState::FDC_StateCommand;
+    commandState = FDCCommandState::FDC_StateCommandCode;
+    command = 0;
+    HD = false;
+    US = PCN = H = R = EOT = 0;
+    GPL = DTL = STP = NCN = SC = D = 0;
+    SRT = HUT = HLT = 0;
+    ND = MT = MF = SK = false;
     headSettlingTime = 0;
     headUploadTimeInterval = 0;
+    for (int i = 0; i < 7; i++)
+        result[i] = 0;
+    resultCount = 0;
+    resultIndex = 0;
+    bit7_RQM = 1;
+    bit6_DIO = 0;
+    bit4_BUSY = 0;
+    bit5_NDMA = 0;
+    bits03_FDDBUSY[0] = 0;
+    bits03_FDDBUSY[1] = 0;
+    bits03_FDDBUSY[2] = 0;
+    bits03_FDDBUSY[3] = 0;
+    dataIndex = 0;
+    dataSize = 0;
+    sizeCode = 0;
+    sectorID = 0;
     weakSectorCycle = 0;
-    GoToCommandState();
+    INT = 4;
+    stIC = 0b11000000;
+    stSE = stEC = stNR = 0;
+    stEN = stDE = stOR = stND = stNW = stMA = 0;
+    stCM = stDD = stWC = stSH = stSN = stBC = stMD = 0;
 }
 
 void FDC::Clock()

@@ -3,7 +3,6 @@
 #include "Headers/Tape.h"
 #include <stdlib.h>
 
-BYTE PSG::PortA;
 bool PSG::BC1;
 bool PSG::BDIR;
 BYTE PSG::outputA;
@@ -48,27 +47,36 @@ BYTE PSG::tVolA;
 BYTE PSG::tVolB;
 BYTE PSG::tVolC;
 
-
-void PSG::Init()
+void PSG::Reset()
 {
-    BDIR = false;
-    BC1 = true;
-    counterA = 0;
-    counterB = 0;
-    counterC = 0;
     outputA = 0;
     outputB = 0;
     outputC = 0;
+    for (int i = 0; i < PSG_BUFFER_SIZE; i++)
+        buffer[i] = 0;
+    bufferIndex = 0;
+    inputRegister = 0;
+    outputRegister = 0;
+    selectedRegister = 0;
+    for (int i = 0; i < 16; i++)
+        registers[i] = 0;
+    counterA = 0;
+    counterB = 0;
+    counterC = 0;
     divider = 0;
     envelopeDivider = 0;
     envelopeStage = 0;
     envelopeLevel = 0;
-    envelopeDir = EnvelopeDir::EDNone;
+    envelopeDir = EnvelopeDir::EDUp;
+    envelopeContinue = false;
+    envelopeAttack = false;
+    envelopeHold = false;
+    envelopeAlternate = false;
     envelopePeriod = 0;
+    envelopeCounter = 0;
     envelopeRunning = false;
     noiseDivider = 0;
     noiseLevel = 0;
-
     bitA = false;
     bitB = false;
     bitC = false;
@@ -81,7 +89,11 @@ void PSG::Init()
     noiseA = false;
     noiseB = false;
     noiseC = false;
-    bufferIndex = 0;
+    tVolA = 0;
+    tVolB = 0;
+    tVolC = 0;
+    BC1 = true;
+    BDIR = false;
 }
 
 void PSG::Clock()
@@ -231,8 +243,6 @@ void PSG::UpdateEnvelope()
         envelopeCounter = envelopePeriod;
         switch(envelopeDir)
         {
-        case EnvelopeDir::EDNone:
-            break;
         case EnvelopeDir::EDUp:
             envelopeLevel++;
             if (envelopeLevel >= 15)
