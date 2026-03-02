@@ -6,6 +6,7 @@
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/Tape.h"
 #include "Emulator/Headers/FDC.h"
+#include "Emulator/Headers/GateArray.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -48,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
     connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
     connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
+    connect(ui->actionEnable_cartridge, &QAction::changed, this, &MainWindow::onMenuCartridgeEnableCartridge);
+    connect(ui->actionLoad_cartridge, &QAction::triggered, this, &MainWindow::onMenuCartridgeLoadCartridge);
+    connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
 
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
@@ -163,23 +167,41 @@ void MainWindow::onMenuROMLoadFromFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load ROM"), ".", tr("ROM Files (*.bin *.rom)"));
     if (fileName != nullptr)
-        Emulator::ReadROM((char *)fileName.toUtf8().data(), 1);
+        CPC::ReadROM((char *)fileName.toUtf8().data(), 1);
+}
+
+void MainWindow::onMenuCartridgeEnableCartridge()
+{
+    CPC::cartridgeEnabled = ui->actionEnable_cartridge->isChecked();
+    Emulator::Reset();
+}
+
+void MainWindow::onMenuCartridgeLoadCartridge()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
+    if (fileName != nullptr)
+        CPC::ReadCartridge((char *)fileName.toUtf8().data());
+}
+
+void MainWindow::onMenuScreenGreenMonitor()
+{
+    GateArray::Monochrome = ui->actionGreen_monitor->isChecked();
 }
 
 void MainWindow::SetCPC464()
 {
-    Emulator::cpcType = CPCType::CPC464;
+    CPC::cpcType = CPCType::CPC464;
     ResetEmulation();
 }
 
 void MainWindow::SetCPC664()
 {
-    Emulator::cpcType = CPCType::CPC664;
+    CPC::cpcType = CPCType::CPC664;
     ResetEmulation();
 }
 
 void MainWindow::SetCPC6128()
 {
-    Emulator::cpcType = CPCType::CPC6128;
+    CPC::cpcType = CPCType::CPC6128;
     ResetEmulation();
 }

@@ -113,7 +113,7 @@ void Disassembler::Init()
 
 BYTE Disassembler::ReadNext()
 {
-    BYTE b = GetActiveMemory();
+    BYTE b = CPC::GetByteAt(addr);
     sprintf(buff, "%02hhX ", static_cast<unsigned char>(b));
     bytes += buff;
     length++;
@@ -161,31 +161,6 @@ void Disassembler::SetPoint(ushort address)
 void Disassembler::AddNewLabel(word address, string label)
 {
     labels->insert_or_assign(address, label);
-}
-
-BYTE Disassembler::GetActiveMemory()
-{
-    int bank = addr >> 14;
-    int address = addr & 0x3FFF;
-    switch(bank)
-    {
-    case 0:
-        if (!GateArray::LoROMActive)
-            return CPC::LoROM[address];
-        else
-            return CPC::RAM[bank][address];
-        break;
-    case 1:
-    case 2:
-        return CPC::RAM[bank][address];
-        break;
-    case 3:
-        if (!GateArray::HiROMActive)
-            return CPC::HiROM[address];
-        else
-            return CPC::RAM[bank][address];
-    }
-    return 0;
 }
 
 void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *label, string *addressStr, string *bytesStr, string *instrStr)

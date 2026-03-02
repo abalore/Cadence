@@ -37,7 +37,6 @@ private:
     static void GetNextInstructionIDX2();
     static void GetNextInstructionMisc();
     static void AddNewLabel(word address, string label);
-    static BYTE GetActiveMemory();
     static const string CB_INSTR[];
     static const string CB_OPERAND[];
     static map<word, string> *labels;

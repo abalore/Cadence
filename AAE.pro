@@ -26,7 +26,6 @@ SOURCES += \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
-    Emulator/ROMSelector.cpp \
     Emulator/Tape.cpp \
     Emulator/Z80_16bitAL.cpp \
     Emulator/Z80_8bitAL.cpp \
@@ -73,7 +72,6 @@ HEADERS += \
     Emulator/Headers/Keyboard.h \
     Emulator/Headers/PPI.h \
     Emulator/Headers/PSG.h \
-    Emulator/Headers/ROMSelector.h \
     Emulator/Headers/Reg16.h \
     Emulator/Headers/Tape.h \
     Emulator/Headers/Z80.h \

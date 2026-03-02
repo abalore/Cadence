@@ -35,6 +35,9 @@ private slots:
     void onMenuDiscLoadDSK();
     void onMenuROMLoadFromFile();
     void onMenuMemoryEnterBytes();
+    void onMenuCartridgeEnableCartridge();
+    void onMenuCartridgeLoadCartridge();
+    void onMenuScreenGreenMonitor();
     void StartThreads();
     void StopThreads();
     void ResetEmulation();

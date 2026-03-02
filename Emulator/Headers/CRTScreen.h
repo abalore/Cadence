@@ -17,6 +17,6 @@ public:
     static bool frameFinished;
 private:
     static int hPos, vPos;
-    };
+};
 
 #endif // CRTSCREEN_H

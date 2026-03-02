@@ -35,13 +35,13 @@ void PboWidget::paintGL()
 {
     glBindTexture(GL_TEXTURE_2D, ID);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.1875f, 0.11f);
+    glTexCoord2f(0.1875f-0.1875f, 0.128205128f);
     glVertex2f(-1, 1);
-    glTexCoord2f(0.9375f, 0.11f);
+    glTexCoord2f(0.9375f-0.1875f, 0.128205128f);
     glVertex2f(1, 1);
-    glTexCoord2f(0.9375f, 0.846153846f + 0.11);
+    glTexCoord2f(0.9375f-0.1875f, 0.820512821f + 0.128205128f);
     glVertex2f(1, -1);
-    glTexCoord2f(0.1875f, 0.846153846f + 0.11);
+    glTexCoord2f(0.1875f-0.1875f, 0.820512821f +0.128205128f);
     glVertex2f(-1, -1);
     glEnd();
     glFlush();
