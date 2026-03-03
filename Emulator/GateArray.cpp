@@ -107,7 +107,7 @@ void GateArray::ProcessSync()
             vsyncDelay--;
             if (!vsyncDelay)
             {
-                if (R52 > 32)
+                if (R52 > 31)
                     Z80::InterruptRequest = false;
                 R52 = 0;
             }

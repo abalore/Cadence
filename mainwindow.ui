@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
-    <height>850</height>
+    <width>965</width>
+    <height>782</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,16 +38,38 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
    <widget class="PboWidget" name="openGLWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>20</y>
+      <x>86</x>
+      <y>56</y>
       <width>768</width>
-      <height>512</height>
+      <height>576</height>
      </rect>
     </property>
     <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="imgScreen_frame">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>942</width>
+      <height>701</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="screen_frame.qrc">:/images/monitor_frame.png</pixmap>
+    </property>
+    <property name="scaledContents">
      <bool>true</bool>
     </property>
    </widget>
@@ -57,7 +79,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1200</width>
+     <width>965</width>
      <height>23</height>
     </rect>
    </property>
@@ -118,6 +140,44 @@
     <addaction name="actionEnable_cartridge"/>
     <addaction name="actionLoad_cartridge"/>
    </widget>
+   <widget class="QMenu" name="menuDevices">
+    <property name="title">
+     <string>Devices</string>
+    </property>
+    <widget class="QMenu" name="menuDisk_A">
+     <property name="title">
+      <string>Disk A:</string>
+     </property>
+     <addaction name="actionInsert_disk"/>
+     <addaction name="actionRemove_disk"/>
+    </widget>
+    <widget class="QMenu" name="menuDisk_B">
+     <property name="title">
+      <string>Disk B:</string>
+     </property>
+     <addaction name="actionInsert_disk_2"/>
+     <addaction name="actionRemove_disk_2"/>
+    </widget>
+    <widget class="QMenu" name="menuTape_2">
+     <property name="title">
+      <string>Tape</string>
+     </property>
+     <addaction name="actionInsert_tape"/>
+     <addaction name="actionRemove_tape"/>
+    </widget>
+    <widget class="QMenu" name="menuCartridge_2">
+     <property name="title">
+      <string>Cartridge</string>
+     </property>
+     <addaction name="actionInsert_cartridge"/>
+     <addaction name="actionRemove_cartridge"/>
+    </widget>
+    <addaction name="menuDisk_A"/>
+    <addaction name="menuDisk_B"/>
+    <addaction name="menuTape_2"/>
+    <addaction name="actionROM_Box"/>
+    <addaction name="menuCartridge_2"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuTape"/>
@@ -126,6 +186,7 @@
    <addaction name="menuDisc"/>
    <addaction name="menuROM"/>
    <addaction name="menuCartridge"/>
+   <addaction name="menuDevices"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -248,6 +309,51 @@
     <string>Green monitor</string>
    </property>
   </action>
+  <action name="actionInsert_disk">
+   <property name="text">
+    <string>Insert disk...</string>
+   </property>
+  </action>
+  <action name="actionRemove_disk">
+   <property name="text">
+    <string>Remove disk</string>
+   </property>
+  </action>
+  <action name="actionInsert_disk_2">
+   <property name="text">
+    <string>Insert disk...</string>
+   </property>
+  </action>
+  <action name="actionRemove_disk_2">
+   <property name="text">
+    <string>Remove disk</string>
+   </property>
+  </action>
+  <action name="actionInsert_tape">
+   <property name="text">
+    <string>Insert tape...</string>
+   </property>
+  </action>
+  <action name="actionRemove_tape">
+   <property name="text">
+    <string>Remove tape</string>
+   </property>
+  </action>
+  <action name="actionROM_Box">
+   <property name="text">
+    <string>ROM Box...</string>
+   </property>
+  </action>
+  <action name="actionInsert_cartridge">
+   <property name="text">
+    <string>Insert cartridge...</string>
+   </property>
+  </action>
+  <action name="actionRemove_cartridge">
+   <property name="text">
+    <string>Remove cartridge</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -256,6 +362,8 @@
    <header>pboWidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="screen_frame.qrc"/>
+ </resources>
  <connections/>
 </ui>
