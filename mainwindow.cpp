@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     enterBytesDialog = new EnterBytesDialog(this);
 
     Instance = this;
-    setFixedSize(800, 600);
+    setFixedSize(1024, 768);
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
