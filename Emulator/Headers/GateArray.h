@@ -11,6 +11,7 @@ public:
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
     static void WR();
+    static void AckInt();
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;

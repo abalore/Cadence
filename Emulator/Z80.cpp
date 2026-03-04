@@ -164,10 +164,10 @@ void Z80::Clock()
             {
                 IFF1 = false;
                 InterruptRequest = true;
-                //IR = 0xFF;
                 mCycleType = MCycleType::INT;
                 halted = false;
                 idMode = IDMode::INTEXEC;
+                GateArray::AckInt();
             }
             if (EIRequest)
             {

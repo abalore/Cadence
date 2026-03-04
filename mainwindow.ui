@@ -47,7 +47,7 @@
       <x>86</x>
       <y>56</y>
       <width>768</width>
-      <height>576</height>
+      <height>544</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -60,7 +60,7 @@
       <x>0</x>
       <y>0</y>
       <width>942</width>
-      <height>701</height>
+      <height>674</height>
      </rect>
     </property>
     <property name="text">
@@ -99,12 +99,6 @@
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
    </widget>
-   <widget class="QMenu" name="menuTape">
-    <property name="title">
-     <string>Tape</string>
-    </property>
-    <addaction name="actionLoad_File"/>
-   </widget>
    <widget class="QMenu" name="menuScreen">
     <property name="title">
      <string>Screen</string>
@@ -121,28 +115,9 @@
     <addaction name="actionLoad_binary_file"/>
     <addaction name="actionSave_binary_file"/>
    </widget>
-   <widget class="QMenu" name="menuDisc">
-    <property name="title">
-     <string>Disc</string>
-    </property>
-    <addaction name="actionLoad_DSK"/>
-   </widget>
-   <widget class="QMenu" name="menuROM">
-    <property name="title">
-     <string>ROM</string>
-    </property>
-    <addaction name="actionLoad_fromFile"/>
-   </widget>
-   <widget class="QMenu" name="menuCartridge">
-    <property name="title">
-     <string>Cartridge</string>
-    </property>
-    <addaction name="actionEnable_cartridge"/>
-    <addaction name="actionLoad_cartridge"/>
-   </widget>
    <widget class="QMenu" name="menuDevices">
     <property name="title">
-     <string>Devices</string>
+     <string>Media</string>
     </property>
     <widget class="QMenu" name="menuDisk_A">
      <property name="title">
@@ -180,12 +155,8 @@
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
-   <addaction name="menuTape"/>
    <addaction name="menuScreen"/>
    <addaction name="menuMemory"/>
-   <addaction name="menuDisc"/>
-   <addaction name="menuROM"/>
-   <addaction name="menuCartridge"/>
    <addaction name="menuDevices"/>
   </widget>
   <action name="actionPause">

@@ -41,16 +41,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
-    connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
+    connect(ui->actionInsert_tape, &QAction::triggered, this, &MainWindow::onMenuMediaInsertTape);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
-    connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
-    connect(ui->actionLoad_fromFile, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
+    connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
+    connect(ui->actionROM_Box, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
     connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
     connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
     connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
-    connect(ui->actionEnable_cartridge, &QAction::changed, this, &MainWindow::onMenuCartridgeEnableCartridge);
-    connect(ui->actionLoad_cartridge, &QAction::triggered, this, &MainWindow::onMenuCartridgeLoadCartridge);
+    connect(ui->actionRemove_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveCartridge);
+    connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
     connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
 
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
@@ -138,7 +138,7 @@ void MainWindow::onMenuScreenInspectGraphics()
     graphicsInspector->UpdateGraphics();
 }
 
-void MainWindow::onMenuTapeLoadFile()
+void MainWindow::onMenuMediaInsertTape()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
@@ -156,7 +156,7 @@ void MainWindow::onMenuScreenSmooth()
     ui->openGLWidget->setSmoothing(ui->actionSmooth->isChecked());
 }
 
-void MainWindow::onMenuDiscLoadDSK()
+void MainWindow::onMenuMediaInsertDiskA()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
@@ -170,17 +170,19 @@ void MainWindow::onMenuROMLoadFromFile()
         CPC::ReadROM((char *)fileName.toUtf8().data(), 1);
 }
 
-void MainWindow::onMenuCartridgeEnableCartridge()
+void MainWindow::onMenuMediaRemoveCartridge()
 {
-    CPC::cartridgeEnabled = ui->actionEnable_cartridge->isChecked();
+    CPC::cartridgeEnabled = false;
     Emulator::Reset();
 }
 
-void MainWindow::onMenuCartridgeLoadCartridge()
+void MainWindow::onMenuMediaInsertCartridge()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
         CPC::ReadCartridge((char *)fileName.toUtf8().data());
+    CPC::cartridgeEnabled = true;
+    Emulator::Reset();
 }
 
 void MainWindow::onMenuScreenGreenMonitor()
