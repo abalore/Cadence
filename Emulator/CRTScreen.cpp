@@ -15,20 +15,20 @@ void CRTScreen::Init()
 
 void CRTScreen::Clock()
 {
-    hPos += 3;
-    if (GateArray::hsyncTrigger) // || hPos == 1024)
+    hPos ++;
+    if (GateArray::hsyncTrigger || hPos > 3090) // 16068 Hz free running
     {
         hPos = 0;
-        vPos += Stride;
+        vPos ++;
         GateArray::hsyncTrigger = false;
     }
-    if (GateArray::vsyncTrigger) //* || vPos == 312*/) && vPos)
+    if ((GateArray::vsyncTrigger && vPos > 300) || vPos > 325) // 48Hz free running
     {
         vPos = 0;
         frameFinished = true;
         GateArray::vsyncTrigger = false;
     }
-    unsigned int base = vPos + hPos;
+    unsigned int base = vPos * Stride + hPos * 3;
     if (base < DataSize)
     {
         Pixels[base] = GateArray::Color[0];

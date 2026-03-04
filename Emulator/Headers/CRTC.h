@@ -10,17 +10,35 @@ public:
     static void Clock();
     static void RD();
     static void WR();
-    static BYTE Registers[18];
+    static BYTE R[18];
     static BYTE Index;
     static BYTE RA;
-    static word MA;
     static bool HSYNC, VSYNC, BORDER;
-    static word HCC, VCC;
-    static BYTE HSC, VSC;
-    static BYTE R12, R13;
-    static BYTE verticalAdjust;
+
+    static BYTE HCC;
+    static word VLC;
+    static BYTE VCC;
+    static BYTE VSC;
+    static BYTE HSC;
+    static word MA;
+
+    static BYTE VTAC;
+    static BYTE verticalTotal;
+    static BYTE crtcType;
+
+    static BYTE R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17;
+
 private:
-    static void Update();
+    static void RunHorizontalChar();
+    static void RunAdj();
+    static void RunLine();
+    static void RunVerticalChar();
+    static void ResetFrame();
+    static bool HDISP;
+    static bool VDISP;
+    static word baseMA;
+    static bool adjustMode;
+
 };
 
 #endif // CRTC_H

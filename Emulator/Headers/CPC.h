@@ -37,6 +37,7 @@ public:
     static bool cartridgeEnabled;
     static CPCType cpcType;
     static BYTE tick;
+    static BYTE baseVMA;
 };
 
 

@@ -203,7 +203,7 @@ string Debugger::GetCRTCDebugLine()
     crtc += "\n";
     for (int i = 0; i < 18; i++)
     {
-        sprintf(buff, "%02X ", CRTC::Registers[i]);
+        sprintf(buff, "%02X ", CRTC::R[i]);
         crtc += (string)buff;
     }
     crtc += "\n";

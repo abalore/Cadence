@@ -29,14 +29,14 @@ private slots:
     void onEmulatorFinishedFrame();
     void onMenuMemoryLoadBinaryFile();
     void onMenuMemorySaveBinaryFile();
-    void onMenuTapeLoadFile();
+    void onMenuMediaInsertTape();
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
-    void onMenuDiscLoadDSK();
+    void onMenuMediaInsertDiskA();
     void onMenuROMLoadFromFile();
     void onMenuMemoryEnterBytes();
-    void onMenuCartridgeEnableCartridge();
-    void onMenuCartridgeLoadCartridge();
+    void onMenuMediaRemoveCartridge();
+    void onMenuMediaInsertCartridge();
     void onMenuScreenGreenMonitor();
     void StartThreads();
     void StopThreads();

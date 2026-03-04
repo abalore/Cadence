@@ -1,4 +1,5 @@
 #include "speedcontroller.h"
+#include "SoundThread.h"
 #include <chrono>
 #include <QThread>
 
@@ -9,20 +10,48 @@ volatile long SpeedController::lastElapsed;
 long SpeedController::lastT = 0;
 long SpeedController::t = 0;
 long SpeedController::elapsed = 0;
+bool SpeedController::overrun = false;
+int SpeedController::targetTime = 20000;
+SpeedMode SpeedController::speedMode = SpeedMode::Keep;
 
 void SpeedController::Run()
 {
+    snd_pcm_sframes_t frames = SoundThread::frames;
+    switch(speedMode)
+    {
+    case SpeedMode::Keep:
+        if (frames > 48)
+        {
+            speedMode = SpeedMode::Slowdown;
+            targetTime = 20100;
+        }
+        else if (frames < 16)
+        {
+            speedMode = SpeedMode::Speedup;
+            targetTime = 19900;
+        }
+        break;
+    case SpeedMode::Slowdown:
+    case SpeedMode::Speedup:
+        if (frames == 32)
+        {
+            targetTime = 20000;
+            speedMode = SpeedMode::Keep;
+        }
+        break;
+    }
+
     duration now = high_resolution_clock::now().time_since_epoch();
     t = duration_cast<microseconds>(now).count();
     elapsed = t - lastT;
     lastElapsed = elapsed;
-    if (elapsed > 19968)
-    {
-        QThread::usleep(0);
-    }
+
+    overrun = false;
+    if (elapsed > targetTime)
+        overrun = true;
     else
     {
-        while (elapsed < 19968)
+        while (elapsed < targetTime)
         {
             QThread::usleep(0);
             duration now = high_resolution_clock::now().time_since_epoch();

@@ -2,6 +2,7 @@
 #include "Headers/CPC.h"
 #include "Headers/CRTC.h"
 #include "Headers/Z80.h"
+#include "speedcontroller.h"
 
 const BYTE *GateArray::Color = Palette;
 BYTE GateArray::INK[16];
@@ -67,7 +68,6 @@ void GateArray::Clock(int tick)
     // 1Mhz
     if ((tick % 16) == 0)
     {
-        mode = RMR & 0x03;
         ProcessSync();
     }
     // 2 Mhz
@@ -80,34 +80,45 @@ void GateArray::Clock(int tick)
     SetPixel();
 }
 
+void GateArray::AckInt()
+{
+   R52 &= 0x1F;
+}
+
 void GateArray::ProcessSync()
 {
+    bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
     if (hsyncDelay > 0)
     {
         hsyncDelay--;
-        if (!hsyncDelay)
+        if (hsyncDelay == 0)
             hsyncTrigger = true;
     }
-    if (lastHSYNC && !CRTC::HSYNC) // Falling edge
+    if (hsyncFallingEdge)
     {
-        hsyncDelay = 1;
+        mode = RMR & 0x03;
+        hsyncDelay = 1; ///////////////// 3?
         R52++;
         if (R52 == 52)
         {
             R52 = 0;
             Z80::InterruptRequest = false;
         }
-        if (!lastVSYNC && CRTC::VSYNC) // Rising edge
-        {
-            vsyncDelay = 2;
-            vsyncTrigger = true;
-        }
         if (vsyncDelay > 0)
         {
             vsyncDelay--;
-            if (!vsyncDelay)
+            if (vsyncDelay == 0)
             {
-                if (R52 > 31)
+                vsyncTrigger = true;
+            }
+        }
+        else
+        {
+            bool vsyncRisingEdge = !lastVSYNC && CRTC::VSYNC;
+            if (vsyncRisingEdge)
+            {
+                vsyncDelay = 2; //////////////// 3?
+                if (R52 & 0x20)
                     Z80::InterruptRequest = false;
                 R52 = 0;
             }
@@ -125,6 +136,8 @@ void GateArray::SetPixel()
         return;
     }
     currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
+    if (SpeedController::overrun && BORDER)
+        currentInk = 0;
     if (++pixelIndex == 8) pixelIndex = 0;
     if (Monochrome)
         Color = &GreenPalette[currentInk * 3];
