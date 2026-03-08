@@ -3,7 +3,6 @@
 #include "Headers/Z80.h"
 #include "Headers/GateArray.h"
 
-BYTE CRTC::R[18];
 BYTE CRTC::Index;
 BYTE CRTC::RA;
 bool CRTC::HSYNC;
@@ -17,24 +16,18 @@ BYTE CRTC::VSC;
 BYTE CRTC::HSC;
 word CRTC::MA;
 
-BYTE CRTC::R0;
-BYTE CRTC::R1;
-BYTE CRTC::R2;
-BYTE CRTC::R3;
-BYTE CRTC::R4;
-BYTE CRTC::R5;
-BYTE CRTC::R6;
-BYTE CRTC::R7;
-BYTE CRTC::R8;
-BYTE CRTC::R9;
-BYTE CRTC::R10;
-BYTE CRTC::R11;
-BYTE CRTC::R12;
-BYTE CRTC::R13;
-BYTE CRTC::R14;
-BYTE CRTC::R15;
-BYTE CRTC::R16;
-BYTE CRTC::R17;
+BYTE CRTC::HT;
+BYTE CRTC::HD;
+BYTE CRTC::HSP;
+BYTE CRTC::HSW;
+BYTE CRTC::VSW;
+BYTE CRTC::VT;
+BYTE CRTC::VTA;
+BYTE CRTC::VD;
+BYTE CRTC::VSP;
+BYTE CRTC::IS;
+BYTE CRTC::MRA;
+
 BYTE CRTC::VTAC;
 BYTE CRTC::verticalTotal;
 bool CRTC::HDISP;
@@ -44,10 +37,15 @@ bool CRTC::adjustMode;
 
 BYTE CRTC::crtcType = 0;
 
+word CRTC::DSA;
+
+Counter *CRTC::H, *CRTC::L, *CRTC::V, *CRTC::A;
+DFlipFlop *CRTC::ResetH, *CRTC::ResetL, *CRTC::ResetV;
+RSFlipFlop *CRTC::HDispEnable, *CRTC::VDispEnable;
+bool CRTC::EndLine, CRTC::EndVisibleLine, CRTC::NewCharLine;
+
 void CRTC::Reset()
 {
-    for (int i = 0; i < 18; i++)
-        R[i] = 0;
     Index = 0;
     RA = 0;
     MA = 0;
@@ -61,26 +59,35 @@ void CRTC::Reset()
     HDISP = false;
     HDISP = false;
     BORDER = false;
-    R0 = 0;
-    R1 = 0;
-    R2 = 0;
-    R3 = 0;
-    R4 = 0;
-    R5 = 0;
-    R6 = 0;
-    R7 = 0;
-    R8 = 0;
-    R9 = 0;
-    R10 = 0;
-    R11 = 0;
-    R12 = 0;
-    R13 = 0;
-    R14 = 0;
-    R15 = 0;
-    R16 = 0;
-    R17 = 0;
+    HT = 63;
+    HD = 40;
+    HSP = 46;
+    VSW = 8;
+    HSW = 14;
+    VT = 38;
+    VTA = 0;
+    VD = 25;
+    VSP = 30;
+    MRA = 7;
+    DSA = 0x3000;
     VTAC = 0;
     adjustMode = false;
+    DSA = 0x3000;
+    MA = DSA;
+
+    H = new Counter(0xFF);
+    L = new Counter(0x1F);
+    V = new Counter(0x7F);
+    A = new Counter(0x1F);
+    ResetH = new DFlipFlop();
+    ResetL = new DFlipFlop();
+    ResetV = new DFlipFlop();
+    HDispEnable = new RSFlipFlop();
+    VDispEnable = new RSFlipFlop();
+    EndLine = false;
+    EndVisibleLine = false;
+    NewCharLine = false;
+    VSW = 16; //Z80::DR >> 4;
 }
 
 void CRTC::RD()
@@ -91,7 +98,7 @@ void CRTC::RD()
         //////////////////////////////////////////
         break;
     case 3: // Data out
-        Z80::DR = R[Index];
+        //Z80::DR = R[Index];
         break;
     }
 }
@@ -104,100 +111,148 @@ void CRTC::WR()
         Index = Z80::DR;
         break;
     case 1: // Data in
-        R[Index] = Z80::DR;
+        switch(Index)
+        {
+        case 0:
+            HT = Z80::DR;
+            break;
+        case 1:
+            HD = Z80::DR;
+            break;
+        case 2:
+            HSP = Z80::DR;
+            break;
+        case 3:
+            HSW = Z80::DR & 0x0F;
+            if (VSW == 0)
+                VSW = 16;               // Check CRTC Type
+            break;
+        case 4:
+            VT = Z80::DR;
+            break;
+        case 5:
+            VTA = Z80::DR;
+            break;
+        case 6:
+            VD = Z80::DR;
+            break;
+        case 7:
+            VSP = Z80::DR;
+            break;
+        case 8:
+            IS = Z80::DR;
+            break;
+        case 9:
+            MRA = Z80::DR;
+            break;
+        case 12:
+            DSA &= 0x00FF;
+            DSA |= Z80::DR * 256;
+            break;
+        case 13:
+            DSA &= 0xFF00;
+            DSA |= Z80::DR;
+            break;
+        }
+
         break;
     }
 }
 
+void CRTC::RunCombinational()
+{
+}
+
 void CRTC::RunHorizontalChar()
 {
-    if (!BORDER) MA = (MA + 1) & 0x3FFF;
-
-    if (HCC == R[0])
+    if (!BORDER)
+        MA++;
+    if (HSYNC)
+    {
+        HSC++;
+        if (HSC == HSW)
+            HSYNC = false;
+    }
+    if (HCC == HT)
     {
         HCC = 0;
         HDISP = true;
         RunLine();
-    }
-    else
-        HCC++;
-
-    if (HCC == (R[2]))
+    } else HCC++;
+    if (HCC == HD)
+        HDISP = false;
+    if (HCC == HSP)
     {
         HSYNC = true;
-        HSC = R[3] & 0x0F;
+        HSC = 0;
     }
-    if (HSC > 0)
-    {
-        HSC--;
-        if (HSC == 0)
-            HSYNC = false;
-    }
-    if (HCC == R[1])
-        HDISP = false;
+
 }
 
 void CRTC::RunLine()
 {
-    if (adjustMode && RA == VTAC - 1)
-        ResetFrame();
-    else if (RA == R[9])
+    if (VSYNC)
     {
-        RA = 0;
-        RunVerticalChar();
-        baseMA = MA;
-    }
-    else
-        RA++;
-    MA = baseMA;
-    if (VSC > 0)
-    {
-        VSC--;
-        if (VSC == 0)
+        VSC++;
+        if (VSC == VSW)
             VSYNC = false;
     }
+    if (adjustMode)
+    {
+        RA++;
+        if (RA == VTA)
+        {
+            VDISP = true;
+            MA = DSA;
+            baseMA = MA;
+            adjustMode = false;
+            RA = 0;
+        }
+        else
+        {
+            MA = baseMA;
+        }
+    }
+    else
+        if (RA == MRA)
+        {
+            RA = 0;
+            baseMA = MA;
+            RunVerticalChar();
+        }
+        else
+        {
+            RA++;
+            MA = baseMA;
+        }
 }
 
 void CRTC::RunVerticalChar()
 {
-    if (VCC == R[4])
+    if (VCC == VT)
     {
-        if (!adjustMode)
+        VCC = 0;
+        if (VTA == 0)
         {
-            VTAC = R[5];
-            if (VTAC > 0)
-                adjustMode = true;
-            else
-                ResetFrame();
+            VDISP = true;
+            MA = DSA;
+            baseMA = MA;
         }
         else
-            ResetFrame();
-        return;
-    }
-    else
-        VCC++;
-    if (VCC == R[7])
+            adjustMode = true;
+    } else VCC++;
+    if (VCC == VD)
+        VDISP = false;
+
+    if (VCC == VSP)
     {
         VSYNC = true;
-        VSC = R[3] >> 4;
-        if (VSC == 0)
-            VSC = 16;
+        VSC = 0;
     }
-    if (VCC == R[6])
-        VDISP = false;
 }
 
 void CRTC::ResetFrame()
 {
-    MA = ((R[12] & 0x3F) << 8) + R[13];
-    VDISP = true;
-    HCC = 0;
-    VCC = 0;
-    //HSC = 0;
-    //VSC = 0;
-    adjustMode = false;
-    baseMA = MA;
-    RA = 0;
 }
 
 void CRTC::Clock()

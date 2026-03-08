@@ -19,7 +19,6 @@ bool GateArray::CCLK = false;
 bool GateArray::lastHSYNC = false;
 bool GateArray::lastVSYNC = false;
 BYTE GateArray::R52 = 0;
-BYTE GateArray::hsyncDelay = 0;
 BYTE GateArray::vsyncDelay = 0;
 BYTE GateArray::mode;
 BYTE GateArray::pi;
@@ -55,7 +54,6 @@ void GateArray::Reset()
     pixelIndex = 0x80;
     lastHSYNC = false;
     lastHSYNC = false;
-    hsyncDelay = 0;
     vsyncDelay = 0;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
@@ -82,50 +80,51 @@ void GateArray::Clock(int tick)
 
 void GateArray::AckInt()
 {
-   R52 &= 0x1F;
+    R52 &= 0x1F;
 }
 
 void GateArray::ProcessSync()
 {
     bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
-    if (hsyncDelay > 0)
+    bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
+    bool vsyncRisingEdge = !lastVSYNC && CRTC::VSYNC;
+
+    if (hsyncRisingEdge)
     {
-        hsyncDelay--;
-        if (hsyncDelay == 0)
-            hsyncTrigger = true;
+        hsyncTrigger = true;
     }
+
     if (hsyncFallingEdge)
     {
         mode = RMR & 0x03;
-        hsyncDelay = 1; ///////////////// 3?
         R52++;
         if (R52 == 52)
         {
             R52 = 0;
             Z80::InterruptRequest = false;
         }
+
         if (vsyncDelay > 0)
         {
             vsyncDelay--;
             if (vsyncDelay == 0)
             {
-                vsyncTrigger = true;
-            }
-        }
-        else
-        {
-            bool vsyncRisingEdge = !lastVSYNC && CRTC::VSYNC;
-            if (vsyncRisingEdge)
-            {
-                vsyncDelay = 2; //////////////// 3?
-                if (R52 & 0x20)
+
+                if( R52 > 31)
+                {
+                    R52 = 0;
                     Z80::InterruptRequest = false;
-                R52 = 0;
+                }
             }
         }
-        lastVSYNC = CRTC::VSYNC;
+    }
+    if (vsyncRisingEdge)
+    {
+        vsyncDelay = 2;
+        vsyncTrigger = true;
     }
     lastHSYNC = CRTC::HSYNC;
+    lastVSYNC = CRTC::VSYNC;
 }
 
 void GateArray::SetPixel()
@@ -136,7 +135,8 @@ void GateArray::SetPixel()
         return;
     }
     currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
-    if (SpeedController::overrun && BORDER)
+    //if (SpeedController::overrun && BORDER)
+    if (CRTC::BORDER && !Z80::IFF1)
         currentInk = 0;
     if (++pixelIndex == 8) pixelIndex = 0;
     if (Monochrome)
@@ -206,7 +206,10 @@ void GateArray::WR()
     case 0x80: // RMR
         RMR = Z80::DR & 0x3F;
         if ((Z80::DR & 0x10) > 0)
+        {
             R52 = 0;
+            //Z80::InterruptRequest = false;
+        }
         LoROMActive = (RMR & 0x04) != 0;
         HiROMActive = (RMR & 0x08) != 0;
         break;

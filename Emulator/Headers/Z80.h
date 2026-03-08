@@ -84,6 +84,7 @@ private:
     static word w1, w2, w3;
     static int i1, i2, i3;
     static short s1;
+    static BYTE intACK;
 
     // 8 bit arithmetic and logic for A
     static void ADD_v(BYTE v);

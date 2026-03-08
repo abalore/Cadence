@@ -7,6 +7,7 @@
 #include "Headers/PSG.h"
 #include "Headers/FDC.h"
 #include "Headers/Tape.h"
+#include "Headers/CRTScreen.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -114,8 +115,10 @@ void CPC::Clock()
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
+        //CRTScreen::OneMhzClock();
     }
     GateArray::Clock(tick);
+    CRTScreen::Clock();
     tick++;
 }
 

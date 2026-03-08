@@ -1,4 +1,5 @@
 #include "Headers/Z80.h"
+#include "Headers/GateArray.h"
 
 void Z80::Step_Int_Exec()
 {
@@ -14,6 +15,7 @@ void Z80::Step_Int_Exec()
         AR--;
         SP = AR;
         DR = (BYTE)(PC & 0xFF);
+        GateArray::AckInt();
         break;
     case 3:
         switch(im)

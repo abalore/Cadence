@@ -5,7 +5,7 @@
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0x40E4;
+volatile ushort EmulatorThread::stopPoint = 0x2B54;
 volatile bool EmulatorThread::running = true;
 volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorThread::end = false;

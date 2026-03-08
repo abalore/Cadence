@@ -18,7 +18,6 @@ void Emulator::Finalize()
 void Emulator::Clock()
 {
     CPC::Clock();
-    CRTScreen::Clock();
 }
 
 void Emulator::Reset()

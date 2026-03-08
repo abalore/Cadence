@@ -1,10 +1,13 @@
 #include "Headers/CRTScreen.h"
 #include "Headers/GateArray.h"
+#include "Headers/CRTC.h"
 
 int CRTScreen::hPos = 0;
 int CRTScreen::vPos = 0;
+int CRTScreen::hSyncPos = 0;
 BYTE CRTScreen::Pixels[DataSize];
 bool CRTScreen::frameFinished;
+unsigned int CRTScreen::pixelIndex;
 
 void CRTScreen::Init()
 {
@@ -21,19 +24,37 @@ void CRTScreen::Clock()
         hPos = 0;
         vPos ++;
         GateArray::hsyncTrigger = false;
+        if (GateArray::vsyncTrigger || vPos > 325) // 48Hz free running
+        {
+            vPos = 0;
+            frameFinished = true;
+            GateArray::vsyncTrigger = false;
+            switch (CRTC::HSW)
+            {
+            case 3:
+                pixelIndex = 72;
+                break;
+            case 4:
+                pixelIndex = 48;
+                break;
+            case 5:
+                pixelIndex = 24;
+                break;
+            default:
+                pixelIndex = 0;
+                break;
+            }
+        }
     }
-    if ((GateArray::vsyncTrigger && vPos > 300) || vPos > 325) // 48Hz free running
+    //pixelIndex = vPos * Stride + hPos * 3;
+    if (pixelIndex < DataSize)
     {
-        vPos = 0;
-        frameFinished = true;
-        GateArray::vsyncTrigger = false;
-    }
-    unsigned int base = vPos * Stride + hPos * 3;
-    if (base < DataSize)
-    {
-        Pixels[base] = GateArray::Color[0];
-        Pixels[base + 1] = GateArray::Color[1];
-        Pixels[base + 2] = GateArray::Color[2];
+        Pixels[pixelIndex++] = GateArray::Color[0];
+        Pixels[pixelIndex++] = GateArray::Color[1];
+        Pixels[pixelIndex++] = GateArray::Color[2];
     }
 }
 
+void CRTScreen::OneMhzClock()
+{
+}
