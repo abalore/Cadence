@@ -95,12 +95,12 @@ void Z80::ProcessINT()
 void Z80::ProcessFETCH()
 {
     R = (R & 0x80) | ((R + 1) & 0x7F);
-    AR = PC;
-    ProcessREAD();
-    if (halted)
+    if (halted)// && InterruptRequest)
         IR = 0x00;
     else
     {
+        AR = PC;
+        ProcessREAD();
         IR = DR;
         PC++;
     }
@@ -163,11 +163,11 @@ void Z80::Clock()
             if (!InterruptRequest && IFF1)
             {
                 IFF1 = false;
+                IFF2 = false;
                 InterruptRequest = true;
                 mCycleType = MCycleType::INT;
                 halted = false;
                 idMode = IDMode::INTEXEC;
-                GateArray::AckInt();
             }
             if (EIRequest)
             {

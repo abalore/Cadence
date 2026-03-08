@@ -20,12 +20,15 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 SOURCES += \
     Debugger.cpp \
     Emulator/CRTScreen.cpp \
+    Emulator/Counter.cpp \
+    Emulator/DFlipFlip.cpp \
     Emulator/DSK.cpp \
     Emulator/FDC.cpp \
     Emulator/FloppyDrive.cpp \
     Emulator/Keyboard.cpp \
     Emulator/PPI.cpp \
     Emulator/PSG.cpp \
+    Emulator/RSFlipFlop.cpp \
     Emulator/Tape.cpp \
     Emulator/Z80_16bitAL.cpp \
     Emulator/Z80_8bitAL.cpp \
@@ -59,6 +62,8 @@ SOURCES += \
 
 HEADERS += \
     Debugger.h \
+    Emulator/Counter.h \
+    Emulator/DFlipFlop.h \
     Emulator/Headers/CDT.h \
     Emulator/Headers/CPC.h \
     Emulator/Headers/CRTC.h \
@@ -76,6 +81,7 @@ HEADERS += \
     Emulator/Headers/Tape.h \
     Emulator/Headers/Z80.h \
     Emulator/Headers/defs.h \
+    Emulator/RSFlipFlop.h \
     EmulatorThread.h \
     KeyPressFilter.h \
     SoundThread.h \

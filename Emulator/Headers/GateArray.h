@@ -92,8 +92,8 @@ private:
     static bool CCLK;
     static bool lastHSYNC;
     static bool lastVSYNC;
-    static BYTE hsyncDelay;
     static BYTE vsyncDelay;
+    static bool waitingInt;
 };
 
 #endif // GATEARRAY_H

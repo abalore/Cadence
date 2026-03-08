@@ -6,6 +6,7 @@
 #include "Emulator/Headers/PPI.h"
 #include "Emulator/Headers/CPC.h"
 #include "Emulator/Headers/CRTC.h"
+#include "Emulator/Headers/CRTScreen.h"
 #include "Emulator/Headers/GateArray.h"
 #include <QCloseEvent>
 #include <QStringListModel>
@@ -195,20 +196,17 @@ string Debugger::GetCRTCDebugLine()
 {
     string crtc;
     char buff[100];
-    for (int i = 0; i < 18; i++)
-    {
-        sprintf(buff, "%2d ", i);
-        crtc += (string)buff;
-    }
-    crtc += "\n";
-    for (int i = 0; i < 18; i++)
-    {
-        sprintf(buff, "%02X ", CRTC::R[i]);
-        crtc += (string)buff;
-    }
-    crtc += "\n";
-    sprintf(buff, "HCC: %02d  VCC: %02d  HSYNC: %1d  VSYNC: %1d", CRTC::HCC, CRTC::VCC, CRTC::HSYNC, CRTC::VSYNC);
-    crtc += buff;
+    sprintf(buff, "HT  %3d  HCC %3d\n", CRTC::HT, CRTC::HCC); crtc += buff;
+    sprintf(buff, "HD  %3d  HDISP %1d\n", CRTC::HD, CRTC::HDISP); crtc += buff;
+    sprintf(buff, "HSP %3d  HSYNC %1d\n", CRTC::HSP, CRTC::HSYNC); crtc += buff;
+    sprintf(buff, "HSW %3d  HSC %3d\n", CRTC::HSW, CRTC::HSC); crtc += (string) buff;
+    sprintf(buff, "VSW %3d  VSC %3d\n", CRTC::VSW, CRTC::VSC); crtc += (string) buff;
+    sprintf(buff, "VT  %3d  VCC %3d\n", CRTC::VT, CRTC::VCC); crtc += buff;
+    sprintf(buff, "VD  %3d  VDISP %1d\n", CRTC::VD, CRTC::VDISP); crtc += buff;
+    sprintf(buff, "VSP %3d  VSYNC %1d\n", CRTC::VSP, CRTC::VSYNC); crtc += buff;
+    sprintf(buff, "MRA %3d  RA  %3d\n", CRTC::MRA, CRTC::RA); crtc += buff;
+    sprintf(buff, "SA %04X  MA %04X\n", CRTC::MRA, CRTC::MA); crtc += (string) buff;
+    sprintf(buff, "sX %4d sY %4d\n", CRTScreen::hPos, CRTScreen::vPos); crtc += (string) buff;
     return crtc;
 }
 
