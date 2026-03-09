@@ -1168,12 +1168,12 @@ void Z80::OUT_PortBC_R(BYTE &reg)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::OUT;
+        mCycleType = MCycleType::ALU;
         AR = BC.Get();
-        DR = reg;
         break;
     case 2:
-        mCycleType = MCycleType::ALU;
+        mCycleType = MCycleType::OUT;
+        DR = reg;
         break;
     case 3:
         FinishInstruction
@@ -1385,16 +1385,16 @@ void Z80::OUTI(bool R, bool dir)
         AR = HL.Get();
         break;
     case 2:
+        mCycleType = MCycleType::ALU;
         B--;
-        mCycleType = MCycleType::OUT;
         AR = BC.Get();
         break;
     case 3:
-        mCycleType = MCycleType::ALU;
         if (dir)
             HL.Set(HL.Get() + 1);
         else
             HL.Set(HL.Get() - 1);
+        mCycleType = MCycleType::OUT;
         break;
     case 4:
         fS = (DR & 0x80) > 0;

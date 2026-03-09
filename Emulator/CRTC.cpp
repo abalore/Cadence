@@ -87,7 +87,7 @@ void CRTC::Reset()
     EndLine = false;
     EndVisibleLine = false;
     NewCharLine = false;
-    VSW = 16; //Z80::DR >> 4;
+    VSW = 8; //Z80::DR >> 4;
 }
 
 void CRTC::RD()
@@ -98,7 +98,46 @@ void CRTC::RD()
         //////////////////////////////////////////
         break;
     case 3: // Data out
-        //Z80::DR = R[Index];
+        switch(Index)
+        {
+        case 0:
+            Z80::DR = HT;
+            break;
+        case 1:
+            Z80::DR = HD;
+            break;
+        case 2:
+            Z80::DR = HSP;
+            break;
+        case 3:
+            HSW = Z80::DR = VSW * 16 + HSW;
+            break;
+        case 4:
+            Z80::DR = VT;
+            break;
+        case 5:
+            Z80::DR = VTA;
+            break;
+        case 6:
+            Z80::DR = VD;
+            break;
+        case 7:
+            Z80::DR = VSP;
+            break;
+        case 8:
+            Z80::DR = IS;
+            break;
+        case 9:
+            MRA = Z80::DR = MRA;
+            break;
+        case 12:
+            Z80::DR = DSA >> 8;
+            break;
+        case 13:
+            Z80::DR = DSA & 0xFF;
+            break;
+        }
+
         break;
     }
 }
@@ -124,6 +163,7 @@ void CRTC::WR()
             break;
         case 3:
             HSW = Z80::DR & 0x0F;
+            VSW = Z80::DR >> 4;
             if (VSW == 0)
                 VSW = 16;               // Check CRTC Type
             break;
@@ -243,12 +283,12 @@ void CRTC::RunVerticalChar()
     } else VCC++;
     if (VCC == VD)
         VDISP = false;
-
     if (VCC == VSP)
     {
         VSYNC = true;
         VSC = 0;
     }
+
 }
 
 void CRTC::ResetFrame()
