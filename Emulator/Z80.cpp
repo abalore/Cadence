@@ -95,7 +95,7 @@ void Z80::ProcessINT()
 void Z80::ProcessFETCH()
 {
     R = (R & 0x80) | ((R + 1) & 0x7F);
-    if (halted)// && InterruptRequest)
+    if (halted)
         IR = 0x00;
     else
     {
