@@ -24,6 +24,8 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnStepOver, &QPushButton::clicked, this, &Debugger::onStepOverClicked);
     connect(ui->btnStepIn, &QPushButton::clicked, this, &Debugger::onStepInClicked);
     connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
+    connect(ui->btnResetNops, &QPushButton::clicked, this, &Debugger::onResetNopsClicked);
+
     modelDisassembly = new QStringListModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
@@ -154,6 +156,12 @@ void Debugger::onStepOutClicked()
     EmulatorThread::RunTo(L + H * 256);
 }
 
+void Debugger::onResetNopsClicked()
+{
+    Z80::nops = 0;
+    Update();
+}
+
 void Debugger::onRunToClicked()
 {
     setEnabled(false);
@@ -166,10 +174,10 @@ string Debugger::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
-    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\n",
+    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
             Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
-            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC);
+            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC, Z80::InterruptRequest, Z80::IFF1, Z80::IFF2);
     d.append(buff);
     sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::im, Z80::IFF1, Z80::nops);
     d.append(buff);

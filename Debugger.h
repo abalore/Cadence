@@ -27,6 +27,7 @@ private slots:
     void onStepOverClicked();
     void onStepOutClicked();
     void onRunToClicked();
+    void onResetNopsClicked();
 private:
 
     string GetZ80RegsDebugLine();

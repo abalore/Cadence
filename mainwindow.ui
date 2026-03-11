@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>965</width>
+    <width>1118</width>
     <height>782</height>
    </rect>
   </property>
@@ -44,10 +44,10 @@
    <widget class="PboWidget" name="openGLWidget">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>56</y>
-      <width>768</width>
-      <height>544</height>
+      <x>0</x>
+      <y>0</y>
+      <width>1024</width>
+      <height>624</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -55,13 +55,22 @@
     </property>
    </widget>
    <widget class="QLabel" name="imgScreen_frame">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>942</width>
-      <height>674</height>
+      <width>0</width>
+      <height>0</height>
      </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
     </property>
     <property name="text">
      <string/>
@@ -73,13 +82,39 @@
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="Line" name="hLine">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>650</y>
+      <width>1024</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="vLine">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>0</y>
+      <width>3</width>
+      <height>624</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>965</width>
+     <width>1118</width>
      <height>23</height>
     </rect>
    </property>
@@ -199,6 +234,9 @@
   </action>
   <action name="actionSmooth">
    <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">
