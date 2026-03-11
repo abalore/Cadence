@@ -34,7 +34,7 @@
      <x>490</x>
      <y>30</y>
      <width>101</width>
-     <height>241</height>
+     <height>301</height>
     </rect>
    </property>
    <property name="font">
@@ -87,8 +87,8 @@
   <widget class="QLabel" name="lblStack">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>300</y>
+     <x>600</x>
+     <y>450</y>
      <width>101</width>
      <height>161</height>
     </rect>
@@ -387,8 +387,8 @@
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>280</y>
+     <x>600</x>
+     <y>430</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -402,6 +402,28 @@
    </property>
    <property name="text">
     <string>Stack</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnResetNops">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>340</y>
+     <width>101</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>Reset nops</string>
    </property>
   </widget>
  </widget>

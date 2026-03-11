@@ -7,6 +7,7 @@
 #include "Emulator/Headers/Tape.h"
 #include "Emulator/Headers/FDC.h"
 #include "Emulator/Headers/GateArray.h"
+#include "Emulator/Headers/CRTScreen.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -29,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     enterBytesDialog = new EnterBytesDialog(this);
 
     Instance = this;
-    setFixedSize(1024, 768);
+    //setFixedSize(1024, 768);
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -96,6 +97,9 @@ void MainWindow::onMenuMemoryEnterBytes()
 
 void MainWindow::onEmulatorPaused()
 {
+    ui->hLine->move(0, CRTScreen::vPos * 2);
+    ui->vLine->move(CRTScreen::hPos, 0);
+    ui->vLine->pos().setX(CRTScreen::vPos);
     if (debugger->isHidden())
         debugger->show();
     debugger->Update();

@@ -19,8 +19,6 @@ void PboWidget::initializeGL()
     glBindTexture(GL_TEXTURE_2D, ID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_LIGHTING);
@@ -29,14 +27,15 @@ void PboWidget::initializeGL()
     glCullFace(GL_FRONT);
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
     glEnable(GL_TEXTURE_2D);
+    setSmoothing(true);
 }
 
 void PboWidget::paintGL()
 {
-    float xOffset = 14.0f / 64.0f;
-    float xSize = 48.0f / 64.0f;
-    float yOffset = 3.0f / 34.0f;
-    float ySize = 34.0f / 39.0f;
+    float xOffset = 0; //14.0f / 64.0f;
+    float xSize = 1; //48.0f / 64.0f;
+    float yOffset = 0; //3.0f / 34.0f;
+    float ySize = 1; //34.0f / 39.0f;
 
     glBindTexture(GL_TEXTURE_2D, ID);
     glBegin(GL_QUADS);

@@ -39,12 +39,6 @@ public:
 
 
 private:
-    static Counter *H, *L, *V, *A;
-    static DFlipFlop *ResetH, *ResetL, *ResetV;
-    static RSFlipFlop *HDispEnable, *VDispEnable;
-    static bool EndLine, EndVisibleLine, NewCharLine;
-
-
     static void RunHorizontalChar();
     static void RunAdj();
     static void RunLine();

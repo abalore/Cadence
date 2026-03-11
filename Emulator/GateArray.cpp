@@ -19,6 +19,7 @@ bool GateArray::CCLK = false;
 bool GateArray::lastHSYNC = false;
 bool GateArray::lastVSYNC = false;
 BYTE GateArray::R52 = 0;
+BYTE GateArray::hsyncDelay = 0;
 BYTE GateArray::vsyncDelay = 0;
 BYTE GateArray::mode;
 BYTE GateArray::pi;
@@ -28,6 +29,7 @@ bool GateArray::vsyncTrigger = false;
 bool GateArray::LoROMActive;
 bool GateArray::HiROMActive;
 bool GateArray::Monochrome;
+BYTE GateArray::intTimeout;
 
 void GateArray::Reset()
 {
@@ -54,7 +56,9 @@ void GateArray::Reset()
     pixelIndex = 0x80;
     lastHSYNC = false;
     lastHSYNC = false;
+    hsyncDelay = 0;
     vsyncDelay = 0;
+    intTimeout = 0;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
             for (int b = 0; b < 256; b++)
@@ -85,15 +89,31 @@ void GateArray::AckInt()
 
 void GateArray::ProcessSync()
 {
+
     bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
     bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
     bool vsyncRisingEdge = !lastVSYNC && CRTC::VSYNC;
 
-    if (hsyncRisingEdge)
+    if (intTimeout > 0)
     {
-        hsyncTrigger = true;
+        intTimeout++;
+        if (intTimeout == 0)
+        {
+            Z80::InterruptRequest = true;
+        }
     }
 
+
+    if (hsyncDelay > 0)
+    {
+        hsyncDelay--;
+        if (hsyncDelay == 0)
+            hsyncTrigger = true;
+    }
+    if (hsyncRisingEdge)
+    {
+         hsyncDelay = 2;
+    }
     if (hsyncFallingEdge)
     {
         mode = RMR & 0x03;
@@ -102,29 +122,31 @@ void GateArray::ProcessSync()
         {
             R52 = 0;
             Z80::InterruptRequest = false;
+           // intTimeout = 32;
         }
-
         if (vsyncDelay > 0)
         {
             vsyncDelay--;
             if (vsyncDelay == 0)
             {
-
-                if( R52 > 31)
+                vsyncTrigger = true;
+                if (R52 > 31)
                 {
-                    R52 = 0;
                     Z80::InterruptRequest = false;
+                    //  intTimeout = 32;
                 }
+                R52 = 0;
             }
         }
     }
     if (vsyncRisingEdge)
     {
         vsyncDelay = 2;
-        vsyncTrigger = true;
     }
-    lastHSYNC = CRTC::HSYNC;
+
+
     lastVSYNC = CRTC::VSYNC;
+    lastHSYNC = CRTC::HSYNC;
 }
 
 void GateArray::SetPixel()
@@ -208,7 +230,7 @@ void GateArray::WR()
         if ((Z80::DR & 0x10) > 0)
         {
             R52 = 0;
-            //Z80::InterruptRequest = false;
+            Z80::InterruptRequest = true;
         }
         LoROMActive = (RMR & 0x04) != 0;
         HiROMActive = (RMR & 0x08) != 0;
