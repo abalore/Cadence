@@ -1,6 +1,6 @@
 #include "enterbytesdialog.h"
 #include "ui_enterbytesdialog.h"
-#include "Emulator/Headers/CPC.h"
+#include "CPC.h"
 
 EnterBytesDialog::EnterBytesDialog(QWidget *parent)
     : QDialog(parent)

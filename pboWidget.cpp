@@ -1,5 +1,5 @@
 #include "pboWidget.h"
-#include "Emulator/Headers/CRTScreen.h"
+#include "CRTScreen.h"
 
 BYTE *pixels;
 

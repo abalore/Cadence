@@ -1,5 +1,5 @@
 #include "SoundThread.h"
-#include "Emulator/Headers/PSG.h"
+#include "PSG.h"
 #include <QMutex>
 
 QWaitCondition SoundThread::waitCondition;

@@ -19,69 +19,69 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 
 SOURCES += \
     Debugger.cpp \
-    Emulator/CRTScreen.cpp \
-    Emulator/Counter.cpp \
-    Emulator/DFlipFlip.cpp \
-    Emulator/DSK.cpp \
-    Emulator/FDC.cpp \
-    Emulator/FloppyDrive.cpp \
-    Emulator/Keyboard.cpp \
-    Emulator/PPI.cpp \
-    Emulator/PSG.cpp \
-    Emulator/RSFlipFlop.cpp \
-    Emulator/Tape.cpp \
-    Emulator/Z80_16bitAL.cpp \
-    Emulator/Z80_8bitAL.cpp \
-    Emulator/Z80_IDX_3.cpp \
-    Emulator/Z80_Jump.cpp \
-    Emulator/Z80_intexec.cpp \
+    CRTScreen.cpp \
+    Counter.cpp \
+    DFlipFlip.cpp \
+    DSK.cpp \
+    FDC.cpp \
+    FloppyDrive.cpp \
+    Keyboard.cpp \
+    PPI.cpp \
+    PSG.cpp \
+    RSFlipFlop.cpp \
+    Tape.cpp \
+    Z80_16bitAL.cpp \
+    Z80_8bitAL.cpp \
+    Z80_IDX_3.cpp \
+    Z80_Jump.cpp \
+    Z80_intexec.cpp \
     EmulatorThread.cpp \
     SoundThread.cpp \
     enterbytesdialog.cpp \
     graphicsinspector.cpp \
     main.cpp \
     mainwindow.cpp \
-    Emulator/CDT.cpp \
-    Emulator/CPC.cpp \
-    Emulator/CRTC.cpp \
-    Emulator/Disassembler.cpp \
-    Emulator/Emulator.cpp \
-    Emulator/GateArray.cpp \
-    Emulator/Reg16.cpp \
-    Emulator/Z80.cpp \
-    Emulator/Z80_CB.cpp \
-    Emulator/Z80_IDX.cpp \
-    Emulator/Z80_IDX_2.cpp \
-    Emulator/Z80_IDX_CB.cpp \
-    Emulator/Z80_Instr.cpp \
-    Emulator/Z80_basic.cpp \
-    Emulator/Z80_misc.cpp \
+    CDT.cpp \
+    CPC.cpp \
+    CRTC.cpp \
+    Disassembler.cpp \
+    Emulator.cpp \
+    GateArray.cpp \
+    Reg16.cpp \
+    Z80.cpp \
+    Z80_CB.cpp \
+    Z80_IDX.cpp \
+    Z80_IDX_2.cpp \
+    Z80_IDX_CB.cpp \
+    Z80_Instr.cpp \
+    Z80_basic.cpp \
+    Z80_misc.cpp \
     pboWidget.cpp \
     pboWidget.h \
     speedcontroller.cpp
 
 HEADERS += \
     Debugger.h \
-    Emulator/Counter.h \
-    Emulator/DFlipFlop.h \
-    Emulator/Headers/CDT.h \
-    Emulator/Headers/CPC.h \
-    Emulator/Headers/CRTC.h \
-    Emulator/Headers/CRTScreen.h \
-    Emulator/Headers/DSK.h \
-    Emulator/Headers/Disassembler.h \
-    Emulator/Headers/Emulator.h \
-    Emulator/Headers/FDC.h \
-    Emulator/Headers/FloppyDrive.h \
-    Emulator/Headers/GateArray.h \
-    Emulator/Headers/Keyboard.h \
-    Emulator/Headers/PPI.h \
-    Emulator/Headers/PSG.h \
-    Emulator/Headers/Reg16.h \
-    Emulator/Headers/Tape.h \
-    Emulator/Headers/Z80.h \
-    Emulator/Headers/defs.h \
-    Emulator/RSFlipFlop.h \
+    Counter.h \
+    DFlipFlop.h \
+    CDT.h \
+    CPC.h \
+    CRTC.h \
+    CRTScreen.h \
+    DSK.h \
+    Disassembler.h \
+    Emulator.h \
+    FDC.h \
+    FloppyDrive.h \
+    GateArray.h \
+    Keyboard.h \
+    PPI.h \
+    PSG.h \
+    Reg16.h \
+    Tape.h \
+    Z80.h \
+    defs.h \
+    RSFlipFlop.h \
     EmulatorThread.h \
     KeyPressFilter.h \
     SoundThread.h \
