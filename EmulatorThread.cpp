@@ -1,11 +1,11 @@
 #include "EmulatorThread.h"
-#include "Emulator/Headers/Emulator.h"
-#include "Emulator/Headers/Z80.h"
-#include "Emulator/Headers/CRTScreen.h"
+#include "Emulator.h"
+#include "Z80.h"
+#include "CRTScreen.h"
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0x189F;
+volatile ushort EmulatorThread::stopPoint = 0x3FFC;
 volatile bool EmulatorThread::running = true;
 volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorThread::end = false;

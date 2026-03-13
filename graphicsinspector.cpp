@@ -1,8 +1,8 @@
 #include "graphicsinspector.h"
 #include "ui_graphicsinspector.h"
-#include "Emulator/Headers/defs.h"
-#include "Emulator/Headers/GateArray.h"
-#include "Emulator/Headers/CPC.h"
+#include "defs.h"
+#include "GateArray.h"
+#include "CPC.h"
 
 GraphicsInspector::GraphicsInspector(QWidget *parent)
     : QDialog(parent)

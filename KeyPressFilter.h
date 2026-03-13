@@ -1,7 +1,7 @@
 #ifndef KEYPRESSFILTER_H
 #define KEYPRESSFILTER_H
 
-#include "Emulator/Headers/Keyboard.h"
+#include "Keyboard.h"
 #include <QObject>
 #include <QKeyEvent>
 
