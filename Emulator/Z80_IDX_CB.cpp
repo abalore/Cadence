@@ -18,6 +18,7 @@ void Z80::Step_IDX_CB()
         AR++;
         PC = AR;
         AR = IDX->Get() + index;
+        intAlign = true;
         break;
     case 4:
         mCycleType = MCycleType::WRITE;
@@ -242,6 +243,9 @@ void Z80::Step_IDX_CB()
             else
                 BIT_x_IDX(1);
             mCycleType = MCycleType::ALU;
+            mCycleType = MCycleType::FETCH;
+            idMode = IDMode::BASIC;
+            intAlign = false;
             break;
         case 0x5:
             if ((t8 & 0x0F) < 0x08)
@@ -249,6 +253,9 @@ void Z80::Step_IDX_CB()
             else
                 BIT_x_IDX(3);
             mCycleType = MCycleType::ALU;
+            mCycleType = MCycleType::FETCH;
+            idMode = IDMode::BASIC;
+            intAlign = false;
             break;
         case 0x6:
             if ((t8 & 0x0F) < 0x08)
@@ -256,6 +263,9 @@ void Z80::Step_IDX_CB()
             else
                 BIT_x_IDX(5);
             mCycleType = MCycleType::ALU;
+            mCycleType = MCycleType::FETCH;
+            idMode = IDMode::BASIC;
+            intAlign = false;
             break;
         case 0x7:
             if ((t8 & 0x0F) < 0x08)
@@ -263,6 +273,9 @@ void Z80::Step_IDX_CB()
             else
                 BIT_x_IDX(7);
             mCycleType = MCycleType::ALU;
+            mCycleType = MCycleType::FETCH;
+            idMode = IDMode::BASIC;
+            intAlign = false;
             break;
         case 0x8:
             switch(t8 & 0x0F)
@@ -579,7 +592,8 @@ void Z80::Step_IDX_CB()
                 break;
             case 0xF: // SET 3,A
                 SET_x_IDX(3, A);
-                break;
+                break;        mCycleType = MCycleType::FETCH;
+                idMode = IDMode::BASIC;
             }
             break;
         case 0xE:

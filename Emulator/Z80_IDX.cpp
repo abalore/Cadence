@@ -60,7 +60,7 @@ void Z80::Step_IDX()
         case 0x9: // ADD IX,IX
             ADD_IDX_RR(*IDX);
             break;
-        case 0xA: // SLD IX,(nn)
+        case 0xA: // LD IX,(nn)
             LD_RR_Ind(*IDX);
             break;
         case 0xB: // DEC IX

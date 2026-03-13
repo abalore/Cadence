@@ -30,6 +30,7 @@ class Z80
 public:
     static void Reset();
     static void Clock();
+    static void Clock2();
     static BYTE tCycle;
     static BYTE mCycle;
     static bool MREQ, IORQ, RD, WR;
@@ -85,6 +86,7 @@ private:
     static int i1, i2, i3;
     static short s1;
     static BYTE intACK;
+    static bool intAlign;
 
     // 8 bit arithmetic and logic for A
     static void ADD_v(BYTE v);

@@ -176,41 +176,49 @@ void Z80::OR_v(BYTE v)
 void Z80::ADD_n()
 {
     ALO_n(ADD_v);
+    intAlign = true;
 }
 
 void Z80::ADC_n()
 {
     ALO_n(ADC_v);
+    intAlign = true;
 }
 
 void Z80::SUB_n()
 {
     ALO_n(SUB_v);
+    intAlign = true;
 }
 
 void Z80::SBC_n()
 {
     ALO_n(SBC_v);
+    intAlign = true;
 }
 
 void Z80::CP_n()
 {
     ALO_n(CP_v);
+    intAlign = true;
 }
 
 void Z80::AND_n()
 {
     ALO_n(AND_v);
+    intAlign = true;
 }
 
 void Z80::XOR_n()
 {
     ALO_n(XOR_v);
+    intAlign = true;
 }
 
 void Z80::OR_n()
 {
     ALO_n(OR_v);
+    intAlign = true;
 }
 
 void Z80::INC_R(BYTE &reg)
@@ -234,99 +242,119 @@ void Z80::DEC_R(BYTE &reg)
 void Z80::ADD_Ind_HL()
 {
     ALO_Ind(ADD_v);
+    intAlign = true;
 }
 
 void Z80::ADC_Ind_HL()
 {
     ALO_Ind(ADC_v);
+    intAlign = true;
 }
 
 void Z80::SUB_Ind_HL()
 {
     ALO_Ind(SUB_v);
+    intAlign = true;
 }
 
 void Z80::SBC_Ind_HL()
 {
     ALO_Ind(SBC_v);
+    intAlign = true;
 }
 
 void Z80::CP_Ind_HL()
 {
     ALO_Ind(CP_v);
+    intAlign = true;
 }
 
 void Z80::AND_Ind_HL()
 {
     ALO_Ind(AND_v);
+    intAlign = true;
 }
 
 void Z80::XOR_Ind_HL()
 {
     ALO_Ind(XOR_v);
+    intAlign = true;
 }
 
 void Z80::OR_Ind_HL()
 {
     ALO_Ind(OR_v);
+    intAlign = true;
 }
 
 void Z80::INC_Ind_HL()
 {
     ALO_Ind_INC_DEC(INC_R);
+    intAlign = true;
 }
 
 void Z80::DEC_Ind_HL()
 {
     ALO_Ind_INC_DEC(DEC_R);
+    intAlign = true;
 }
 
 void Z80::ADD_Ind_IDX()
 {
     ALO_Ind_IDX(ADD_v);
+    intAlign = true;
 }
 
 void Z80::ADC_Ind_IDX()
 {
     ALO_Ind_IDX(ADC_v);
+    intAlign = true;
 }
 
 void Z80::SUB_Ind_IDX()
 {
     ALO_Ind_IDX(SUB_v);
+    intAlign = true;
 }
 
 void Z80::SBC_Ind_IDX()
 {
     ALO_Ind_IDX(SBC_v);
+    intAlign = true;
 }
 
 void Z80::CP_Ind_IDX()
 {
     ALO_Ind_IDX(CP_v);
+    intAlign = true;
 }
 
 void Z80::AND_Ind_IDX()
 {
     ALO_Ind_IDX(AND_v);
+    intAlign = true;
 }
 
 void Z80::XOR_Ind_IDX()
 {
     ALO_Ind_IDX(XOR_v);
+    intAlign = true;
 }
 
 void Z80::OR_Ind_IDX()
 {
     ALO_Ind_IDX(OR_v);
+    intAlign = true;
 }
 
 void Z80::INC_Ind_IDX()
 {
     ALO_Ind_IDX_INC_DEC(INC_R);
+    intAlign = true;
 }
 
 void Z80::DEC_Ind_IDX()
 {
     ALO_Ind_IDX_INC_DEC(DEC_R);
+    intAlign = true;
 }

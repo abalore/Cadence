@@ -22,6 +22,7 @@ void Z80::Step_IDX_3()
     case 5:
         mCycleType = MCycleType::FETCH;
         idMode = IDMode::BASIC;
+        intAlign = true;
         break;
     }
 }

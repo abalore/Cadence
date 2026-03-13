@@ -213,7 +213,8 @@ string Debugger::GetCRTCDebugLine()
     sprintf(buff, "VD  %3d  VDISP %1d\n", CRTC::VD, CRTC::VDISP); crtc += buff;
     sprintf(buff, "VSP %3d  VSYNC %1d\n", CRTC::VSP, CRTC::VSYNC); crtc += buff;
     sprintf(buff, "MRA %3d  RA  %3d\n", CRTC::MRA, CRTC::RA); crtc += buff;
-    sprintf(buff, "SA %04X  MA %04X\n", CRTC::MRA, CRTC::MA); crtc += (string) buff;
+    sprintf(buff, "VTA %3d  VTAC %2d\n", CRTC::VTA, CRTC::VTAC); crtc += buff;
+    sprintf(buff, "SA %04X  MA %04X\n", CRTC::DSA, CRTC::MA); crtc += (string) buff;
     sprintf(buff, "sX %4d sY %4d\n", CRTScreen::hPos, CRTScreen::vPos); crtc += (string) buff;
     return crtc;
 }

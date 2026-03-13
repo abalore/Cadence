@@ -189,7 +189,6 @@ void CRTC::RunHorizontalChar()
 {
     if (HSYNC)
     {
-        HSC++;
         if (HSC == HSW)
             HSYNC = false;
     }
@@ -208,6 +207,8 @@ void CRTC::RunHorizontalChar()
         HSYNC = true;
         HSC = 0;
     }
+    if (HSYNC)
+        HSC++;
 }
 
 void CRTC::RunLine()
@@ -221,9 +222,7 @@ void CRTC::RunLine()
     }
     if (adjustMode)
     {
-        RA++;
-        RA&=0x1F;
-        if (RA == VTA)
+        if (RA == VTA || RA == MRA)
         {
             VDISP = true;
             MA = DSA;
@@ -235,6 +234,8 @@ void CRTC::RunLine()
         {
             MA = baseMA;
         }
+        RA++;
+        RA&=0x1F;
     }
     else
         if (RA == MRA)
@@ -261,6 +262,7 @@ void CRTC::RunVerticalChar()
             VDISP = true;
             MA = DSA;
             baseMA = MA;
+            VTAC = 0;
         }
         else
             adjustMode = true;
