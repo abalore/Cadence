@@ -90,7 +90,8 @@ void Z80::Step_IDX_2()
         }
         break;
     case 4:
-            FinishInstruction
+        intAlign = true;
+        FinishInstruction
             break;
     }
 }

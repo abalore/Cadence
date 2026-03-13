@@ -630,7 +630,7 @@ void Disassembler::GetNextInstructionBasic()
             instr = "ADD H";
             break;
         case 0x5: // ADD L
-            instr = "ADD K";
+            instr = "ADD L";
             break;
         case 0x6: // ADD (HL)
             instr = "ADD (HL)";

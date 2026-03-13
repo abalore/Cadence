@@ -62,6 +62,7 @@ int Z80::i3;
 short Z80::s1;
 dword Z80::nops;
 bool Z80::EIRequest;
+bool Z80::intAlign;
 
 void Z80::Reset()
 {
@@ -104,6 +105,7 @@ void Z80::ProcessFETCH()
         IR = DR;
         PC++;
     }
+    intAlign = false;
 }
 
 void Z80::ProcessREAD()
@@ -154,26 +156,38 @@ void Z80::Clock()
     case IDMode::INTEXEC: Step_Int_Exec(); break;
     }
     nops++;
+}
+
+void Z80::Clock2()
+{
     if (mCycleType == MCycleType::FETCH)
     {
         mCycle = 1;
         if (idMode == IDMode::BASIC)
         {
-            stopPoint = true;
             if (!InterruptRequest && IFF1)
             {
                 IFF1 = false;
                 IFF2 = false;
                 InterruptRequest = true;
                 mCycleType = MCycleType::INT;
-                halted = false;
+                if (halted)
+                {
+                    halted = false;
+                    PC++;
+                }
                 idMode = IDMode::INTEXEC;
-            }
-            if (EIRequest)
-            {
-                IFF1 = true;
-                IFF2 = true;
                 EIRequest = false;
+            }
+            else
+            {
+                stopPoint = true;
+                if (EIRequest)
+                {
+                    IFF1 = true;
+                    IFF2 = true;
+                    EIRequest = false;
+                }
             }
         }
     }

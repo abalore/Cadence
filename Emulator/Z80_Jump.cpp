@@ -12,11 +12,14 @@ void Z80::JR(bool condition)
         break;
     case 2:
         if (!condition)
+        {
             FinishInstruction
-                else
-                mCycleType = MCycleType::ALU;
+        }
+        else
+            mCycleType = MCycleType::ALU;
         break;
     case 3:
+        intAlign = true;
         PC += (sbyte)DR;
         FinishInstruction
             break;
@@ -36,6 +39,7 @@ void Z80::RET()
         AR++;
         break;
     case 3:
+        intAlign = true;
         w1 += DR * 256;
         AR++;
         SP = AR;
@@ -65,6 +69,7 @@ void Z80::RET(bool condition)
         mCycleType = MCycleType::ALU;
         break;
     case 4:
+        intAlign = true;
         SP = AR;
         PC = w1;
         FinishInstruction
@@ -85,6 +90,7 @@ void Z80::JP(bool condition)
         AR = PC++;
         break;
     case 3:
+        intAlign = true;
         AR++;
         if (condition)
             PC = DR * 256 + t8;
@@ -106,6 +112,7 @@ void Z80::CALL(bool condition)
         AR++;
         break;
     case 3:
+        intAlign = true;
         *t16.H = DR;
         AR++;
         PC = AR;
@@ -151,6 +158,7 @@ void Z80::RST(BYTE address)
         break;
     case 4:
         PC = address;
+        intAlign = true;
         break;
     case 5:
         FinishInstruction

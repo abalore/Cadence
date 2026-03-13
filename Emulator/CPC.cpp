@@ -118,6 +118,10 @@ void CPC::Clock()
         //CRTScreen::OneMhzClock();
     }
     GateArray::Clock(tick);
+    if ((tick % 16) == 0)
+    {
+        Z80::Clock2();
+    }
     CRTScreen::Clock();
     tick++;
 }
