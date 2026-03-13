@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
-    <height>850</height>
+    <width>1118</width>
+    <height>782</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,17 +38,74 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
    <widget class="PboWidget" name="openGLWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>20</y>
-      <width>768</width>
-      <height>528</height>
+      <y>0</y>
+      <width>1024</width>
+      <height>624</height>
      </rect>
     </property>
     <property name="autoFillBackground">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="imgScreen_frame">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>0</width>
+      <height>0</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>0</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="screen_frame.qrc">:/images/monitor_frame.png</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="Line" name="hLine">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>650</y>
+      <width>1024</width>
+      <height>3</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="vLine">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>0</y>
+      <width>3</width>
+      <height>624</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
     </property>
    </widget>
   </widget>
@@ -57,7 +114,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1200</width>
+     <width>1118</width>
      <height>23</height>
     </rect>
    </property>
@@ -73,16 +130,9 @@
     <property name="title">
      <string>System</string>
     </property>
-    <addaction name="actionLoad_binary"/>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
-   </widget>
-   <widget class="QMenu" name="menuTape">
-    <property name="title">
-     <string>Tape</string>
-    </property>
-    <addaction name="actionLoad_File"/>
    </widget>
    <widget class="QMenu" name="menuScreen">
     <property name="title">
@@ -90,31 +140,59 @@
     </property>
     <addaction name="actionSmooth"/>
     <addaction name="actionInspect_video_memory"/>
+    <addaction name="actionGreen_monitor"/>
    </widget>
    <widget class="QMenu" name="menuMemory">
     <property name="title">
      <string>Memory</string>
     </property>
+    <addaction name="actionEnter_bytes"/>
+    <addaction name="actionLoad_binary_file"/>
+    <addaction name="actionSave_binary_file"/>
    </widget>
-   <widget class="QMenu" name="menuDisc">
+   <widget class="QMenu" name="menuDevices">
     <property name="title">
-     <string>Disc</string>
+     <string>Media</string>
     </property>
-    <addaction name="actionLoad_DSK"/>
-   </widget>
-   <widget class="QMenu" name="menuROM">
-    <property name="title">
-     <string>ROM</string>
-    </property>
-    <addaction name="actionLoad_fromFile"/>
+    <widget class="QMenu" name="menuDisk_A">
+     <property name="title">
+      <string>Disk A:</string>
+     </property>
+     <addaction name="actionInsert_disk"/>
+     <addaction name="actionRemove_disk"/>
+    </widget>
+    <widget class="QMenu" name="menuDisk_B">
+     <property name="title">
+      <string>Disk B:</string>
+     </property>
+     <addaction name="actionInsert_disk_2"/>
+     <addaction name="actionRemove_disk_2"/>
+    </widget>
+    <widget class="QMenu" name="menuTape_2">
+     <property name="title">
+      <string>Tape</string>
+     </property>
+     <addaction name="actionInsert_tape"/>
+     <addaction name="actionRemove_tape"/>
+    </widget>
+    <widget class="QMenu" name="menuCartridge_2">
+     <property name="title">
+      <string>Cartridge</string>
+     </property>
+     <addaction name="actionInsert_cartridge"/>
+     <addaction name="actionRemove_cartridge"/>
+    </widget>
+    <addaction name="menuDisk_A"/>
+    <addaction name="menuDisk_B"/>
+    <addaction name="menuTape_2"/>
+    <addaction name="actionROM_Box"/>
+    <addaction name="menuCartridge_2"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
-   <addaction name="menuTape"/>
    <addaction name="menuScreen"/>
    <addaction name="menuMemory"/>
-   <addaction name="menuDisc"/>
-   <addaction name="menuROM"/>
+   <addaction name="menuDevices"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -149,18 +227,6 @@
     <string>F4</string>
    </property>
   </action>
-  <action name="actionLoad_binary">
-   <property name="icon">
-    <iconset>
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Load binary</string>
-   </property>
-   <property name="shortcut">
-    <string>F2</string>
-   </property>
-  </action>
   <action name="actionLoad_File">
    <property name="text">
     <string>Load File</string>
@@ -168,6 +234,9 @@
   </action>
   <action name="actionSmooth">
    <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">
@@ -213,6 +282,87 @@
     <string>Load from file</string>
    </property>
   </action>
+  <action name="actionEnter_bytes">
+   <property name="text">
+    <string>Enter bytes...</string>
+   </property>
+  </action>
+  <action name="actionLoad_binary_file">
+   <property name="text">
+    <string>Load binary file...</string>
+   </property>
+  </action>
+  <action name="actionSave_binary_file">
+   <property name="text">
+    <string>Save binary file...</string>
+   </property>
+  </action>
+  <action name="actionEnable_cartridge">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable cartridge</string>
+   </property>
+  </action>
+  <action name="actionLoad_cartridge">
+   <property name="text">
+    <string>Load cartridge...</string>
+   </property>
+  </action>
+  <action name="actionGreen_monitor">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Green monitor</string>
+   </property>
+  </action>
+  <action name="actionInsert_disk">
+   <property name="text">
+    <string>Insert disk...</string>
+   </property>
+  </action>
+  <action name="actionRemove_disk">
+   <property name="text">
+    <string>Remove disk</string>
+   </property>
+  </action>
+  <action name="actionInsert_disk_2">
+   <property name="text">
+    <string>Insert disk...</string>
+   </property>
+  </action>
+  <action name="actionRemove_disk_2">
+   <property name="text">
+    <string>Remove disk</string>
+   </property>
+  </action>
+  <action name="actionInsert_tape">
+   <property name="text">
+    <string>Insert tape...</string>
+   </property>
+  </action>
+  <action name="actionRemove_tape">
+   <property name="text">
+    <string>Remove tape</string>
+   </property>
+  </action>
+  <action name="actionROM_Box">
+   <property name="text">
+    <string>ROM Box...</string>
+   </property>
+  </action>
+  <action name="actionInsert_cartridge">
+   <property name="text">
+    <string>Insert cartridge...</string>
+   </property>
+  </action>
+  <action name="actionRemove_cartridge">
+   <property name="text">
+    <string>Remove cartridge</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -221,6 +371,8 @@
    <header>pboWidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="screen_frame.qrc"/>
+ </resources>
  <connections/>
 </ui>

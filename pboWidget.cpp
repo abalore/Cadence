@@ -1,5 +1,5 @@
 #include "pboWidget.h"
-#include "Emulator/Headers/CRTScreen.h"
+#include "CRTScreen.h"
 
 BYTE *pixels;
 
@@ -19,8 +19,6 @@ void PboWidget::initializeGL()
     glBindTexture(GL_TEXTURE_2D, ID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_LIGHTING);
@@ -29,19 +27,25 @@ void PboWidget::initializeGL()
     glCullFace(GL_FRONT);
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
     glEnable(GL_TEXTURE_2D);
+    setSmoothing(true);
 }
 
 void PboWidget::paintGL()
 {
+    float xOffset = 0; //14.0f / 64.0f;
+    float xSize = 1; //48.0f / 64.0f;
+    float yOffset = 0; //3.0f / 34.0f;
+    float ySize = 1; //34.0f / 39.0f;
+
     glBindTexture(GL_TEXTURE_2D, ID);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.1875f, 0.11f);
+    glTexCoord2f(xOffset, yOffset);
     glVertex2f(-1, 1);
-    glTexCoord2f(0.9375f, 0.11f);
+    glTexCoord2f(xSize + xOffset, yOffset);
     glVertex2f(1, 1);
-    glTexCoord2f(0.9375f, 0.846153846f + 0.11);
+    glTexCoord2f(xSize + xOffset, ySize + yOffset);
     glVertex2f(1, -1);
-    glTexCoord2f(0.1875f, 0.846153846f + 0.11);
+    glTexCoord2f(xOffset, ySize + yOffset);
     glVertex2f(-1, -1);
     glEnd();
     glFlush();

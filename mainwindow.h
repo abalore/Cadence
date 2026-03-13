@@ -5,6 +5,7 @@
 #include "SoundThread.h"
 #include "Debugger.h"
 #include "graphicsinspector.h"
+#include "enterbytesdialog.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -26,19 +27,29 @@ public:
 private slots:
     void onEmulatorPaused();
     void onEmulatorFinishedFrame();
-    void onMenuFileLoadBinary();
-    void onMenuTapeLoadFile();
+    void onMenuMemoryLoadBinaryFile();
+    void onMenuMemorySaveBinaryFile();
+    void onMenuMediaInsertTape();
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
-    void onMenuDiscLoadDSK();
+    void onMenuMediaInsertDiskA();
     void onMenuROMLoadFromFile();
+    void onMenuMemoryEnterBytes();
+    void onMenuMediaRemoveCartridge();
+    void onMenuMediaInsertCartridge();
+    void onMenuScreenGreenMonitor();
     void StartThreads();
     void StopThreads();
     void ResetEmulation();
+
+    void SetCPC464();
+    void SetCPC664();
+    void SetCPC6128();
 private:
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
+    EnterBytesDialog *enterBytesDialog;
     EmulatorThread *workerThread;
     SoundThread *soundThread;
 };

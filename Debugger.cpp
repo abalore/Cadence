@@ -1,12 +1,13 @@
 #include "Debugger.h"
 #include "ui_Debugger.h"
 #include "EmulatorThread.h"
-#include "Emulator/Headers/Disassembler.h"
-#include "Emulator/Headers/Z80.h"
-#include "Emulator/Headers/PPI.h"
-#include "Emulator/Headers/CPC.h"
-#include "Emulator/Headers/CRTC.h"
-#include "Emulator/Headers/GateArray.h"
+#include "Disassembler.h"
+#include "Z80.h"
+#include "PPI.h"
+#include "CPC.h"
+#include "CRTC.h"
+#include "CRTScreen.h"
+#include "GateArray.h"
 #include <QCloseEvent>
 #include <QStringListModel>
 #include <QModelIndex>
@@ -23,6 +24,8 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnStepOver, &QPushButton::clicked, this, &Debugger::onStepOverClicked);
     connect(ui->btnStepIn, &QPushButton::clicked, this, &Debugger::onStepInClicked);
     connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
+    connect(ui->btnResetNops, &QPushButton::clicked, this, &Debugger::onResetNopsClicked);
+
     modelDisassembly = new QStringListModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
@@ -83,15 +86,18 @@ void Debugger::Update()
     listMemory.clear();
     for (int i = 0x0000; i <= 0xFFF0; i += 16)
     {
+        int bank = i >> 14;
+        int address = i & 0x3FFF;
+        BYTE *mem = CPC::RAM[bank];
         sprintf(buff, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                i, CPC::BaseRAM.MEM[i], CPC::BaseRAM.MEM[i + 1],
-                CPC::BaseRAM.MEM[i + 2], CPC::BaseRAM.MEM[i + 3],
-                CPC::BaseRAM.MEM[i + 4], CPC::BaseRAM.MEM[i + 5],
-                CPC::BaseRAM.MEM[i + 6], CPC::BaseRAM.MEM[i + 7],
-                CPC::BaseRAM.MEM[i + 8], CPC::BaseRAM.MEM[i + 9],
-                CPC::BaseRAM.MEM[i + 10], CPC::BaseRAM.MEM[i + 11],
-                CPC::BaseRAM.MEM[i + 12], CPC::BaseRAM.MEM[i + 13],
-                CPC::BaseRAM.MEM[i + 14], CPC::BaseRAM.MEM[i + 15]);
+                i, mem[address], mem[address + 1],
+                mem[address + 2], mem[address + 3],
+                mem[address + 4], mem[address + 5],
+                mem[address + 6], mem[address + 7],
+                mem[address + 8], mem[address + 9],
+                mem[address + 10], mem[address + 11],
+                mem[address + 12], mem[address + 13],
+                mem[address + 14], mem[address + 15]);
         listMemory.append(buff);
     }
 
@@ -144,10 +150,16 @@ void Debugger::onStepOverClicked()
 void Debugger::onStepOutClicked()
 {
     setEnabled(false);
-    word address = Z80::SP.Get();
-    BYTE L = CPC::BaseRAM.MEM[address];
-    BYTE H = CPC::BaseRAM.MEM[address + 1];
+    word address = Z80::SP;
+    BYTE L = CPC::GetByteAt(address);
+    BYTE H = CPC::GetByteAt(address + 1);
     EmulatorThread::RunTo(L + H * 256);
+}
+
+void Debugger::onResetNopsClicked()
+{
+    Z80::nops = 0;
+    Update();
 }
 
 void Debugger::onRunToClicked()
@@ -162,12 +174,12 @@ string Debugger::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
-    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\n",
+    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
-            Z80::PC, Z80::SP.Get(), Z80::IX.Get(), Z80::IY.Get(),
-            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC);
+            Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
+            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC, Z80::InterruptRequest, Z80::IFF1, Z80::IFF2);
     d.append(buff);
-    sprintf(buff, "IM:%1d\nInts:%1d", Z80::InterruptMode, Z80::InterruptEnable);
+    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::im, Z80::IFF1, Z80::nops);
     d.append(buff);
     return d;
 }
@@ -176,11 +188,11 @@ string Debugger::GetZ80StackDebugLine()
 {
     string d;
     char buff[100];
-    word sp = Z80::SP.Get();
+    word sp = Z80::SP;
     for (int i = 0; i < 8; i++)
     {
-        BYTE L = CPC::BaseRAM.MEM[sp];
-        BYTE H = CPC::BaseRAM.MEM[sp + 1];
+        BYTE L = CPC::GetByteAt(sp);
+        BYTE H = CPC::GetByteAt(sp + 1);
         sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;
@@ -192,20 +204,18 @@ string Debugger::GetCRTCDebugLine()
 {
     string crtc;
     char buff[100];
-    for (int i = 0; i < 18; i++)
-    {
-        sprintf(buff, "%2d ", i);
-        crtc += (string)buff;
-    }
-    crtc += "\n";
-    for (int i = 0; i < 18; i++)
-    {
-        sprintf(buff, "%02X ", CRTC::Registers[i]);
-        crtc += (string)buff;
-    }
-    crtc += "\n";
-    sprintf(buff, "HCC: %02d  VCC: %02d  HSYNC: %1d  VSYNC: %1d", CRTC::HCC, CRTC::VCC, CRTC::HSYNC, CRTC::VSYNC);
-    crtc += buff;
+    sprintf(buff, "HT  %3d  HCC %3d\n", CRTC::HT, CRTC::HCC); crtc += buff;
+    sprintf(buff, "HD  %3d  HDISP %1d\n", CRTC::HD, CRTC::HDISP); crtc += buff;
+    sprintf(buff, "HSP %3d  HSYNC %1d\n", CRTC::HSP, CRTC::HSYNC); crtc += buff;
+    sprintf(buff, "HSW %3d  HSC %3d\n", CRTC::HSW, CRTC::HSC); crtc += (string) buff;
+    sprintf(buff, "VSW %3d  VSC %3d\n", CRTC::VSW, CRTC::VSC); crtc += (string) buff;
+    sprintf(buff, "VT  %3d  VCC %3d\n", CRTC::VT, CRTC::VCC); crtc += buff;
+    sprintf(buff, "VD  %3d  VDISP %1d\n", CRTC::VD, CRTC::VDISP); crtc += buff;
+    sprintf(buff, "VSP %3d  VSYNC %1d\n", CRTC::VSP, CRTC::VSYNC); crtc += buff;
+    sprintf(buff, "MRA %3d  RA  %3d\n", CRTC::MRA, CRTC::RA); crtc += buff;
+    sprintf(buff, "VTA %3d  VTAC %2d\n", CRTC::VTA, CRTC::VTAC); crtc += buff;
+    sprintf(buff, "SA %04X  MA %04X\n", CRTC::DSA, CRTC::MA); crtc += (string) buff;
+    sprintf(buff, "sX %4d sY %4d\n", CRTScreen::hPos, CRTScreen::vPos); crtc += (string) buff;
     return crtc;
 }
 
@@ -220,7 +230,7 @@ string Debugger::GetGateArrayDebugLine()
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nRMR: %08b  R52: %d  PPI Control: %08b", GateArray::RMR, GateArray::R52, PPI::controlWord);
+    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord);
     d += buff;
     return d;
 }

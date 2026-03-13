@@ -1,23 +1,24 @@
 #include "EmulatorThread.h"
-#include "Emulator/Headers/Emulator.h"
-#include "Emulator/Headers/Z80.h"
-#include "Emulator/Headers/CRTScreen.h"
+#include "Emulator.h"
+#include "Z80.h"
+#include "CRTScreen.h"
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0xC6E7;
+volatile ushort EmulatorThread::stopPoint = 0x3FFC;
 volatile bool EmulatorThread::running = true;
-volatile RunMode EmulatorThread::runMode = RunMode::Run;
+volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorThread::end = false;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
     Emulator::Init();
+
 }
 
 EmulatorThread::~EmulatorThread()
 {
-
+    Emulator::Finalize();
 }
 
 void EmulatorThread::Pause()
@@ -63,6 +64,7 @@ void EmulatorThread::Stop ()
 
 void EmulatorThread::run()
 {
+    Emulator::Reset();
     while (!end)
     {
         if (running)

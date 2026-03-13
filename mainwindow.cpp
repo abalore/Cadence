@@ -2,10 +2,12 @@
 #include "ui_mainwindow.h"
 #include "Debugger.h"
 #include "EmulatorThread.h"
-#include "Emulator/Headers/Emulator.h"
-#include "Emulator/Headers/CPC.h"
-#include "Emulator/Headers/Tape.h"
-#include "Emulator/Headers/FDC.h"
+#include "Emulator.h"
+#include "CPC.h"
+#include "Tape.h"
+#include "FDC.h"
+#include "GateArray.h"
+#include "CRTScreen.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -25,9 +27,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
+    enterBytesDialog = new EnterBytesDialog(this);
 
     Instance = this;
-    setFixedSize(800, 600);
+    //setFixedSize(1024, 768);
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -39,12 +42,21 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
-    connect(ui->actionLoad_binary, &QAction::triggered, this, &MainWindow::onMenuFileLoadBinary);
-    connect(ui->actionLoad_File, &QAction::triggered, this, &MainWindow::onMenuTapeLoadFile);
+    connect(ui->actionInsert_tape, &QAction::triggered, this, &MainWindow::onMenuMediaInsertTape);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
-    connect(ui->actionLoad_DSK, &QAction::triggered, this, &MainWindow::onMenuDiscLoadDSK);
-    connect(ui->actionLoad_fromFile, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
+    connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
+    connect(ui->actionROM_Box, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
+    connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
+    connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
+    connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
+    connect(ui->actionRemove_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveCartridge);
+    connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
+    connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
+
+    connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
+    connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
+    connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
 }
 
 MainWindow::~MainWindow()
@@ -75,12 +87,19 @@ void MainWindow::StopThreads()
 void MainWindow::ResetEmulation()
 {
     StopThreads();
-    Emulator::Reset();
     StartThreads();
+}
+
+void MainWindow::onMenuMemoryEnterBytes()
+{
+    enterBytesDialog->show();
 }
 
 void MainWindow::onEmulatorPaused()
 {
+    ui->hLine->move(0, CRTScreen::vPos * 2);
+    ui->vLine->move(CRTScreen::hPos, 0);
+    ui->vLine->pos().setX(CRTScreen::vPos);
     if (debugger->isHidden())
         debugger->show();
     debugger->Update();
@@ -91,7 +110,7 @@ void MainWindow::onEmulatorFinishedFrame()
     ui->openGLWidget->updateTexture();
 }
 
-void MainWindow::onMenuFileLoadBinary()
+void MainWindow::onMenuMemoryLoadBinaryFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), ".", tr("Binary Files (*.bin)"));
     QFile file = QFile(fileName);
@@ -99,7 +118,19 @@ void MainWindow::onMenuFileLoadBinary()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::BaseRAM.MEM + 0x100, ba.data(), ba.size());
+        memcpy(CPC::RAM[1], ba.data(), ba.size());
+    }
+    file.close();
+}
+
+void MainWindow::onMenuMemorySaveBinaryFile()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), ".", tr("Binary Files (*.bin)"));
+    QFile file = QFile(fileName);
+    file.open(QIODevice::WriteOnly);
+    if (file.isOpen())
+    {
+        file.write((const char *)CPC::RAM[1] + 0x3000, 0x1000);
     }
     file.close();
 }
@@ -111,7 +142,7 @@ void MainWindow::onMenuScreenInspectGraphics()
     graphicsInspector->UpdateGraphics();
 }
 
-void MainWindow::onMenuTapeLoadFile()
+void MainWindow::onMenuMediaInsertTape()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
@@ -129,7 +160,7 @@ void MainWindow::onMenuScreenSmooth()
     ui->openGLWidget->setSmoothing(ui->actionSmooth->isChecked());
 }
 
-void MainWindow::onMenuDiscLoadDSK()
+void MainWindow::onMenuMediaInsertDiskA()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
@@ -140,5 +171,43 @@ void MainWindow::onMenuROMLoadFromFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load ROM"), ".", tr("ROM Files (*.bin *.rom)"));
     if (fileName != nullptr)
-        Emulator::ReadROM((char *)fileName.toUtf8().data(), 1);
+        CPC::ReadROM((char *)fileName.toUtf8().data(), 1);
+}
+
+void MainWindow::onMenuMediaRemoveCartridge()
+{
+    CPC::cartridgeEnabled = false;
+    Emulator::Reset();
+}
+
+void MainWindow::onMenuMediaInsertCartridge()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
+    if (fileName != nullptr)
+        CPC::ReadCartridge((char *)fileName.toUtf8().data());
+    CPC::cartridgeEnabled = true;
+    Emulator::Reset();
+}
+
+void MainWindow::onMenuScreenGreenMonitor()
+{
+    GateArray::Monochrome = ui->actionGreen_monitor->isChecked();
+}
+
+void MainWindow::SetCPC464()
+{
+    CPC::cpcType = CPCType::CPC464;
+    ResetEmulation();
+}
+
+void MainWindow::SetCPC664()
+{
+    CPC::cpcType = CPCType::CPC664;
+    ResetEmulation();
+}
+
+void MainWindow::SetCPC6128()
+{
+    CPC::cpcType = CPCType::CPC6128;
+    ResetEmulation();
 }
