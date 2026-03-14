@@ -127,18 +127,20 @@ void PPI::WR()
         else
         {
             BYTE bit = (Z80::DR & 0x0E) >> 1;
+            bool setBit = (Z80::DR & 0x01) != 0;
             if (bit < 4)
             {
-                BYTE value = 1 << bit;
-                lC &= value ^0x0F;
-                lC |= value;
+                if (setBit) lC |= (1 << bit);
+                else        lC &= ~(1 << bit);
+
+                lC &= 0x0F;
                 ApplyLC();
             }
             else
             {
-                BYTE value = (Z80::DR & 0x01) << bit;
-                hC &= value ^0x0F;
-                hC |= value;
+                if (setBit) hC |= (1 << bit);
+                else        hC &= ~(1 << bit);
+                hC &= 0xF0;
                 ApplyHC();
             }
         }

@@ -193,7 +193,7 @@ void PSG::ApplyChange()
         case 11:
         case 12:
             envelopePeriod = registers[12] * 256 + registers[11];
-            envelopeCounter = envelopePeriod;
+            //envelopeCounter = envelopePeriod;
             break;
         case 13:
             envelopeContinue = registers[13] & 0x08;
@@ -244,8 +244,7 @@ void PSG::UpdateEnvelope()
         switch(envelopeDir)
         {
         case EnvelopeDir::EDUp:
-            envelopeLevel++;
-            if (envelopeLevel >= 15)
+            if (envelopeLevel == 15)
             {
                 if (!envelopeContinue)
                 {
@@ -268,10 +267,9 @@ void PSG::UpdateEnvelope()
                             envelopeLevel = 0;
                     }
                 }
-            }
+            } else envelopeLevel++;
             break;
         case EnvelopeDir::EDDown:
-            envelopeLevel--;
             if (envelopeLevel == 0)
             {
                 if (!envelopeContinue)
@@ -295,7 +293,7 @@ void PSG::UpdateEnvelope()
                             envelopeLevel = 15;
                     }
                 }
-            }
+            } else envelopeLevel--;
             break;
         }
     }
