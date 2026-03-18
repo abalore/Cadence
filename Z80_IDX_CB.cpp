@@ -1,13 +1,13 @@
 #include "Z80.h"
 
-void Z80::Step_IDX_CB()
+bool Z80::Step_IDX_CB()
 {
     switch(mCycle)
     {
     case 1:
         //PC--;
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
         index = (sbyte)DR;
@@ -706,9 +706,7 @@ void Z80::Step_IDX_CB()
         DR = tByte;
         break;
     case 5:
-        mCycleType = MCycleType::FETCH;
-        idMode = IDMode::BASIC;
-        break;
+        return true;
     }
-
+    return false;
 }

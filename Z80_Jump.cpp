@@ -2,7 +2,7 @@
 
 #define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
 
-void Z80::JR(bool condition)
+bool Z80::JR(bool condition)
 {
     switch(mCycle)
     {
@@ -12,21 +12,19 @@ void Z80::JR(bool condition)
         break;
     case 2:
         if (!condition)
-        {
-            FinishInstruction
-        }
+            return true;
         else
-            mCycleType = MCycleType::ALU;
+            mCycleType = MCycleType::RELADDR;
+        AR = PC;
         break;
     case 3:
-        intAlign = true;
-        PC += (sbyte)DR;
-        FinishInstruction
-            break;
+        PC = AR;
+        return true;
     }
+    return false;
 }
 
-void Z80::RET()
+bool Z80::RET()
 {
     switch(mCycle)
     {
@@ -44,12 +42,12 @@ void Z80::RET()
         AR++;
         SP = AR;
         PC = w1;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::RET(bool condition)
+bool Z80::RET(bool condition)
 {
     switch(mCycle)
     {
@@ -59,8 +57,8 @@ void Z80::RET(bool condition)
         break;
     case 2:
         if (!condition)
-            FinishInstruction
-                w1 = DR;
+            return true;
+        w1 = DR;
         AR++;
         break;
     case 3:
@@ -72,12 +70,12 @@ void Z80::RET(bool condition)
         intAlign = true;
         SP = AR;
         PC = w1;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::JP(bool condition)
+bool Z80::JP(bool condition)
 {
     switch(mCycle)
     {
@@ -90,32 +88,27 @@ void Z80::JP(bool condition)
         AR = PC++;
         break;
     case 3:
-        intAlign = true;
-        AR++;
         if (condition)
             PC = DR * 256 + t8;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::CALL(bool condition)
+bool Z80::CALL(bool condition)
 {
     switch(mCycle)
     {
     case 1:
         mCycleType = MCycleType::READ;
-        AR = PC;
+        AR = PC++;
         break;
     case 2:
         *t16.L = DR;
-        AR++;
+        AR = PC++;
         break;
     case 3:
-        intAlign = true;
         *t16.H = DR;
-        AR++;
-        PC = AR;
         if (condition)
         {
             mCycleType = MCycleType::WRITE;
@@ -124,8 +117,8 @@ void Z80::CALL(bool condition)
             DR = (BYTE)(PC >> 8);
         }
         else
-            FinishInstruction
-                break;
+            return true;
+        break;
     case 4:
         AR--;
         DR = (BYTE)(PC & 0xFF);
@@ -133,12 +126,12 @@ void Z80::CALL(bool condition)
     case 5:
         SP = AR;
         PC = t16.Get();
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::RST(BYTE address)
+bool Z80::RST(BYTE address)
 {
     switch(mCycle)
     {
@@ -161,8 +154,8 @@ void Z80::RST(BYTE address)
         intAlign = true;
         break;
     case 5:
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 

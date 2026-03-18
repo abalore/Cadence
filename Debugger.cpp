@@ -223,7 +223,7 @@ string Debugger::GetGateArrayDebugLine()
 {
     string d;
     char buff[100];
-    sprintf(buff, "Pen: %d   Border: %d\nInks: ", GateArray::currentPen, GateArray::BORDER);
+    sprintf(buff, "Pen: %d   Border: %d  Mode: %d\nInks: ", GateArray::currentPen, GateArray::BORDER, GateArray::mode);
     d.append(buff);
     for (int i = 0; i < 16; i++)
     {

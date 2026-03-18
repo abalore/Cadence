@@ -1,21 +1,21 @@
 #include "Z80.h"
 
-#define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
-
-void Z80::Step_IDX_2()
+bool Z80::Step_IDX_2()
 {
     switch(mCycle)
     {
-    case 1:
+    case 1: // M2 4T
         mCycleType = MCycleType::READ;
         AR = PC++;
         break;
-    case 2:
+    case 2: // M3 3T
+        mCycleType = MCycleType::RELADDR;
         AR = IDX->Get();
-        AR += (sbyte)DR;
         break;
-    case 3:
-        mCycleType = MCycleType::ALU;
+    case 3: // M4 5T
+        mCycleType = MCycleType::READ;
+        break;
+    case 4: // M5 3T
         switch(IR >> 4)
         {
         case 0x4:
@@ -88,10 +88,7 @@ void Z80::Step_IDX_2()
             }
             break;
         }
-        break;
-    case 4:
-        intAlign = true;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }

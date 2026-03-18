@@ -36,6 +36,7 @@ public:
     static bool adjustMode;
     static word DSA;
     static BYTE newVT;
+    static bool EndLine, EndChar, EndScreen;
 
 
 private:

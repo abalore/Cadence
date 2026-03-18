@@ -38,6 +38,9 @@ public:
     static CPCType cpcType;
     static BYTE tick;
     static BYTE baseVMA;
+
+    static word AddressBUS;
+    static BYTE DataBUS;
 };
 
 

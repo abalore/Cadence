@@ -1,6 +1,6 @@
 #include "Z80.h"
 
-void Z80::Step_IDX_3()
+bool Z80::Step_IDX_3()
 {
     switch(mCycle)
     {
@@ -20,9 +20,7 @@ void Z80::Step_IDX_3()
         mCycleType = MCycleType::ALU;
         break;
     case 5:
-        mCycleType = MCycleType::FETCH;
-        idMode = IDMode::BASIC;
-        intAlign = true;
-        break;
+        return true;
     }
+    return false;
 }

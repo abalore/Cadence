@@ -1,7 +1,7 @@
 #include "Z80.h"
 #include "GateArray.h"
 
-void Z80::Step_Int_Exec()
+bool Z80::Step_Int_Exec()
 {
     switch(im)
     {
@@ -95,5 +95,5 @@ void Z80::Step_Int_Exec()
         }
         break;
     }
-
+    return false;
 }

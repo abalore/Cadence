@@ -1,5 +1,5 @@
 #include "FDC.h"
-#include "Z80.h"
+#include "CPC.h"
 
 FDCState FDC::state;
 FDCCommandState FDC::commandState;
@@ -98,11 +98,11 @@ void FDC::Clock()
 
 void FDC::RD()
 {
-    if ((Z80::AR & 0x0100) != 0)
+    if ((CPC::AddressBUS & 0x0100) != 0)
     {
-        if ((Z80::AR & 0x0001) == 0)
+        if ((CPC::AddressBUS & 0x0001) == 0)
         {
-            Z80::DR = (bit7_RQM << 7)
+            CPC::DataBUS = (bit7_RQM << 7)
                       + (bit6_DIO << 6)
                       + (bit5_NDMA << 5)
                       + (bit4_BUSY << 4)
@@ -115,7 +115,7 @@ void FDC::RD()
         {
             if (state == FDCState::FDC_StateTransfer)
             {
-                Z80::DR = data[dataIndex];
+                CPC::DataBUS = data[dataIndex];
                 dataIndex++;
                 if (dataIndex == dataSize)
                 {
@@ -137,7 +137,7 @@ void FDC::RD()
             case FDCState::FDC_StateCommand:
             case FDCState::FDC_StateExecution:
             case FDCState::FDC_StateTransfer:
-                Z80::DR = 0x00;
+                CPC::DataBUS = 0x00;
                 break;
             case FDCState::FDC_StateResult:
                 ProcessResult();
@@ -149,12 +149,12 @@ void FDC::RD()
 
 void FDC::WR()
 {
-    BYTE data = Z80::DR;
-    if ((Z80::AR & 0x0100) == 0)
+    BYTE data = CPC::DataBUS;
+    if ((CPC::AddressBUS & 0x0100) == 0)
     {
         // Set motor
     }
-    else if ((Z80::AR & 0x0001) != 0)
+    else if ((CPC::AddressBUS & 0x0001) != 0)
     {
         switch(state)
         {
@@ -466,7 +466,7 @@ void FDC::ProcessResult()
 {
     if (resultCount)
     {
-        Z80::DR = result[resultIndex];
+        CPC::DataBUS = result[resultIndex];
         resultIndex++;
         if (resultIndex == resultCount)
         {

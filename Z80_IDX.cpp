@@ -1,6 +1,6 @@
 #include "Z80.h"
 
-void Z80::Step_IDX()
+bool Z80::Step_IDX()
 {
     switch(IR >> 4)
     {
@@ -13,11 +13,9 @@ void Z80::Step_IDX()
         case 0xC: // INC C
         case 0xD: // DEC C
         case 0xE: // LD C,n
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x9: // ADD IX,BC
-            ADD_IDX_RR(BC);
-            break;
+            return ADD_IDX_RR(BC);
         }
         break;
     case 0x1:
@@ -29,25 +27,20 @@ void Z80::Step_IDX()
         case 0xC: // INC E
         case 0xD: // DEC E
         case 0xE: // LD E,n
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x9: // ADD IX,DE
-            ADD_IDX_RR(DE);
-            break;
+            return ADD_IDX_RR(DE);
         }
         break;
     case 0x2:
         switch(IR & 0x0F)
         {
         case 0x1: // LD IX,nn
-            LD_RR_nn(*IDX);
-            break;
+            return LD_RR_nn(*IDX);
         case 0x2: // LD (nn),IX
-            LD_Ind_RR(*IDX);
-            break;
+            return LD_Ind_RR(*IDX);
         case 0x3: // INC IX
-            INC_RR(*IDX);
-            break;
+            return INC_RR(*IDX);
         case 0x4: // INC IXH
             INC_R(*(*IDX).H);
             break;
@@ -55,17 +48,13 @@ void Z80::Step_IDX()
             DEC_R(*(*IDX).H);
             break;
         case 0x6: // LD IXH,n
-            LD_R_n(*(*IDX).H);
-            break;
+            return LD_R_n(*(*IDX).H);
         case 0x9: // ADD IX,IX
-            ADD_IDX_RR(*IDX);
-            break;
+            return ADD_IDX_RR(*IDX);
         case 0xA: // LD IX,(nn)
-            LD_RR_Ind(*IDX);
-            break;
+            return LD_RR_Ind(*IDX);
         case 0xB: // DEC IX
-            DEC_RR(*IDX);
-            break;
+            return DEC_RR(*IDX);
         case 0xC: // INC IXL
             INC_R(*(*IDX).L);
             break;
@@ -81,22 +70,17 @@ void Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0x4: // INC (IX+d)
-            INC_Ind_IDX();
-            break;
+            return INC_Ind_IDX();
         case 0x5: // DEC (IX+d)
-            DEC_Ind_IDX();
-            break;
+            return DEC_Ind_IDX();
         case 0x6: // LD (IX+d),n
-            Step_IDX_3();
-            break;
+            return Step_IDX_3();
         case 0x9: // ADD IX,SP
-            ADD_IDX_vv(SP);
-            break;
+            return ADD_IDX_vv(SP);
         case 0xC: // INC A
         case 0xD: // DEC A
         case 0xE: // LD A,n
-            Step_basic();
-            break;
+            return Step_basic();
         }
         break;
     case 0x4:
@@ -112,8 +96,7 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x4: // LD B,IDX.H
             B = *(*IDX).H;
             break;
@@ -122,8 +105,7 @@ void Z80::Step_IDX()
             break;
         case 0x6: // LD B,(IDX+n)
         case 0xE: // LD C,(IDX+n)
-            Step_IDX_2();
-            break;
+            return Step_IDX_2();
         case 0xC: // LD C,IDX.H
             C = *(*IDX).H;
             break;
@@ -145,8 +127,7 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x4: // LD D,IDX.H
             D = *(*IDX).H;
             break;
@@ -155,8 +136,7 @@ void Z80::Step_IDX()
             break;
         case 0x6: // LD D,(IDX+n)
         case 0xE: // LD E,(IDX+n)
-            Step_IDX_2();
-            break;
+            return Step_IDX_2();
         case 0xC: // LD E,IDX.H
             E = *(*IDX).H;
             break;
@@ -225,15 +205,13 @@ void Z80::Step_IDX()
         case 0x5: //
         case 0x7: //
         case 0xE: // LD A,(IX+d)
-            Step_IDX_2();
-            break;
+            return Step_IDX_2();
         case 0x8: //
         case 0x9: //
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0xC: // LD A,IDX.H
             A = *(*IDX).H;
             break;
@@ -255,14 +233,11 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x6:
-            ADD_Ind_IDX();
-            break;
+            return ADD_Ind_IDX();
         case 0xE:
-            ADC_Ind_IDX();
-            break;
+            return ADC_Ind_IDX();
         case 0x4: // ADD IDX.H
             ADD_v(*(*IDX).H);
             break;
@@ -290,14 +265,11 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x6:
-            SUB_Ind_IDX();
-            break;
+            return SUB_Ind_IDX();
         case 0xE:
-            SBC_Ind_IDX();
-            break;
+            return SBC_Ind_IDX();
         case 0x4: // SUB IDX.H
             SUB_v(*(*IDX).H);
             break;
@@ -325,14 +297,11 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x6:
-            AND_Ind_IDX();
-            break;
+            return AND_Ind_IDX();
         case 0xE:
-            XOR_Ind_IDX();
-            break;
+            return XOR_Ind_IDX();
         case 0x4: // AND IDX.H
             AND_v(*(*IDX).H);
             break;
@@ -360,14 +329,11 @@ void Z80::Step_IDX()
         case 0xA: //
         case 0xB: //
         case 0xF: //
-            Step_basic();
-            break;
+            return Step_basic();
         case 0x6:
-            OR_Ind_IDX();
-            break;
+            return OR_Ind_IDX();
         case 0xE:
-            CP_Ind_IDX();
-            break;
+            return CP_Ind_IDX();
         case 0x4: // OR IDX.H
             OR_v(*(*IDX).H);
             break;
@@ -386,9 +352,9 @@ void Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0xB: // IDX BIT OP
-            Step_IDX_CB();
             idMode = IDMode::IDXBIT;
-            return;
+            mCycle--;
+            return false;
         }
         break;
     case 0xE:
@@ -396,14 +362,11 @@ void Z80::Step_IDX()
         {
         case 0x1: // POP IDX
             /////////////////////////// Duda con NOPs
-            POP_RR(*IDX);
-            break;
+            return POP_RR(*IDX);
         case 0x3: // EX SP,(IDX)
-            EX_IDX_Ind_SP();
-            break;
+            return EX_IDX_Ind_SP();
         case 0x5: // PUSH IDX
-            PUSH_RR(*IDX);
-            break;
+            return PUSH_RR(*IDX);
         case 0x9: // JP (IDX)
             JP_IDX();
             break;
@@ -418,6 +381,5 @@ void Z80::Step_IDX()
         }
         break;
     }
-    if (mCycleType == MCycleType::FETCH)
-        idMode = IDMode::BASIC;
+    return false;
 }

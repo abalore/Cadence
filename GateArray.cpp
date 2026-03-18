@@ -145,8 +145,8 @@ void GateArray::SetPixel()
     }
     currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
     //if (SpeedController::overrun && BORDER)
-    if (CRTC::BORDER && !Z80::IFF1)
-        currentInk = 0;
+//    if (CRTC::BORDER && !Z80::IFF1)
+//        currentInk = 0;
     if (++pixelIndex == 8) pixelIndex = 0;
     if (Monochrome)
         Color = &GreenPalette[currentInk * 3];
@@ -195,26 +195,26 @@ void GateArray::ReadByte()
 
 void GateArray::WR()
 {
-    switch(Z80::DR & 0xC0)
+    switch(CPC::DataBUS & 0xC0)
     {
     case 0x00: // PEN
-        if ((Z80::DR & 0x10) > 0)
+        if ((CPC::DataBUS & 0x10) > 0)
             borderSelected = true;
         else
         {
             borderSelected = false;
-            currentPen = Z80::DR & 0x0F;
+            currentPen = CPC::DataBUS & 0x0F;
         }
         break;
     case 0x40: // INK
         if (borderSelected)
-            BORDER = Z80::DR & 0x1F;
+            BORDER = CPC::DataBUS & 0x1F;
         else
-            INK[currentPen] = Z80::DR & 0x1F;
+            INK[currentPen] = CPC::DataBUS & 0x1F;
         break;
     case 0x80: // RMR
-        RMR = Z80::DR & 0x3F;
-        if ((Z80::DR & 0x10) > 0)
+        RMR = CPC::DataBUS & 0x3F;
+        if ((CPC::DataBUS & 0x10) > 0)
         {
             R52 = 0;
             Z80::InterruptRequest = true;
@@ -224,7 +224,7 @@ void GateArray::WR()
         mode = RMR & 0x03;
         break;
     case 0xC0: // MMR
-        CPC::SelectRAM(Z80::DR & 0x3F);
+        CPC::SelectRAM(CPC::DataBUS & 0x3F);
         break;
     }
 }

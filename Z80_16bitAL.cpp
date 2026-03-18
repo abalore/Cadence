@@ -1,8 +1,6 @@
 #include "Z80.h"
 
-#define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
-
-void Z80::ADD_HL_vv(word w)
+bool Z80::ADD_HL_vv(word w)
 {
     switch(mCycle)
     {
@@ -19,12 +17,12 @@ void Z80::ADD_HL_vv(word w)
         fN = false;
         f3 = H & 0x08;
         f5 = H & 0x20;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::ADC_HL_vv(word w)
+bool Z80::ADC_HL_vv(word w)
 {
     switch(mCycle)
     {
@@ -46,12 +44,12 @@ void Z80::ADC_HL_vv(word w)
         fZ = w3 == 0;
         f3 = H & 0x08;
         f5 = H & 0x20;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::SBC_HL_vv(word w)
+bool Z80::SBC_HL_vv(word w)
 {
     switch(mCycle)
     {
@@ -73,67 +71,60 @@ void Z80::SBC_HL_vv(word w)
         fS = H & 0x80;
         f3 = H & 0x08;
         f5 = H & 0x20;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::INC_RR(Reg16 reg)
+bool Z80::INC_RR(Reg16 reg)
 {
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU;
-        break;
-    case 2:
+        mCycleType = MCycleType::END16ALU;
         *reg.L = *reg.L + 1;
         if (*reg.L == 0)
             *reg.H = *reg.H + 1;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::INC_WW(word &w)
+bool Z80::INC_WW(word &w)
 {
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU;
+        mCycleType = MCycleType::END16ALU;
         w++;
-        break;
-    case 2:
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::DEC_RR(Reg16 reg)
+bool Z80::DEC_RR(Reg16 reg)
 {
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU;
-        break;
-    case 2:
+        mCycleType = MCycleType::END16ALU;
         *reg.L = *reg.L - 1;
         if (*reg.L == 0xff)
             *reg.H = *reg.H - 1;
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
 }
 
-void Z80::DEC_WW(word &w)
+bool Z80::DEC_WW(word &w)
 {
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU;
+        mCycleType = MCycleType::END16ALU;
         w--;
-        break;
-    case 2:
-        FinishInstruction
-            break;
+        return true;
     }
+    return false;
+
 }

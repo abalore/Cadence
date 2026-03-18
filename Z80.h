@@ -12,7 +12,9 @@ enum MCycleType
     IN,
     OUT,
     ALU,
-    INT
+    INT,
+    RELADDR,
+    END16ALU
 };
 
 enum IDMode
@@ -57,20 +59,29 @@ public:
     static dword nops;
 
 private:
-    static void Step_basic();
-    static void Step_misc();
-    static void Step_CB();
-    static void Step_IDX();
-    static void Step_IDX_2();
-    static void Step_IDX_3();
-    static void Step_IDX_CB();
-    static void Step_Int_Exec();
-    static void ProcessINT();
-    static void ProcessFETCH();
-    static void ProcessREAD();
-    static void ProcessWRITE();
-    static void ProcessIN();
-    static void ProcessOUT();
+    static bool RunMCycle();
+    static bool RunTCycle();
+
+    static bool edge;
+    static bool M1;
+    static bool WAIT;
+
+    static bool Step_basic();
+    static bool Step_misc();
+    static bool Step_CB();
+    static bool Step_IDX();
+    static bool Step_IDX_2();
+    static bool Step_IDX_3();
+    static bool Step_IDX_CB();
+    static bool Step_Int_Exec();
+    static bool ProcessINT();
+    static bool ProcessFETCH();
+    static bool ProcessREAD();
+    static bool ProcessWRITE();
+    static bool ProcessIN();
+    static bool ProcessOUT();
+    static bool ProcessRELADDR();
+    static bool ProcessEND16ALU();
     static void FinishInstruction();
     static BYTE t8;
     static Reg16 t16, tt16;
@@ -89,6 +100,9 @@ private:
     static bool intAlign;
 
     // 8 bit arithmetic and logic for A
+    static void NEG();
+    static void DAA();
+    static void CPL();
     static void ADD_v(BYTE v);
     static void ADC_v(BYTE v);
     static void SUB_v(BYTE v);
@@ -99,67 +113,51 @@ private:
     static void OR_v(BYTE v);
     static void INC_R(BYTE &reg);
     static void DEC_R(BYTE &reg);
-    static void ADD_n();
-    static void ADC_n();
-    static void SUB_n();
-    static void SBC_n();
-    static void AND_n();
-    static void XOR_n();
-    static void OR_n();
-    static void CP_n();
+    static bool ADD_n();
+    static bool ADC_n();
+    static bool SUB_n();
+    static bool SBC_n();
+    static bool AND_n();
+    static bool XOR_n();
+    static bool OR_n();
+    static bool CP_n();
     // 8 bit arithmetic and logic for (HL)
-    static void ADD_Ind_HL();
-    static void ADC_Ind_HL();
-    static void SUB_Ind_HL();
-    static void SBC_Ind_HL();
-    static void CP_Ind_HL();
-    static void AND_Ind_HL();
-    static void XOR_Ind_HL();
-    static void OR_Ind_HL();
-    static void INC_Ind_HL();
-    static void DEC_Ind_HL();
+    static bool ADD_Ind_HL();
+    static bool ADC_Ind_HL();
+    static bool SUB_Ind_HL();
+    static bool SBC_Ind_HL();
+    static bool CP_Ind_HL();
+    static bool AND_Ind_HL();
+    static bool XOR_Ind_HL();
+    static bool OR_Ind_HL();
+    static bool INC_Ind_HL();
+    static bool DEC_Ind_HL();
     // 8 bit arithmetic and logic for (IDX+d)
-    static void ADD_Ind_IDX();
-    static void ADC_Ind_IDX();
-    static void SUB_Ind_IDX();
-    static void SBC_Ind_IDX();
-    static void CP_Ind_IDX();
-    static void AND_Ind_IDX();
-    static void XOR_Ind_IDX();
-    static void OR_Ind_IDX();
-    static void INC_Ind_IDX();
-    static void DEC_Ind_IDX();
+    static bool ADD_Ind_IDX();
+    static bool ADC_Ind_IDX();
+    static bool SUB_Ind_IDX();
+    static bool SBC_Ind_IDX();
+    static bool CP_Ind_IDX();
+    static bool AND_Ind_IDX();
+    static bool XOR_Ind_IDX();
+    static bool OR_Ind_IDX();
+    static bool INC_Ind_IDX();
+    static bool DEC_Ind_IDX();
     // 16 bit arithmetic
-    static void ADD_HL_vv(word w);
-    static void ADC_HL_vv(word w);
-    static void SBC_HL_vv(word w);
-    static void ADD_IDX_vv(word w);
-    static void INC_WW(word &w);
-    static void DEC_WW(word &w);
-    static void INC_RR(Reg16 reg);
-    static void DEC_RR(Reg16 reg);
-
-
-    static void JR(bool condition);
-    static void LD_RR_addr(Reg16 reg);
-    static void LD_Ind_RR(Reg16 reg);
-    static void LD_RR_Ind(Reg16 reg);
-    static void LD_Ind_A();
-    static void LD_A_Ind();
-    static void LD_R_Ind_HL(BYTE &reg);
-    static void LD_Ind_HL_R(BYTE &reg);
-    static void LD_RR_nn(Reg16 reg);
-    static void LD_R_n(BYTE &reg);
-    static void LD_Ind_RR_A(Reg16 reg);
-    static void PUSH_RR(Reg16 reg);
-    static void POP_RR(Reg16 reg);
-    static bool GetParity(BYTE b);
-    static void SetFlagsAfterShiftOp(BYTE b);
-    static void RET();
-    static void RET(bool condition);
-    static void JP(bool condition);
-    static void CALL(bool condition);
-    static void RST(BYTE address);
+    static bool ADD_HL_vv(word w);
+    static bool ADC_HL_vv(word w);
+    static bool SBC_HL_vv(word w);
+    static bool ADD_IDX_vv(word w);
+    static bool INC_WW(word &w);
+    static bool DEC_WW(word &w);
+    static bool INC_RR(Reg16 reg);
+    static bool DEC_RR(Reg16 reg);
+    static bool ADD_IDX_RR(Reg16 reg);
+    // Shift
+    static void RLCA();
+    static void RRCA();
+    static void RLA();
+    static void RRA();
     static void RLC_R(BYTE &reg);
     static void RRC_R(BYTE &reg);
     static void RL_R(BYTE &reg);
@@ -168,9 +166,7 @@ private:
     static void SRA_R(BYTE &reg);
     static void SLL_R(BYTE &reg);
     static void SRL_R(BYTE &reg);
-    static void BIT_x_R(int X, BYTE * R);
-    static void RES_x_R(int X, BYTE * R);
-    static void SET_x_R(int X, BYTE * R);
+    static bool ShiftBitOpIndHL(BYTE opCode);
     static void RLC_IDX_R(BYTE &reg);
     static void RRC_IDX_R(BYTE &reg);
     static void RL_IDX_R(BYTE &reg);
@@ -179,55 +175,77 @@ private:
     static void SRA_IDX_R(BYTE &reg);
     static void SLL_IDX_R(BYTE &reg);
     static void SRL_IDX_R(BYTE &reg);
+    static bool RLD();
+    static bool RRD();
+    // Bitwise op
+    static void BIT_x_R(int X, BYTE * R);
+    static void RES_x_R(int X, BYTE * R);
+    static void SET_x_R(int X, BYTE * R);
     static void BIT_x_IDX(int X);
     static void RES_x_IDX(int X, BYTE &reg);
     static void SET_x_IDX(int X, BYTE &reg);
-    static void ADD_IDX_RR(Reg16 reg);
-    static void NEG();
-    static void LDI(bool R);
-    static void CPI(bool R);
-    static void LDD(bool R);
-    static void CPD(bool R);
-    static void RLCA();
-    static void RRCA();
-    static void LD_A_I_RR(Reg16 reg);
+    // 8 bit load
+    static bool LD_Ind_A();
+    static bool LD_A_Ind();
+    static bool LD_R_Ind_HL(BYTE &reg);
+    static bool LD_Ind_HL_R(BYTE &reg);
+    static bool LD_R_n(BYTE &reg);
+    static bool LD_Ind_RR_A(Reg16 reg);
+    static bool LD_A_I();
+    static bool LD_I_A();
+    static bool LD_A_R();
+    static bool LD_R_A();
+    // 16 bit load
+    static bool LD_RR_addr(Reg16 reg);
+    static bool LD_Ind_RR(Reg16 reg);
+    static bool LD_RR_Ind(Reg16 reg);
+    static bool LD_RR_nn(Reg16 reg);
+    static bool LD_SP_HL();
+    static bool LD_SP_IDX();
+    static bool LD_WW_nn(word &w);
+    static bool LD_Ind_WW(word w);
+    static bool LD_WW_Ind(word &w);
+    static bool LD_A_I_RR(Reg16 reg);
+    static bool LD_Ind_HL_n();
+    static bool PUSH_RR(Reg16 reg);
+    static bool POP_RR(Reg16 reg);
+    // Jump
+    static bool JR(bool condition);
+    static bool JP(bool condition);
+    static bool CALL(bool condition);
+    static bool RST(BYTE address);
+    static bool RET();
+    static bool RET(bool condition);
+    static void JP_HL();
+    static void JP_IDX();
+    static bool DJNZ();
+    // Block
+    static bool LDI(bool R);
+    static bool CPI(bool R);
+    static bool LDD(bool R);
+    static bool CPD(bool R);
+    static bool INI(bool R, bool dir);
+    static bool OUTI(bool R, bool dir);
+    // Interchange
     static void EX_AF_AF_();
     static void EX_DE_HL();
     static void EXX();
-    static void EX_HL_Ind_SP();
-    static void EX_IDX_Ind_SP();
-    static void JP_HL();
-    static void JP_IDX();
-    static void DJNZ();
-    static void RLA();
-    static void RRA();
-    static void DAA();
-    static void CPL();
-    static void LD_Ind_HL_n();
+    static bool EX_HL_Ind_SP();
+    static bool EX_IDX_Ind_SP();
+    // I/O
+    static bool IN_R_PortBC(BYTE &reg);
+    static bool IN_A_n();
+    static bool OUT_PortBC_R(BYTE &reg);
+    static bool OUT_n_A();
+    // Control
     static void SCF();
     static void CCF();
-    static void LD_SP_HL();
-    static void LD_SP_IDX();
-    static void IN_R_PortBC(BYTE &reg);
-    static void IN_A_n();
-    static void OUT_PortBC_R(BYTE &reg);
-    static void OUT_n_A();
-    static void LD_A_I();
-    static void LD_I_A();
-    static void LD_A_R();
-    static void LD_R_A();
-    static void RLD();
-    static void RRD();
     static void IM(int mode);
-    static void ShiftOpIndHL(BYTE opCode);
-    static void INI(bool R, bool dir);
-    static void OUTI(bool R, bool dir);
+    // Helpers
+    static bool GetParity(BYTE b);
     static void EncodeF();
     static void DecodeF();
-    static void LD_WW_nn(word &w);
-    static void LD_Ind_WW(word w);
-    static void LD_WW_Ind(word &w);
-
+    static void SetFlagsAfterShiftOp(BYTE b);
 };
 
 #endif // Z80_H

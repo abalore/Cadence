@@ -23,6 +23,8 @@ BYTE *CPC::Cartridge;
 bool CPC::cartridgeEnabled;
 CPCType CPC::cpcType = CPCType::CPC6128;
 BYTE CPC::tick = 0;
+word CPC::AddressBUS = 0;
+BYTE CPC::DataBUS = 0;
 
 void CPC::ReadROM(char *filename, int number)
 {
@@ -108,9 +110,43 @@ void CPC::Finalize()
 void CPC::Clock()
 {
     Z80::stopPoint = false;
-    if ((tick % 16) == 0)
+    if (tick % 2 == 0)
     {
         Z80::Clock();
+    }
+    if (tick % 4 == 0)
+    {
+        if (!Z80::MREQ)
+        {
+            if (!Z80::RD)
+            {
+                DataBUS = GetByteAt(AddressBUS);
+            }
+            else if (!Z80::WR)
+            {
+                SetByteAt(AddressBUS, DataBUS);
+            }
+        }
+        if (!Z80::IORQ)
+        {
+            if (!Z80::RD)
+            {
+                if (!(AddressBUS & 0x4000)) CRTC::RD();
+                else if (!(AddressBUS & 0x0800)) PPI::RD();
+                else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::RD();
+            }
+            else if (!Z80::WR)
+            {
+                if (!(AddressBUS & 0x8000)) GateArray::WR();
+                else if (!(AddressBUS & 0x4000)) CRTC::WR();
+                else if (!(AddressBUS & 0x2000)) CPC::SelectROM(DataBUS);
+                else if (!(AddressBUS & 0x0800)) PPI::WR();
+                else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::WR();
+            }
+        }
+    }
+    if ((tick % 16) == 0)
+    {
         FDC::Clock();
         Tape::Clock();
         PSG::Clock();
@@ -120,7 +156,7 @@ void CPC::Clock()
     GateArray::Clock(tick);
     if ((tick % 16) == 0)
     {
-        Z80::Clock2();
+        // Z80::Clock2();
     }
     CRTScreen::Clock();
     tick++;

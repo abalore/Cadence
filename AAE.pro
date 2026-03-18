@@ -32,8 +32,10 @@ SOURCES += \
     Tape.cpp \
     Z80_16bitAL.cpp \
     Z80_8bitAL.cpp \
+    Z80_8bitShift.cpp \
     Z80_IDX_3.cpp \
     Z80_Jump.cpp \
+    Z80_Load.cpp \
     Z80_intexec.cpp \
     EmulatorThread.cpp \
     SoundThread.cpp \

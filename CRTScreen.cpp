@@ -24,7 +24,7 @@ void CRTScreen::Clock()
         hPos = 0;
         vPos ++;
         GateArray::hsyncTrigger = false;
-        if (GateArray::vsyncTrigger || vPos > 325) // 48Hz free running
+        if (GateArray::vsyncTrigger || vPos == 325) // 48Hz free running
         {
             vPos = 0;
             frameFinished = true;

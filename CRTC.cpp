@@ -69,12 +69,12 @@ void CRTC::Reset()
     adjustMode = false;
     DSA = 0;
     MA = DSA;
-    VSW = 8; //Z80::DR >> 4;
+    VSW = 8; //CPC::DataBUS >> 4;
 }
 
 void CRTC::RD()
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    switch((CPC::AddressBUS & 0x0300) >> 8)
     {
     case 2: // Status out
         //////////////////////////////////////////
@@ -83,40 +83,40 @@ void CRTC::RD()
         switch(Index)
         {
         case 0:
-            Z80::DR = HT;
+            CPC::DataBUS = HT;
             break;
         case 1:
-            Z80::DR = HD;
+            CPC::DataBUS = HD;
             break;
         case 2:
-            Z80::DR = HSP;
+            CPC::DataBUS = HSP;
             break;
         case 3:
-            HSW = Z80::DR = VSW * 16 + HSW;
+            HSW = CPC::DataBUS = VSW * 16 + HSW;
             break;
         case 4:
-            Z80::DR = VT;
+            CPC::DataBUS = VT;
             break;
         case 5:
-            Z80::DR = VTA;
+            CPC::DataBUS = VTA;
             break;
         case 6:
-            Z80::DR = VD;
+            CPC::DataBUS = VD;
             break;
         case 7:
-            Z80::DR = VSP;
+            CPC::DataBUS = VSP;
             break;
         case 8:
-            Z80::DR = IS;
+            CPC::DataBUS = IS;
             break;
         case 9:
-            MRA = Z80::DR = MRA;
+            MRA = CPC::DataBUS = MRA;
             break;
         case 12:
-            Z80::DR = DSA >> 8;
+            CPC::DataBUS = DSA >> 8;
             break;
         case 13:
-            Z80::DR = DSA & 0xFF;
+            CPC::DataBUS = DSA & 0xFF;
             break;
         }
 
@@ -126,54 +126,54 @@ void CRTC::RD()
 
 void CRTC::WR()
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    switch((CPC::AddressBUS & 0x0300) >> 8)
     {
     case 0: // Index in
-        Index = Z80::DR;
+        Index = CPC::DataBUS;
         break;
     case 1: // Data in
         switch(Index)
         {
         case 0:
-            HT = Z80::DR;
+            HT = CPC::DataBUS;
             break;
         case 1:
-            HD = Z80::DR;
+            HD = CPC::DataBUS;
             break;
         case 2:
-            HSP = Z80::DR;
+            HSP = CPC::DataBUS;
             break;
         case 3:
-            HSW = Z80::DR & 0x0F;
-            VSW = Z80::DR >> 4;
+            HSW = CPC::DataBUS & 0x0F;
+            VSW = CPC::DataBUS >> 4;
             if (VSW == 0)
                 VSW = 16;               // Check CRTC Type
             break;
         case 4:
-            VT = Z80::DR & 0x7F;
+            VT = CPC::DataBUS & 0x7F;
             break;
         case 5:
-            VTA = Z80::DR & 0x1F;
+            VTA = CPC::DataBUS & 0x1F;
             break;
         case 6:
-            VD = Z80::DR & 0x7F;
+            VD = CPC::DataBUS & 0x7F;
             break;
         case 7:
-            VSP = Z80::DR & 0x7F;
+            VSP = CPC::DataBUS & 0x7F;
             break;
         case 8:
-            IS = Z80::DR;
+            IS = CPC::DataBUS;
             break;
         case 9:
-            MRA = Z80::DR;
+            MRA = CPC::DataBUS;
             break;
         case 12:
             DSA &= 0x00FF;
-            DSA |= (Z80::DR & 0x3F) * 256;
+            DSA |= (CPC::DataBUS & 0x3F) * 256;
             break;
         case 13:
             DSA &= 0xFF00;
-            DSA |= Z80::DR;
+            DSA |= CPC::DataBUS;
             break;
         }
 
@@ -183,23 +183,6 @@ void CRTC::WR()
 
 void CRTC::RunCombinational()
 {
-    /*
-
-
-
-
-
-    if (VCC == VT)
-    {
-        VCC = 0;
-    }
-    else
-    {
-        VCC = (VCC + 1) & 0x7F;
-    }
-
-
-    */
 }
 
 void CRTC::RunHorizontalChar()
@@ -247,8 +230,7 @@ void CRTC::RunLine()
 
         if (adjustMode)
         {
-            MA = DSA;
-            baseMA = MA;
+            baseMA = DSA;
             VCC = 0;
             adjustMode = false;
 
@@ -261,25 +243,24 @@ void CRTC::RunLine()
         }
         else
         {
-            RunVerticalChar();
             baseMA = MA;
+            RunVerticalChar();
         }
     }
     else
     {
         RA = (RA + 1) & 0x1F;
-        MA = baseMA;
     }
+    MA = baseMA;
 }
 
 void CRTC::RunVerticalChar()
 {
-    if (VCC == VT)
+    if (VCC == VT || VT == 1)
     {
         if (VTA == 0)
         {
-            MA = DSA;
-            baseMA = MA;
+            baseMA = DSA;
             VDISP = (VD > 0);
             VCC = 0;
         }
