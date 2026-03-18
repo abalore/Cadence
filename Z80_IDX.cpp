@@ -386,7 +386,7 @@ void Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0xB: // IDX BIT OP
-            Step_IDX_CB();
+            //Step_IDX_CB();
             idMode = IDMode::IDXBIT;
             return;
         }
