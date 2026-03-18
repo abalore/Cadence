@@ -37,7 +37,6 @@ bool Z80::RET()
         AR++;
         break;
     case 3:
-        intAlign = true;
         w1 += DR * 256;
         AR++;
         SP = AR;
@@ -52,23 +51,20 @@ bool Z80::RET(bool condition)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::READ;
-        AR = SP;
+        mCycleType = MCycleType::ALU1;
         break;
     case 2:
         if (!condition)
             return true;
-        w1 = DR;
-        AR++;
+        mCycleType = MCycleType::READ;
+        AR = SP++;
         break;
     case 3:
-        w1 += DR * 256;
-        AR++;
-        mCycleType = MCycleType::ALU;
+        w1 = DR;
+        AR = SP++;
         break;
     case 4:
-        intAlign = true;
-        SP = AR;
+        w1 += DR * 256;
         PC = w1;
         return true;
     }
@@ -136,24 +132,19 @@ bool Z80::RST(BYTE address)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::WRITE;
-        AR = SP;
-        AR--;
-        DR = (BYTE)(PC >> 8);
+        mCycleType = MCycleType::ALU1;
         break;
     case 2:
-        AR--;
-        DR = (BYTE)(PC & 0xFF);
+        mCycleType = MCycleType::WRITE;
+        AR = --SP;
+        DR = (BYTE)(PC >> 8);
         break;
     case 3:
-        mCycleType = MCycleType::ALU;
-        SP = AR;
+        AR = --SP;
+        DR = (BYTE)(PC & 0xFF);
         break;
     case 4:
         PC = address;
-        intAlign = true;
-        break;
-    case 5:
         return true;
     }
     return false;

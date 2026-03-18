@@ -20,7 +20,6 @@ bool Z80::LD_Ind_RR(Reg16 reg)
     case 4:
         AR++;
         DR = *reg.H;
-        intAlign = true;
         break;
     case 5:
         return true;
@@ -48,7 +47,6 @@ bool Z80::LD_Ind_WW(word w)
     case 4:
         AR++;
         DR = w / 0x100;
-        intAlign = true;
         break;
     case 5:
         return true;
@@ -74,7 +72,6 @@ bool Z80::LD_RR_Ind(Reg16 reg)
     case 4:
         *reg.L = DR;
         AR++;
-        intAlign = true;
         break;
     case 5:
         *reg.H = DR;
@@ -101,7 +98,6 @@ bool Z80::LD_WW_Ind(word &w)
     case 4:
         w = DR;
         AR++;
-        intAlign = true;
         break;
     case 5:
         w += DR * 256;
@@ -249,7 +245,6 @@ bool Z80::LD_Ind_RR_A(Reg16 reg)
         mCycleType = MCycleType::WRITE;
         AR = reg.Get();
         DR = A;
-        intAlign = true;
         break;
     case 2:
         return true;
@@ -262,18 +257,16 @@ bool Z80::PUSH_RR(Reg16 reg)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::WRITE;
-        AR = SP;
-        AR--;
-        DR = *reg.H;
+        mCycleType = MCycleType::ALU1;
         break;
     case 2:
-        AR--;
-        DR = *reg.L;
+        mCycleType = MCycleType::WRITE;
+        AR = --SP;
+        DR = *reg.H;
         break;
     case 3:
-        mCycleType = MCycleType::ALU;
-        SP = AR;
+        AR = --SP;
+        DR = *reg.L;
         break;
     case 4:
         return true;
@@ -294,7 +287,6 @@ bool Z80::POP_RR(Reg16 reg)
         AR++;
         break;
     case 3:
-        intAlign = true;
         *reg.H = DR;
         AR++;
         SP = AR;

@@ -25,6 +25,18 @@ CPCType CPC::cpcType = CPCType::CPC6128;
 BYTE CPC::tick = 0;
 word CPC::AddressBUS = 0;
 BYTE CPC::DataBUS = 0;
+bool CPC::IORD;
+bool CPC::IOWR;
+bool CPC::MEMRD;
+bool CPC::MEMWR;
+bool CPC::INTACK;
+bool CPC::lastIORD;
+bool CPC::lastIOWR;
+bool CPC::lastMEMRD;
+bool CPC::lastMEMWR;
+bool CPC::lastINTACK;
+
+
 
 void CPC::ReadROM(char *filename, int number)
 {
@@ -113,51 +125,57 @@ void CPC::Clock()
     if (tick % 2 == 0)
     {
         Z80::Clock();
-    }
-    if (tick % 4 == 0)
-    {
-        if (!Z80::MREQ)
+
+        IORD = Z80::IORQ || Z80::RD;
+        IOWR = Z80::IORQ || Z80::WR;
+        MEMRD = Z80::MREQ || Z80::RD;
+        MEMWR = Z80::MREQ || Z80::WR;
+        INTACK = Z80::IORQ || Z80::M1;
+
+        if (lastIORD && !IORD)  // IORD falling edge
         {
-            if (!Z80::RD)
-            {
-                DataBUS = GetByteAt(AddressBUS);
-            }
-            else if (!Z80::WR)
-            {
-                SetByteAt(AddressBUS, DataBUS);
-            }
+            if (!(AddressBUS & 0x4000)) CRTC::RD();
+            else if (!(AddressBUS & 0x0800)) PPI::RD();
+            else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::RD();
         }
-        if (!Z80::IORQ)
+        else if (lastIOWR && !IOWR) // IOWR falling edge
         {
-            if (!Z80::RD)
-            {
-                if (!(AddressBUS & 0x4000)) CRTC::RD();
-                else if (!(AddressBUS & 0x0800)) PPI::RD();
-                else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::RD();
-            }
-            else if (!Z80::WR)
-            {
-                if (!(AddressBUS & 0x8000)) GateArray::WR();
-                else if (!(AddressBUS & 0x4000)) CRTC::WR();
-                else if (!(AddressBUS & 0x2000)) CPC::SelectROM(DataBUS);
-                else if (!(AddressBUS & 0x0800)) PPI::WR();
-                else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::WR();
-            }
+            if (!(AddressBUS & 0x8000)) GateArray::WR();
+            else if (!(AddressBUS & 0x4000)) CRTC::WR();
+            else if (!(AddressBUS & 0x2000)) CPC::SelectROM(DataBUS);
+            else if (!(AddressBUS & 0x0800)) PPI::WR();
+            else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::WR();
         }
+        else if (lastMEMRD && !MEMRD) // MEMRD falling edge
+        {
+            DataBUS = GetByteAt(AddressBUS);
+        }
+        else if (lastMEMWR && !MEMWR) // MEMRD falling edge
+        {
+            SetByteAt(AddressBUS, DataBUS);
+        }
+        else if (lastINTACK && !INTACK)
+        {
+            GateArray::AckInt();
+        }
+
+        lastIORD = IORD;
+        lastIOWR = IOWR;
+        lastMEMRD = MEMRD;
+        lastMEMWR = MEMWR;
+        lastINTACK = INTACK;
+
+        Z80::Clock2();
     }
+
     if ((tick % 16) == 0)
     {
         FDC::Clock();
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
-        //CRTScreen::OneMhzClock();
     }
     GateArray::Clock(tick);
-    if ((tick % 16) == 0)
-    {
-        // Z80::Clock2();
-    }
     CRTScreen::Clock();
     tick++;
 }

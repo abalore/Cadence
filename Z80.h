@@ -11,10 +11,12 @@ enum MCycleType
     WRITE,
     IN,
     OUT,
-    ALU,
+    ALU1,
+    ALU2,
+    ALU3,
+    ALU4,
     INT,
-    RELADDR,
-    END16ALU
+    RELADDR
 };
 
 enum IDMode
@@ -58,13 +60,14 @@ public:
     static BYTE im;
     static dword nops;
 
-private:
-    static bool RunMCycle();
-    static bool RunTCycle();
-
-    static bool edge;
     static bool M1;
     static bool WAIT;
+
+private:
+    static void RunMCycle();
+    static void RunTCycle();
+
+    static bool edge;
 
     static bool Step_basic();
     static bool Step_misc();
@@ -81,7 +84,10 @@ private:
     static bool ProcessIN();
     static bool ProcessOUT();
     static bool ProcessRELADDR();
-    static bool ProcessEND16ALU();
+    static bool ProcessALU1();
+    static bool ProcessALU2();
+    static bool ProcessALU3();
+    static bool ProcessALU4();
     static void FinishInstruction();
     static BYTE t8;
     static Reg16 t16, tt16;
@@ -97,7 +103,8 @@ private:
     static int i1, i2, i3;
     static short s1;
     static BYTE intACK;
-    static bool intAlign;
+    static bool lastMCycle;
+    static bool lastTCycle;
 
     // 8 bit arithmetic and logic for A
     static void NEG();
@@ -166,7 +173,7 @@ private:
     static void SRA_R(BYTE &reg);
     static void SLL_R(BYTE &reg);
     static void SRL_R(BYTE &reg);
-    static bool ShiftBitOpIndHL(BYTE opCode);
+    static bool ShiftOpIndHL(BYTE opCode);
     static void RLC_IDX_R(BYTE &reg);
     static void RRC_IDX_R(BYTE &reg);
     static void RL_IDX_R(BYTE &reg);
@@ -181,6 +188,9 @@ private:
     static void BIT_x_R(int X, BYTE * R);
     static void RES_x_R(int X, BYTE * R);
     static void SET_x_R(int X, BYTE * R);
+    static bool BIT_x_Ind_HL(int X);
+    static bool RES_x_Ind_HL(int X);
+    static bool SET_x_Ind_HL(int X);
     static void BIT_x_IDX(int X);
     static void RES_x_IDX(int X, BYTE &reg);
     static void SET_x_IDX(int X, BYTE &reg);

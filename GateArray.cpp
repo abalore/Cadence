@@ -85,6 +85,7 @@ void GateArray::Clock(int tick)
 void GateArray::AckInt()
 {
     R52 &= 0x1F;
+    Z80::InterruptRequest = true;
 }
 
 void GateArray::ProcessSync()

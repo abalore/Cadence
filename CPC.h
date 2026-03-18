@@ -41,6 +41,17 @@ public:
 
     static word AddressBUS;
     static BYTE DataBUS;
+
+    static bool IORD;
+    static bool IOWR;
+    static bool MEMRD;
+    static bool MEMWR;
+    static bool INTACK;
+    static bool lastIORD;
+    static bool lastIOWR;
+    static bool lastMEMRD;
+    static bool lastMEMWR;
+    static bool lastINTACK;
 };
 
 

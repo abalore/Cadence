@@ -63,13 +63,14 @@ switch(mCycle)\
             AR = PC++;\
             break;\
         case 2:\
-            AR = IDX->Get() + (sbyte)DR;\
+            AR = IDX->Get();\
+            mCycleType = MCycleType::RELADDR;\
             break;\
         case 3:\
-            mCycleType = MCycleType::ALU;\
-            op(DR);\
+            mCycleType = MCycleType::READ;\
             break;\
         case 4:\
+            op(DR);\
             return true;\
     }\
     return false;
@@ -82,16 +83,20 @@ switch(mCycle)\
             AR = PC++;\
             break;\
         case 2:\
-            AR = IDX->Get() + (sbyte)DR;\
+            AR = IDX->Get();\
+            mCycleType = MCycleType::RELADDR;\
             break;\
         case 3:\
-            mCycleType = MCycleType::WRITE;\
-            op(DR);\
+            mCycleType = MCycleType::READ;\
             break;\
         case 4:\
-            mCycleType = MCycleType::ALU;\
+            op(DR);\
+            mCycleType = MCycleType::ALU1;\
             break;\
-        case 5:\
+        case 5: \
+            mCycleType = MCycleType::WRITE;\
+            break;\
+        case 6:\
             return true;\
     }\
     return false;

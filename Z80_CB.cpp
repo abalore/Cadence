@@ -26,7 +26,7 @@ bool Z80::Step_CB()
             RLC_R(L);
             break;
         case 0x6: // RLC (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0x7: // RLC A
             RLC_R(A);
@@ -50,7 +50,7 @@ bool Z80::Step_CB()
             RRC_R(L);
             break;
         case 0xE: // RRC (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0xF: // RRC A
             RRC_R(A);
@@ -79,7 +79,7 @@ bool Z80::Step_CB()
             RL_R(L);
             break;
         case 0x6: // RL (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0x7: // RL A
             RL_R(A);
@@ -103,7 +103,7 @@ bool Z80::Step_CB()
             RR_R(L);
             break;
         case 0xE: // RR (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0xF: // RR A
             RR_R(A);
@@ -132,7 +132,7 @@ bool Z80::Step_CB()
             SLA_R(L);
             break;
         case 0x6: // SLA (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0x7: // SLA A
             SLA_R(A);
@@ -156,7 +156,7 @@ bool Z80::Step_CB()
             SRA_R(L);
             break;
         case 0xE: // SRA (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0xF: // SRA A
             SRA_R(A);
@@ -185,7 +185,7 @@ bool Z80::Step_CB()
             SLL_R(L);
             break;
         case 0x6: // SLL (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0x7: // SLL A
             SLL_R(A);
@@ -209,7 +209,7 @@ bool Z80::Step_CB()
             SRL_R(L);
             break;
         case 0xE: // SRL (HL)
-            ShiftBitOpIndHL(IR);
+            ShiftOpIndHL(IR);
             break;
         case 0xF: // SRL A
             SRL_R(A);
@@ -238,7 +238,7 @@ bool Z80::Step_CB()
             BIT_x_R(0, &L);
             break;
         case 0x6: // BIT 0,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(0);
             break;
         case 0x7: // BIT 0,A
             BIT_x_R(0, &A);
@@ -262,7 +262,7 @@ bool Z80::Step_CB()
             BIT_x_R(1, &L);
             break;
         case 0xE: // BIT 1,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(1);
             break;
         case 0xF: // BIT 1,A
             BIT_x_R(1, &A);
@@ -291,7 +291,7 @@ bool Z80::Step_CB()
             BIT_x_R(2, &L);
             break;
         case 0x6: // BIT 2,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(2);
             break;
         case 0x7: // BIT 2,A
             BIT_x_R(2, &A);
@@ -315,7 +315,7 @@ bool Z80::Step_CB()
             BIT_x_R(3, &L);
             break;
         case 0xE: // BIT 3,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(3);
             break;
         case 0xF: // BIT 3,A
             BIT_x_R(3, &A);
@@ -344,7 +344,7 @@ bool Z80::Step_CB()
             BIT_x_R(4, &L);
             break;
         case 0x6: // BIT 4,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(4);
             break;
         case 0x7: // BIT 4,A
             BIT_x_R(4, &A);
@@ -368,7 +368,7 @@ bool Z80::Step_CB()
             BIT_x_R(5, &L);
             break;
         case 0xE: // BIT 5,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(5);
             break;
         case 0xF: // BIT 5,A
             BIT_x_R(5, &A);
@@ -397,7 +397,7 @@ bool Z80::Step_CB()
             BIT_x_R(6, &L);
             break;
         case 0x6: // BIT 6,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(6);
             break;
         case 0x7: // BIT 6,A
             BIT_x_R(6, &A);
@@ -421,7 +421,7 @@ bool Z80::Step_CB()
             BIT_x_R(7, &L);
             break;
         case 0xE: // BIT 7,(HL)
-            ShiftBitOpIndHL(IR);
+            BIT_x_Ind_HL(7);
             break;
         case 0xF: // BIT 7,A
             BIT_x_R(7, &A);
@@ -450,7 +450,7 @@ bool Z80::Step_CB()
             RES_x_R(0, &L);
             break;
         case 0x6: // RES 0,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(0);
             break;
         case 0x7: // RES 0,A
             RES_x_R(0, &A);
@@ -474,7 +474,7 @@ bool Z80::Step_CB()
             RES_x_R(1, &L);
             break;
         case 0xE: // RES 1,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(1);
             break;
         case 0xF: // RES 1,A
             RES_x_R(1, &A);
@@ -503,7 +503,7 @@ bool Z80::Step_CB()
             RES_x_R(2, &L);
             break;
         case 0x6: // RES 2,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(2);
             break;
         case 0x7: // RES 2,A
             RES_x_R(2, &A);
@@ -527,7 +527,7 @@ bool Z80::Step_CB()
             RES_x_R(3, &L);
             break;
         case 0xE: // RES 3,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(3);
             break;
         case 0xF: // RES 3,A
             RES_x_R(3, &A);
@@ -556,7 +556,7 @@ bool Z80::Step_CB()
             RES_x_R(4, &L);
             break;
         case 0x6: // RES 4,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(4);
             break;
         case 0x7: // RES 4,A
             RES_x_R(4, &A);
@@ -580,7 +580,7 @@ bool Z80::Step_CB()
             RES_x_R(5, &L);
             break;
         case 0xE: // RES 5,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(5);
             break;
         case 0xF: // RES 5,A
             RES_x_R(5, &A);
@@ -609,7 +609,7 @@ bool Z80::Step_CB()
             RES_x_R(6, &L);
             break;
         case 0x6: // RES 6,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(6);
             break;
         case 0x7: // RES 6,A
             RES_x_R(6, &A);
@@ -633,7 +633,7 @@ bool Z80::Step_CB()
             RES_x_R(7, &L);
             break;
         case 0xE: // RES 7,(HL)
-            ShiftBitOpIndHL(IR);
+            RES_x_Ind_HL(7);
             break;
         case 0xF: // RES 7,A
             RES_x_R(7, &A);
@@ -662,7 +662,7 @@ bool Z80::Step_CB()
             SET_x_R(0, &L);
             break;
         case 0x6: // SET 0,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(0);
             break;
         case 0x7: // SET 0,A
             SET_x_R(0, &A);
@@ -686,7 +686,7 @@ bool Z80::Step_CB()
             SET_x_R(1, &L);
             break;
         case 0xE: // SET 1,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(1);
             break;
         case 0xF: // SET 1,A
             SET_x_R(1, &A);
@@ -715,7 +715,7 @@ bool Z80::Step_CB()
             SET_x_R(2, &L);
             break;
         case 0x6: // SET 2,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(2);
             break;
         case 0x7: // SET 2,A
             SET_x_R(2, &A);
@@ -739,7 +739,7 @@ bool Z80::Step_CB()
             SET_x_R(3, &L);
             break;
         case 0xE: // SET 3,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(3);
             break;
         case 0xF: // SET 3,A
             SET_x_R(3, &A);
@@ -768,7 +768,7 @@ bool Z80::Step_CB()
             SET_x_R(4, &L);
             break;
         case 0x6: // SET 4,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(4);
             break;
         case 0x7: // SET 4,A
             SET_x_R(4, &A);
@@ -792,7 +792,7 @@ bool Z80::Step_CB()
             SET_x_R(5, &L);
             break;
         case 0xE: // SET 5,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(5);
             break;
         case 0xF: // SET 5,A
             SET_x_R(5, &A);
@@ -821,7 +821,7 @@ bool Z80::Step_CB()
             SET_x_R(6, &L);
             break;
         case 0x6: // SET 6,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(6);
             break;
         case 0x7: // SET 6,A
             SET_x_R(6, &A);
@@ -845,7 +845,7 @@ bool Z80::Step_CB()
             SET_x_R(7, &L);
             break;
         case 0xE: // SET 7,(HL)
-            ShiftBitOpIndHL(IR);
+            SET_x_Ind_HL(7);
             break;
         case 0xF: // SET 7,A
             SET_x_R(7, &A);
