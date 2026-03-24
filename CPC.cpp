@@ -8,6 +8,7 @@
 #include "FDC.h"
 #include "Tape.h"
 #include "CRTScreen.h"
+#include "EmulatorThread.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -30,11 +31,13 @@ bool CPC::IOWR;
 bool CPC::MEMRD;
 bool CPC::MEMWR;
 bool CPC::INTACK;
+bool CPC::MEMIO;
 bool CPC::lastIORD;
 bool CPC::lastIOWR;
 bool CPC::lastMEMRD;
 bool CPC::lastMEMWR;
 bool CPC::lastINTACK;
+bool CPC::lastMEMIO;
 
 
 
@@ -122,21 +125,27 @@ void CPC::Finalize()
 void CPC::Clock()
 {
     Z80::stopPoint = false;
-    if (tick % 2 == 0)
+    if (tick % 4 == 0)
     {
+        FDC::Clock();
+        lastIORD = IORD;
+        lastIOWR = IOWR;
+        lastMEMRD = MEMRD;
+        lastMEMWR = MEMWR;
+        lastINTACK = INTACK;
+        lastMEMIO = MEMIO;
         Z80::Clock();
-
         IORD = Z80::IORQ || Z80::RD;
         IOWR = Z80::IORQ || Z80::WR;
         MEMRD = Z80::MREQ || Z80::RD;
         MEMWR = Z80::MREQ || Z80::WR;
         INTACK = Z80::IORQ || Z80::M1;
-
+        MEMIO = Z80::IORQ && Z80::MREQ;
         if (lastIORD && !IORD)  // IORD falling edge
         {
             if (!(AddressBUS & 0x4000)) CRTC::RD();
             else if (!(AddressBUS & 0x0800)) PPI::RD();
-            else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::RD();
+            else if (!(AddressBUS & 0x0480)) FDC::RD();
         }
         else if (lastIOWR && !IOWR) // IOWR falling edge
         {
@@ -144,13 +153,13 @@ void CPC::Clock()
             else if (!(AddressBUS & 0x4000)) CRTC::WR();
             else if (!(AddressBUS & 0x2000)) CPC::SelectROM(DataBUS);
             else if (!(AddressBUS & 0x0800)) PPI::WR();
-            else if (!(AddressBUS & 0x0480) && CPC::cpcType != CPCType::CPC464) FDC::WR();
+            else if (!(AddressBUS & 0x0480)) FDC::WR();
         }
         else if (lastMEMRD && !MEMRD) // MEMRD falling edge
         {
             DataBUS = GetByteAt(AddressBUS);
         }
-        else if (lastMEMWR && !MEMWR) // MEMRD falling edge
+        else if (lastMEMWR && !MEMWR) // MEMWR falling edge
         {
             SetByteAt(AddressBUS, DataBUS);
         }
@@ -158,25 +167,22 @@ void CPC::Clock()
         {
             GateArray::AckInt();
         }
-
-        lastIORD = IORD;
-        lastIOWR = IOWR;
-        lastMEMRD = MEMRD;
-        lastMEMWR = MEMWR;
-        lastINTACK = INTACK;
-
-        Z80::Clock2();
     }
+
+    if (tick % 4 == 0)
+        Z80::Clock2();
 
     if ((tick % 16) == 0)
     {
-        FDC::Clock();
         Tape::Clock();
         PSG::Clock();
         CRTC::Clock();
+        GateArray::ProcessSync();
     }
+
     GateArray::Clock(tick);
     CRTScreen::Clock();
+
     tick++;
 }
 

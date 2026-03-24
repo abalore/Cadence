@@ -11,7 +11,7 @@ bool Z80::ADD_HL_vv(word w)
         w1 = HL.Get();
         fC = w1 + w > 0xFFFF;
         fH = (w1 & 0xFFF) + (w & 0xFFF) > 0xFFF;
-        mCycleType = MCycleType::ALU3;
+        mCycleType = MCycleType::ALU4;
         break;
     case 3:
         HL.Set(w1 + w);
@@ -39,7 +39,7 @@ bool Z80::ADC_HL_vv(word w)
         fC = w1 + w2 > 0xFFFF;
         fP = ((w1 ^ w3) & (w2 ^ w3)) & 0x8000;
         fH = (w1 & 0xFFF) + (w2 & 0xFFF) > 0xFFF;
-        mCycleType = MCycleType::ALU3;
+        mCycleType = MCycleType::ALU4;
         break;
     case 4:
         HL.Set(w3);
@@ -69,7 +69,7 @@ bool Z80::SBC_HL_vv(word w)
         fC = w2 > w1;
         fP = ((w1 ^ w2) & (w1 ^ w3)) & 0x8000;
         fH = ((w1 & 0xFFF) - (w2 & 0xFFF)) & 0x1000;
-        mCycleType = MCycleType::ALU3;
+        mCycleType = MCycleType::ALU4;
         break;
     case 4:
         HL.Set(w3);
@@ -85,7 +85,6 @@ bool Z80::SBC_HL_vv(word w)
 
 bool Z80::INC_RR(Reg16 reg)
 {
-    mCycleType = MCycleType::ALU2;
     *reg.L = *reg.L + 1;
     if (*reg.L == 0)
         *reg.H = *reg.H + 1;
@@ -94,14 +93,12 @@ bool Z80::INC_RR(Reg16 reg)
 
 bool Z80::INC_WW(word &w)
 {
-    mCycleType = MCycleType::ALU2;
     w++;
     return true;
 }
 
 bool Z80::DEC_RR(Reg16 reg)
 {
-    mCycleType = MCycleType::ALU2;
     *reg.L = *reg.L - 1;
     if (*reg.L == 0xff)
         *reg.H = *reg.H - 1;
@@ -110,7 +107,6 @@ bool Z80::DEC_RR(Reg16 reg)
 
 bool Z80::DEC_WW(word &w)
 {
-    mCycleType = MCycleType::ALU2;
     w--;
     return true;
 }

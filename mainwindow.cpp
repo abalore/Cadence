@@ -98,7 +98,7 @@ void MainWindow::onMenuMemoryEnterBytes()
 void MainWindow::onEmulatorPaused()
 {
     ui->hLine->move(0, CRTScreen::vPos * 2);
-    ui->vLine->move(CRTScreen::hPos, 0);
+    ui->vLine->move(CRTScreen::hPos - 14, 0);
     ui->vLine->pos().setX(CRTScreen::vPos);
     if (debugger->isHidden())
         debugger->show();

@@ -257,18 +257,15 @@ bool Z80::PUSH_RR(Reg16 reg)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU1;
-        break;
-    case 2:
         mCycleType = MCycleType::WRITE;
         AR = --SP;
         DR = *reg.H;
         break;
-    case 3:
+    case 2:
         AR = --SP;
         DR = *reg.L;
         break;
-    case 4:
+    case 3:
         return true;
     }
     return false;

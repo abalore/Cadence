@@ -21,7 +21,6 @@ bool Z80::Step_misc()
         case 0x5: // RETN
             IFF1 = IFF2;
             return RET();
-            break;
         case 0x6: // IM 0
             IM(0);
             break;
@@ -117,8 +116,7 @@ bool Z80::Step_misc()
         case 0x9: // OUT (C),L
             return OUT_PortBC_R(L);
         case 0xA: // ADC HL,HL
-            ADC_HL_vv(HL.Get());
-            break;
+            return ADC_HL_vv(HL.Get());
         case 0xB: // LD HL,(nn)
             return LD_RR_Ind(HL);
         case 0xC: // NEG
@@ -143,41 +141,34 @@ bool Z80::Step_misc()
             t8 = 0;
             return OUT_PortBC_R(t8);
         case 0x2: // SBC HL,SP
-            SBC_HL_vv(SP);
-            break;
+            return SBC_HL_vv(SP);
         case 0x3: // LD (nn),SP
-            LD_Ind_WW(SP);
-            break;
+            return LD_Ind_WW(SP);
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0x6: // IM 1
             IM(1);
             break;
         case 0x7: // LD I,A
-            LD_I_A();
-            break;
+            return LD_I_A();
         case 0x8: // IN A,(C)
             return IN_R_PortBC(A);
         case 0x9: // OUT (C),A
             return OUT_PortBC_R(A);
         case 0xA: // ADC HL,SP
-            ADC_HL_vv(SP);
-            break;
+            return ADC_HL_vv(SP);
         case 0xB: // LD SP,(nn)
-            LD_WW_Ind(SP);
-            break;
+            return LD_WW_Ind(SP);
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0xE: // IM 2
             IM(2);
             break;

@@ -46,6 +46,7 @@ bool PSG::noiseC;
 BYTE PSG::tVolA;
 BYTE PSG::tVolB;
 BYTE PSG::tVolC;
+BYTE PSG::latch;
 
 void PSG::Reset()
 {
@@ -94,6 +95,7 @@ void PSG::Reset()
     tVolC = 0;
     BC1 = true;
     BDIR = false;
+    latch = 0;
 }
 
 void PSG::Clock()
@@ -153,6 +155,13 @@ void PSG::ApplyChange()
 {
     if (BC1 == true && BDIR == true)
         selectedRegister = inputRegister;
+    else if (BC1 == true && BDIR == false)
+    {
+        if (selectedRegister < 0x0E)
+            outputRegister = registers[selectedRegister];
+        else if (selectedRegister == 0x0E)
+            outputRegister = Keyboard::Read();
+    }
     else if (BC1 == false && BDIR == true)
     {
         registers[selectedRegister] = inputRegister;
@@ -215,13 +224,6 @@ void PSG::ApplyChange()
             break;
         }
     }
-    else if (BC1 == true && BDIR == false)
-    {
-        if (selectedRegister < 0x0E)
-            outputRegister = registers[selectedRegister];
-        else if (selectedRegister == 0x0E)
-            outputRegister = Keyboard::Read();
-    }
 }
 
 BYTE PSG::ReadData()
@@ -231,6 +233,7 @@ BYTE PSG::ReadData()
 
 void PSG::WriteData(BYTE data)
 {
+
     inputRegister = data;
     ApplyChange();
 }

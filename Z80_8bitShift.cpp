@@ -149,7 +149,6 @@ bool Z80::BIT_x_Ind_HL(int X)
         AR = HL.Get();
         break;
     case 2:
-        mCycleType = MCycleType::WRITE;
         BIT_x_R(X, &DR);
         f3 = H & 0x08;
         f5 = H & 0x20;

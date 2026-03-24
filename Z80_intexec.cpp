@@ -6,13 +6,11 @@ bool Z80::Step_Int_Exec()
     {
     case 1:
         mCycleType = MCycleType::WRITE;
-        AR = SP;
-        AR--;
+        AR = --SP;
         DR = (BYTE)(PC >> 8);
         break;
     case 2:
-        AR--;
-        SP = AR;
+        AR = --SP;
         DR = (BYTE)(PC & 0xFF);
         break;
     case 3:

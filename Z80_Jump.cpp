@@ -2,6 +2,28 @@
 
 #define FinishInstruction { mCycleType = MCycleType::FETCH; idMode = IDMode::BASIC; }
 
+bool Z80::DJNZ()
+{
+    switch(mCycle)
+    {
+    case 1:
+        AR = PC++;
+        mCycleType = MCycleType::READ;
+        break;
+    case 2:
+        B--;
+        if (B == 0)
+            return true;
+        else
+            PC += (sbyte) DR;
+        mCycleType = MCycleType::ALU4;
+        break;
+    case 3:
+        return true;
+    }
+    return false;
+}
+
 bool Z80::JR(bool condition)
 {
     switch(mCycle)
@@ -51,19 +73,16 @@ bool Z80::RET(bool condition)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU1;
-        break;
-    case 2:
         if (!condition)
             return true;
         mCycleType = MCycleType::READ;
         AR = SP++;
         break;
-    case 3:
+    case 2:
         w1 = DR;
         AR = SP++;
         break;
-    case 4:
+    case 3:
         w1 += DR * 256;
         PC = w1;
         return true;
@@ -132,18 +151,15 @@ bool Z80::RST(BYTE address)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::ALU1;
-        break;
-    case 2:
         mCycleType = MCycleType::WRITE;
         AR = --SP;
         DR = (BYTE)(PC >> 8);
         break;
-    case 3:
+    case 2:
         AR = --SP;
         DR = (BYTE)(PC & 0xFF);
         break;
-    case 4:
+    case 3:
         PC = address;
         return true;
     }

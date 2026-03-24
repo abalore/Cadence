@@ -91,12 +91,9 @@ switch(mCycle)\
             break;\
         case 4:\
             op(DR);\
-            mCycleType = MCycleType::ALU1;\
-            break;\
-        case 5: \
             mCycleType = MCycleType::WRITE;\
             break;\
-        case 6:\
+        case 5:\
             return true;\
     }\
     return false;

@@ -16,6 +16,7 @@ BYTE GateArray::currentByte = 0;
 BYTE GateArray::pixelIndex = 0;
 BYTE GateArray::currentInk = 0;
 bool GateArray::CCLK = false;
+bool GateArray::VideoAccess = false;
 bool GateArray::lastHSYNC = false;
 bool GateArray::lastVSYNC = false;
 BYTE GateArray::R52 = 0;
@@ -30,6 +31,7 @@ bool GateArray::LoROMActive;
 bool GateArray::HiROMActive;
 bool GateArray::Monochrome;
 BYTE GateArray::intTimeout;
+BYTE GateArray::porch;
 
 void GateArray::Reset()
 {
@@ -51,6 +53,7 @@ void GateArray::Reset()
     MMR = 0;
     borderSelected = false;
     CCLK = false;
+    VideoAccess = false;
     videoAddress = 0;
     currentByte = 0;
     pixelIndex = 0;
@@ -59,6 +62,7 @@ void GateArray::Reset()
     hsyncDelay = 0;
     vsyncDelay = 0;
     intTimeout = 0;
+    porch = 0;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
             for (int b = 0; b < 256; b++)
@@ -67,17 +71,14 @@ void GateArray::Reset()
 
 void GateArray::Clock(int tick)
 {
-    // 1Mhz
-    if ((tick % 16) == 0)
-    {
-        ProcessSync();
-    }
     // 2 Mhz
     if ((tick % 8) == 0)
     {
         ReadByte();
         CCLK = !CCLK;
     }
+    if ((tick % 8) == 0)
+        VideoAccess = !VideoAccess;
     // 16 Mhz
     SetPixel();
 }
@@ -107,18 +108,23 @@ void GateArray::ProcessSync()
     }
     if (hsyncFallingEdge)
     {
+        if (porch > 0)
+            porch--;
         R52++;
         if (R52 == 52)
         {
             R52 = 0;
-            Z80::InterruptRequest = false;
+            Z80::IRQ();
         }
         if (vsyncDelay > 0)
         {
             vsyncDelay--;
-            if (vsyncDelay == 0)
+            if (vsyncDelay == 1)
             {
                 vsyncTrigger = true;
+            }
+            if (vsyncDelay == 0)
+            {
                 if (R52 >= 32)
                 {
                     Z80::InterruptRequest = false;
@@ -131,6 +137,7 @@ void GateArray::ProcessSync()
     if (vsyncRisingEdge)
     {
         vsyncDelay = 2;
+        porch = 26;
     }
 
     lastVSYNC = CRTC::VSYNC;
@@ -144,10 +151,19 @@ void GateArray::SetPixel()
         Color = &AbsoluteBlack[0];
         return;
     }
+    if (porch)
+    {
+        Color = &NormalBlack[0];
+        return;
+    }
     currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
     //if (SpeedController::overrun && BORDER)
-//    if (CRTC::BORDER && !Z80::IFF1)
-//        currentInk = 0;
+    /*if (CRTC::BORDER && !Z80::IFF1)
+        currentInk = 0;
+    if (CRTC::VSYNC)
+        currentInk = 1;
+    if (CRTC::HSYNC)
+        currentInk = 2;*/
     if (++pixelIndex == 8) pixelIndex = 0;
     if (Monochrome)
         Color = &GreenPalette[currentInk * 3];

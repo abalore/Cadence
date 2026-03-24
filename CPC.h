@@ -47,11 +47,13 @@ public:
     static bool MEMRD;
     static bool MEMWR;
     static bool INTACK;
+    static bool MEMIO;
     static bool lastIORD;
     static bool lastIOWR;
     static bool lastMEMRD;
     static bool lastMEMWR;
     static bool lastINTACK;
+    static bool lastMEMIO;
 };
 
 

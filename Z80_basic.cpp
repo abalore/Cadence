@@ -32,7 +32,7 @@ bool Z80::Step_basic()
         case 0x9: // ADD HL,BC  {12T}
             return ADD_HL_vv(BC.Get());
         case 0xA: // LD A,(BC)    {8T}
-            return LD_A_I_RR(BC);
+            return LD_A_Ind_RR(BC);
         case 0xB: // DEC BC   {8T}
             return DEC_RR(BC);
         case 0xC: // INC C  {4T}
@@ -75,7 +75,7 @@ bool Z80::Step_basic()
         case 0x9: // ADD HL,DE    {12T}
             return ADD_HL_vv(DE.Get());
         case 0xA: // LD A,(DE)    {8T}
-            return LD_A_I_RR(DE);
+            return LD_A_Ind_RR(DE);
         case 0xB: // DEC DE   {8T}
             return DEC_RR(DE);
         case 0xC: // INC E    {4T}
@@ -712,7 +712,8 @@ bool Z80::Step_basic()
         case 0x4: // CALL P,nn
             return CALL(!fS);
         case 0x5: // PUSH_AF
-            EncodeF();
+            if (mCycle == 1)
+                EncodeF();
             return PUSH_RR(AF);
         case 0x6: // OR n
             return OR_n();

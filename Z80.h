@@ -11,9 +11,6 @@ enum MCycleType
     WRITE,
     IN,
     OUT,
-    ALU1,
-    ALU2,
-    ALU3,
     ALU4,
     INT,
     RELADDR
@@ -35,6 +32,7 @@ public:
     static void Reset();
     static void Clock();
     static void Clock2();
+    static void IRQ();
     static BYTE tCycle;
     static BYTE mCycle;
     static bool MREQ, IORQ, RD, WR;
@@ -59,15 +57,12 @@ public:
     static bool halted;
     static BYTE im;
     static dword nops;
-
     static bool M1;
     static bool WAIT;
 
 private:
     static void RunMCycle();
     static void RunTCycle();
-
-    static bool edge;
 
     static bool Step_basic();
     static bool Step_misc();
@@ -84,9 +79,6 @@ private:
     static bool ProcessIN();
     static bool ProcessOUT();
     static bool ProcessRELADDR();
-    static bool ProcessALU1();
-    static bool ProcessALU2();
-    static bool ProcessALU3();
     static bool ProcessALU4();
     static void FinishInstruction();
     static BYTE t8;
@@ -215,7 +207,7 @@ private:
     static bool LD_WW_nn(word &w);
     static bool LD_Ind_WW(word w);
     static bool LD_WW_Ind(word &w);
-    static bool LD_A_I_RR(Reg16 reg);
+    static bool LD_A_Ind_RR(Reg16 reg);
     static bool LD_Ind_HL_n();
     static bool PUSH_RR(Reg16 reg);
     static bool POP_RR(Reg16 reg);
@@ -256,6 +248,25 @@ private:
     static void EncodeF();
     static void DecodeF();
     static void SetFlagsAfterShiftOp(BYTE b);
+    static constexpr bool ExtendedM1[256] =
+    {
+        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+        1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
+        1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
+        1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
+        1,0,0,0,0,1,0,1,1,1,0,0,0,0,0,1
+    };
 };
 
 #endif // Z80_H

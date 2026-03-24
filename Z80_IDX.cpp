@@ -62,8 +62,7 @@ bool Z80::Step_IDX()
             DEC_R(*(*IDX).L);
             break;
         case 0xE: // LD IXL,n
-            LD_R_n(*(*IDX).L);
-            break;
+            return LD_R_n(*(*IDX).L);
         }
         break;
     case 0x3:
@@ -167,8 +166,7 @@ bool Z80::Step_IDX()
             break;
         case 0x6: // LD H,(IDX+n)
         case 0xE: // LD L,(IDX+n)
-            Step_IDX_2();
-            break;
+            return Step_IDX_2();
         case 0x7: // LD IDX.H,A
             *(*IDX).H = A;
             break;
@@ -353,15 +351,13 @@ bool Z80::Step_IDX()
         {
         case 0xB: // IDX BIT OP
             idMode = IDMode::IDXBIT;
-            mCycle--;
-            return false;
+            return Step_IDX_CB();
         }
         break;
     case 0xE:
         switch(IR & 0x0F)
         {
         case 0x1: // POP IDX
-            /////////////////////////// Duda con NOPs
             return POP_RR(*IDX);
         case 0x3: // EX SP,(IDX)
             return EX_IDX_Ind_SP();
@@ -376,10 +372,9 @@ bool Z80::Step_IDX()
         switch(IR & 0x0F)
         {
         case 0x9: // LD SP,IX
-            LD_SP_IDX();
-            break;
+            return LD_SP_IDX();
         }
         break;
     }
-    return false;
+    return true;
 }

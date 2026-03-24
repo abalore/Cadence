@@ -5,23 +5,26 @@ bool Z80::Step_IDX_CB()
     switch(mCycle)
     {
     case 1:
-        //PC--;
         mCycleType = MCycleType::READ;
         AR = PC++;
         break;
     case 2:
-        index = (sbyte)DR;
-        AR++;
+        index = DR;
+        AR = PC++;
         break;
     case 3:
         t8 = DR;
-        AR++;
-        PC = AR;
         AR = IDX->Get() + index;
+        mCycleType = MCycleType::ALU4;
         break;
     case 4:
-        mCycleType = MCycleType::WRITE;
+        mCycleType = MCycleType::READ;
+        break;
+    case 5:
         tByte = DR;
+        mCycleType = MCycleType::ALU4;
+        break;
+    case 6:
         switch(t8 >> 4)
         {
         case 0x0:
@@ -686,8 +689,9 @@ bool Z80::Step_IDX_CB()
             break;
         }
         DR = tByte;
+        mCycleType = MCycleType::WRITE;
         break;
-    case 5:
+    case 7:
         return true;
     }
     return false;

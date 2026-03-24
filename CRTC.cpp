@@ -206,7 +206,7 @@ void CRTC::RunHorizontalChar()
         if (HSC == HSW || (HSW == 0 && HSC == 16))
             HSYNC = false;
     }
-    if (HCC == HSP)
+    if (HCC == HSP - 1)
     {
         HSYNC = true;
         HSC = 0;
@@ -256,7 +256,7 @@ void CRTC::RunLine()
 
 void CRTC::RunVerticalChar()
 {
-    if (VCC == VT || VT == 1)
+    if (VCC == VT)
     {
         if (VTA == 0)
         {
@@ -288,5 +288,5 @@ void CRTC::ResetFrame()
 void CRTC::Clock()
 {
     RunHorizontalChar();
-    BORDER = !HDISP || !VDISP;// || verticalAdjust > 0;
+    BORDER = !HDISP || !VDISP;
 }
