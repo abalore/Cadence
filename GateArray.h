@@ -11,7 +11,7 @@ public:
     static void ProcessSync();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
-    static void WR();
+    static void WR(BYTE value);
     static void AckInt();
     static const BYTE *Color;
     static BYTE INK[16];
@@ -36,6 +36,8 @@ public:
     static bool CCLK;
     static bool VideoAccess;
     static BYTE porch;
+    static word videoAddress;
+    static BYTE ready;
 
     constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
     constexpr static const BYTE NormalBlack[3] = {cL, cL, cL};
@@ -89,7 +91,6 @@ private:
     static BYTE RMR;
     static BYTE MMR;
     static bool borderSelected;
-    static word videoAddress;
     static BYTE currentByte;
     static BYTE pixelIndex;
     static BYTE currentInk;

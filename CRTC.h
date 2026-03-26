@@ -11,8 +11,8 @@ class CRTC
 public:
     static void Reset();
     static void Clock();
-    static void RD();
-    static void WR();
+    static BYTE RD(BYTE address);
+    static void WR(BYTE address, BYTE value);
     static BYTE Index;
     static BYTE RA;
     static bool HSYNC, VSYNC, BORDER;

@@ -2,7 +2,6 @@
 #include "CPC.h"
 #include "CRTC.h"
 #include "Z80.h"
-#include "speedcontroller.h"
 
 const BYTE *GateArray::Color = Palette;
 BYTE GateArray::INK[16];
@@ -32,6 +31,7 @@ bool GateArray::HiROMActive;
 bool GateArray::Monochrome;
 BYTE GateArray::intTimeout;
 BYTE GateArray::porch;
+BYTE GateArray::ready;
 
 void GateArray::Reset()
 {
@@ -63,6 +63,7 @@ void GateArray::Reset()
     vsyncDelay = 0;
     intTimeout = 0;
     porch = 0;
+    ready = 0;
     for (BYTE m = 0; m < 4; m++)
         for (BYTE i = 0; i < 8; i++)
             for (int b = 0; b < 256; b++)
@@ -77,8 +78,14 @@ void GateArray::Clock(int tick)
         ReadByte();
         CCLK = !CCLK;
     }
-    if ((tick % 8) == 0)
-        VideoAccess = !VideoAccess;
+    if ((tick % 4) == 0)
+    {
+        Z80::WAIT = (ready % 4) == 1;
+        ready++;
+        if (ready == 4)
+            ready = 0;
+    }
+
     // 16 Mhz
     SetPixel();
 }
@@ -210,28 +217,28 @@ void GateArray::ReadByte()
     currentByte = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
 }
 
-void GateArray::WR()
+void GateArray::WR(BYTE value)
 {
-    switch(CPC::DataBUS & 0xC0)
+    switch(value & 0xC0)
     {
     case 0x00: // PEN
-        if ((CPC::DataBUS & 0x10) > 0)
+        if ((value & 0x10) > 0)
             borderSelected = true;
         else
         {
             borderSelected = false;
-            currentPen = CPC::DataBUS & 0x0F;
+            currentPen = value & 0x0F;
         }
         break;
     case 0x40: // INK
         if (borderSelected)
-            BORDER = CPC::DataBUS & 0x1F;
+            BORDER = value & 0x1F;
         else
-            INK[currentPen] = CPC::DataBUS & 0x1F;
+            INK[currentPen] = value & 0x1F;
         break;
     case 0x80: // RMR
-        RMR = CPC::DataBUS & 0x3F;
-        if ((CPC::DataBUS & 0x10) > 0)
+        RMR = value & 0x3F;
+        if ((value & 0x10) > 0)
         {
             R52 = 0;
             Z80::InterruptRequest = true;
@@ -241,7 +248,7 @@ void GateArray::WR()
         mode = RMR & 0x03;
         break;
     case 0xC0: // MMR
-        CPC::SelectRAM(CPC::DataBUS & 0x3F);
+        CPC::SelectRAM(value & 0x3F);
         break;
     }
 }

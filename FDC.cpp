@@ -46,6 +46,7 @@ BYTE FDC::INT;
 BYTE FDC::stIC, FDC::stSE, FDC::stEC, FDC::stNR;
 BYTE FDC::stEN, FDC::stDE, FDC::stOR, FDC::stND, FDC::stNW, FDC::stMA;
 BYTE FDC::stCM, FDC::stDD, FDC::stWC, FDC::stSH, FDC::stSN, FDC::stBC, FDC::stMD;
+bool FDC::MotorState;
 
 
 void FDC::Reset()
@@ -96,78 +97,70 @@ void FDC::Clock()
     }
 }
 
-void FDC::RD()
+BYTE FDC::RD_State()
 {
-    if ((CPC::AddressBUS & 0x0100) != 0)
-    {
-        if ((CPC::AddressBUS & 0x0001) == 0)
-        {
-            CPC::DataBUS = (bit7_RQM << 7)
-                      + (bit6_DIO << 6)
-                      + (bit5_NDMA << 5)
-                      + (bit4_BUSY << 4)
-                      + (bits03_FDDBUSY[3] << 3)
-                      + (bits03_FDDBUSY[2] << 2)
-                      + (bits03_FDDBUSY[1] << 1)
-                      + bits03_FDDBUSY[0];
-        }
-        else
-        {
-            if (state == FDCState::FDC_StateTransfer)
-            {
-                CPC::DataBUS = data[dataIndex];
-                dataIndex++;
-                if (dataIndex == dataSize)
-                {
-                    if (R == EOT)
-                    {
-                        R = 1;
-                        GoToResultState();
-                    }
-                    else
-                    {
-                        R++;
-                        GoToExecutionState();
-                    }
-                }
-                return;
-            }
-            switch(state)
-            {
-            case FDCState::FDC_StateCommand:
-            case FDCState::FDC_StateExecution:
-            case FDCState::FDC_StateTransfer:
-                CPC::DataBUS = 0x00;
-                break;
-            case FDCState::FDC_StateResult:
-                ProcessResult();
-                break;
-            }
-        }
-    }
+    return (bit7_RQM << 7)
+           + (bit6_DIO << 6)
+           + (bit5_NDMA << 5)
+           + (bit4_BUSY << 4)
+           + (bits03_FDDBUSY[3] << 3)
+           + (bits03_FDDBUSY[2] << 2)
+           + (bits03_FDDBUSY[1] << 1)
+           + bits03_FDDBUSY[0];
 }
 
-void FDC::WR()
+BYTE FDC::RD_Data()
 {
-    BYTE data = CPC::DataBUS;
-    if ((CPC::AddressBUS & 0x0100) == 0)
+    if (state == FDCState::FDC_StateTransfer)
     {
-        // Set motor
-    }
-    else if ((CPC::AddressBUS & 0x0001) != 0)
-    {
-        switch(state)
+        BYTE v = data[dataIndex];
+        dataIndex++;
+        if (dataIndex == dataSize)
         {
-        case FDCState::FDC_StateCommand:
-            ProcessCommand(data);
-            break;
-        case FDCState::FDC_StateExecution:
-            break;
-        case FDCState::FDC_StateResult:
-            break;
-        case FDCState::FDC_StateTransfer:
-            break;
+            if (R == EOT)
+            {
+                R = 1;
+                GoToResultState();
+            }
+            else
+            {
+                R++;
+                GoToExecutionState();
+            }
         }
+        return v;
+    }
+    switch(state)
+    {
+    case FDCState::FDC_StateCommand:
+    case FDCState::FDC_StateExecution:
+    case FDCState::FDC_StateTransfer:
+        return 0x00;
+    case FDCState::FDC_StateResult:
+        return ProcessResult();
+    }
+    return 0;
+}
+
+void FDC::SetMotor(BYTE value)
+{
+    MotorState = value;
+}
+
+void FDC::WR(BYTE value)
+{
+    BYTE data = value;
+    switch(state)
+    {
+    case FDCState::FDC_StateCommand:
+        ProcessCommand(data);
+        break;
+    case FDCState::FDC_StateExecution:
+        break;
+    case FDCState::FDC_StateResult:
+        break;
+    case FDCState::FDC_StateTransfer:
+        break;
     }
 }
 
@@ -462,11 +455,11 @@ void FDC::ProcessExecution()
     }
 }
 
-void FDC::ProcessResult()
+BYTE FDC::ProcessResult()
 {
     if (resultCount)
     {
-        CPC::DataBUS = result[resultIndex];
+        BYTE value = result[resultIndex];
         resultIndex++;
         if (resultIndex == resultCount)
         {
@@ -474,9 +467,11 @@ void FDC::ProcessResult()
                 stSE = 0;
             GoToCommandState();
         }
+        return value;
     }
     else
         GoToCommandState();
+    return 0;
 }
 
 FloppyDrive *FDC::GetDrive(int number)

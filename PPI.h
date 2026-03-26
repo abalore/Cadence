@@ -7,8 +7,8 @@ class PPI
 {
 public:
     static void Reset();
-    static void RD();
-    static void WR();
+    static BYTE RD(BYTE reg);
+    static void WR(BYTE reg, BYTE value);
     static BYTE controlWord;
 private:
     static void ApplyLC();

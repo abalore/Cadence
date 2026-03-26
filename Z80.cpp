@@ -1,5 +1,9 @@
 #include "Z80.h"
 #include "CPC.h"
+#include "GateArray.h"
+#include "CRTC.h"
+#include "PPI.h"
+#include "FDC.h"
 
 BYTE Z80::tCycle = 1;
 BYTE Z80::mCycle = 1;
@@ -92,28 +96,21 @@ bool Z80::ProcessINT()
         M1 = false;
         break;
     case 3:
-        R = (R & 0x80) | ((R + 1) & 0x7F);
         IORQ = false;
+        GateArray::AckInt();
         break;
     case 4:
-        t8 = CPC::DataBUS;
+        if (!WAIT)
+        {
+            tCycle--;
+            return false;
+        }
+        break;
+    case 5:
         M1 = true;
         IORQ = true;
-        break;
-    case 8:
-        if ((IR & 0xB0) == 0xB0 && idMode == IDMode::MISC)
-        {
-            idMode = IDMode::INTEXEC;
-            return true;
-        }
-        if (ExtendedM1[IR])
-        {
-            idMode = IDMode::INTEXEC;
-            return true;
-        }
+        R = (R & 0x80) | ((R + 1) & 0x7F);
         idMode = IDMode::INTEXEC;
-        break;
-    case 12:
         return true;
     }
     return false;
@@ -124,32 +121,37 @@ bool Z80::ProcessFETCH()
     switch(tCycle)
     {
     case 1:
-        CPC::AddressBUS = PC;
         M1 = false;
         MREQ = false;
         RD = false;
+        DR = CPC::GetByteAt(PC);
         break;
     case 2:
+        if (!WAIT)
+        {
+            tCycle--;
+            return false;
+        }
         if (halted)
             IR = 0x00;
         else
         {
             PC++;
-            IR = CPC::DataBUS;
+            IR = DR;
         }
         break;
     case 3:
         R = (R & 0x80) | ((R + 1) & 0x7F);
+        MREQ = true;
         RD = true;
         M1 = true;
         break;
     case 4:
-        MREQ = true;
-        if (!ExtendedM1[IR] || (idMode != IDMode::BASIC && idMode != IDMode::IDX))
-            return true;
-        break;
-    case 8:
+        //if (!ExtendedM1[IR] || (idMode != IDMode::BASIC && idMode != IDMode::IDX))
         return true;
+        //break;
+        //case 8:
+        //return true;
     }
     return false;
 }
@@ -159,16 +161,17 @@ bool Z80::ProcessREAD()
     switch(tCycle)
     {
     case 1:
-        CPC::AddressBUS = AR;
         MREQ = false;
         RD = false;
-        break;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        return false;
     case 3:
-        DR = CPC::DataBUS;
+        DR = CPC::GetByteAt(AR);
         MREQ = true;
         RD = true;
-        break;
-    case 4:
         return true;
     }
     return false;
@@ -179,18 +182,17 @@ bool Z80::ProcessWRITE()
     switch(tCycle)
     {
     case 1:
-        CPC::AddressBUS = AR;
         MREQ = false;
-        CPC::DataBUS = DR;
-        break;
+        return false;
     case 2:
+        if (!WAIT)
+            tCycle--;
         WR = false;
-        break;
+        CPC::SetByteAt(AR, DR);
+        return false;
     case 3:
         MREQ = true;
         WR = true;
-        break;
-    case 4:
         return true;
     }
     return false;
@@ -201,14 +203,31 @@ bool Z80::ProcessIN()
     switch(tCycle)
     {
     case 1:
-        CPC::AddressBUS = AR;
         break;
     case 2:
         IORQ = false;
         RD = false;
+        if (!(AR & 0x4000)) DR = CRTC::RD((AR & 0x0300) >> 8);
+        else if (!(AR & 0x0800)) DR = PPI::RD((AR & 0x0300) >> 8);
+        else if (!(AR & 0x0480))
+        {
+            if ((AR & 0x0100) != 0)
+            {
+                if ((AR & 0x0001) == 0)
+                    DR = FDC::RD_State();
+                else
+                    DR = FDC::RD_Data();
+            }
+        }
+        break;
+    case 3:
+        if (!WAIT)
+        {
+            tCycle--;
+            return false;
+        }
         break;
     case 4:
-        DR = CPC::DataBUS;
         IORQ = true;
         RD = true;
         return true;
@@ -221,12 +240,29 @@ bool Z80::ProcessOUT()
     switch(tCycle)
     {
     case 1:
-        CPC::AddressBUS = AR;
-        CPC::DataBUS = DR;
         break;
     case 2:
         IORQ = false;
         WR = false;
+        if (!(AR & 0x8000)) GateArray::WR(DR);
+        else if (!(AR & 0x4000)) CRTC::WR((AR & 0x0300) >> 8, DR);
+        else if (!(AR & 0x2000)) CPC::SelectROM(DR);
+        else if (!(AR & 0x0800)) PPI::WR((AR & 0x0300) >> 8, DR);
+        else if (!(AR & 0x0480))
+        {
+            if ((AR & 0x0100) == 0)
+                FDC::SetMotor(DR);
+            else if ((AR & 0x0001) != 0)
+            FDC::WR(DR);
+        }
+
+        break;
+    case 3:
+        if (!WAIT)
+        {
+            tCycle--;
+            return false;
+        }
         break;
     case 4:
         IORQ = true;
@@ -302,7 +338,6 @@ void Z80::Clock2()
 
 void Z80::RunTCycle()
 {
-    nops++;
     switch(mCycleType)
     {
     case MCycleType::READ: lastTCycle = ProcessREAD(); break;
@@ -314,6 +349,7 @@ void Z80::RunTCycle()
     case MCycleType::INT: lastTCycle = ProcessINT();  break;
     case MCycleType::RELADDR: lastTCycle = ProcessRELADDR(); break;
     }
+    nops++;
     if (lastTCycle)
         tCycle = 1;
     else

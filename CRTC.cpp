@@ -72,108 +72,95 @@ void CRTC::Reset()
     VSW = 8; //CPC::DataBUS >> 4;
 }
 
-void CRTC::RD()
+BYTE CRTC::RD(BYTE address)
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch(address)
     {
     case 2: // Status out
-        //////////////////////////////////////////
-        break;
+        return 0;
     case 3: // Data out
         switch(Index)
         {
         case 0:
-            CPC::DataBUS = HT;
-            break;
+            return HT;
         case 1:
-            CPC::DataBUS = HD;
-            break;
+            return HD;
         case 2:
-            CPC::DataBUS = HSP;
-            break;
+            return HSP;
         case 3:
-            HSW = CPC::DataBUS = VSW * 16 + HSW;
-            break;
+            return VSW * 16 + HSW;
         case 4:
-            CPC::DataBUS = VT;
-            break;
+            return VT;
         case 5:
-            CPC::DataBUS = VTA;
-            break;
+            return VTA;
         case 6:
-            CPC::DataBUS = VD;
-            break;
+            return VD;
         case 7:
-            CPC::DataBUS = VSP;
-            break;
+            return VSP;
         case 8:
-            CPC::DataBUS = IS;
-            break;
+            return IS;
         case 9:
-            MRA = CPC::DataBUS = MRA;
-            break;
+            return MRA;
         case 12:
-            CPC::DataBUS = DSA >> 8;
-            break;
+            return DSA >> 8;
         case 13:
-            CPC::DataBUS = DSA & 0xFF;
-            break;
+            return DSA & 0xFF;
         }
-
         break;
     }
+    return 0;
 }
 
-void CRTC::WR()
+void CRTC::WR(BYTE address, BYTE value)
 {
-    switch((CPC::AddressBUS & 0x0300) >> 8)
+    switch(address)
     {
     case 0: // Index in
-        Index = CPC::DataBUS;
+        Index = value;
         break;
     case 1: // Data in
         switch(Index)
         {
         case 0:
-            HT = CPC::DataBUS;
+            HT = value;
             break;
         case 1:
-            HD = CPC::DataBUS;
+            HD = value;
             break;
         case 2:
-            HSP = CPC::DataBUS;
+            HSP = value;
             break;
         case 3:
-            HSW = CPC::DataBUS & 0x0F;
-            VSW = CPC::DataBUS >> 4;
+            HSW = value & 0x0F;
+            VSW = value >> 4;
             if (VSW == 0)
                 VSW = 16;               // Check CRTC Type
             break;
         case 4:
-            VT = CPC::DataBUS & 0x7F;
+            VT = value & 0x7F;
             break;
         case 5:
-            VTA = CPC::DataBUS & 0x1F;
+            VTA = value & 0x1F;
             break;
         case 6:
-            VD = CPC::DataBUS & 0x7F;
+            VD = value & 0x7F;
             break;
         case 7:
-            VSP = CPC::DataBUS & 0x7F;
+            VSP = value & 0x7F;
             break;
         case 8:
-            IS = CPC::DataBUS;
+            IS = value;
             break;
         case 9:
-            MRA = CPC::DataBUS;
+            MRA = value;
             break;
         case 12:
             DSA &= 0x00FF;
-            DSA |= (CPC::DataBUS & 0x3F) * 256;
+            DSA |= (value & 0x3F) * 256;
             break;
         case 13:
             DSA &= 0xFF00;
-            DSA |= CPC::DataBUS;
+            DSA |= value;
             break;
         }
 
@@ -187,10 +174,10 @@ void CRTC::RunCombinational()
 
 void CRTC::RunHorizontalChar()
 {
-    if (HDISP && VDISP)
-        MA++;
+    MA++;
     if (HCC == HT)
     {
+        MA = baseMA;
         HCC = 0;
         if (HD > 0)
             HDISP = true;
@@ -203,16 +190,20 @@ void CRTC::RunHorizontalChar()
     if (HSYNC)
     {
         HSC++;
-        if (HSC == HSW || (HSW == 0 && HSC == 16))
+        if (HSC == HSW)
             HSYNC = false;
     }
-    if (HCC == HSP - 1)
+    if (HCC == HSP)
     {
         HSYNC = true;
         HSC = 0;
     }
     if (HCC == HD)
+    {
         HDISP = false;
+        if (RA == MRA)
+            baseMA = MA;
+    }
 }
 
 void CRTC::RunLine()
@@ -220,38 +211,34 @@ void CRTC::RunLine()
     if (VSYNC)
     {
         VSC++;
-        if (VSC == VSW || (VSW == 0 && VSC == 16))
+        if (VSC == VSW)
             VSYNC = false;
     }
-
-    if (adjustMode ? (RA == VTA - 1) : (RA == MRA))
+    if (adjustMode)
     {
-        RA = 0;
-
-        if (adjustMode)
+        RA = (RA + 1) & 0x1F;
+        if (RA == VTA)
         {
             baseMA = DSA;
+            MA = baseMA;
+            VDISP = (VD > 0);
             VCC = 0;
             adjustMode = false;
-
-            if (VSP == 0)
-            {
-                VSYNC = true;
-                VSC = 0;
-            }
-            VDISP = (VD > 0);
-        }
-        else
-        {
-            baseMA = MA;
-            RunVerticalChar();
+            RA = 0;
         }
     }
     else
     {
-        RA = (RA + 1) & 0x1F;
+        if (RA == MRA)
+        {
+            RA = 0;
+            RunVerticalChar();
+        }
+        else
+        {
+            RA = (RA + 1) & 0x1F;
+        }
     }
-    MA = baseMA;
 }
 
 void CRTC::RunVerticalChar()
@@ -261,14 +248,14 @@ void CRTC::RunVerticalChar()
         if (VTA == 0)
         {
             baseMA = DSA;
+            MA = baseMA;
             VDISP = (VD > 0);
             VCC = 0;
         }
         else
-        {
             adjustMode = true;
-        }
-    } else
+    }
+    else
     {
         VCC = (VCC + 1) & 0x7F;
     }

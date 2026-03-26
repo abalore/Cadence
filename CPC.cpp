@@ -8,7 +8,6 @@
 #include "FDC.h"
 #include "Tape.h"
 #include "CRTScreen.h"
-#include "EmulatorThread.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -24,22 +23,6 @@ BYTE *CPC::Cartridge;
 bool CPC::cartridgeEnabled;
 CPCType CPC::cpcType = CPCType::CPC6128;
 BYTE CPC::tick = 0;
-word CPC::AddressBUS = 0;
-BYTE CPC::DataBUS = 0;
-bool CPC::IORD;
-bool CPC::IOWR;
-bool CPC::MEMRD;
-bool CPC::MEMWR;
-bool CPC::INTACK;
-bool CPC::MEMIO;
-bool CPC::lastIORD;
-bool CPC::lastIOWR;
-bool CPC::lastMEMRD;
-bool CPC::lastMEMWR;
-bool CPC::lastINTACK;
-bool CPC::lastMEMIO;
-
-
 
 void CPC::ReadROM(char *filename, int number)
 {
@@ -125,54 +108,15 @@ void CPC::Finalize()
 void CPC::Clock()
 {
     Z80::stopPoint = false;
+
     if (tick % 4 == 0)
     {
-        FDC::Clock();
-        lastIORD = IORD;
-        lastIOWR = IOWR;
-        lastMEMRD = MEMRD;
-        lastMEMWR = MEMWR;
-        lastINTACK = INTACK;
-        lastMEMIO = MEMIO;
         Z80::Clock();
-        IORD = Z80::IORQ || Z80::RD;
-        IOWR = Z80::IORQ || Z80::WR;
-        MEMRD = Z80::MREQ || Z80::RD;
-        MEMWR = Z80::MREQ || Z80::WR;
-        INTACK = Z80::IORQ || Z80::M1;
-        MEMIO = Z80::IORQ && Z80::MREQ;
-        if (lastIORD && !IORD)  // IORD falling edge
-        {
-            if (!(AddressBUS & 0x4000)) CRTC::RD();
-            else if (!(AddressBUS & 0x0800)) PPI::RD();
-            else if (!(AddressBUS & 0x0480)) FDC::RD();
-        }
-        else if (lastIOWR && !IOWR) // IOWR falling edge
-        {
-            if (!(AddressBUS & 0x8000)) GateArray::WR();
-            else if (!(AddressBUS & 0x4000)) CRTC::WR();
-            else if (!(AddressBUS & 0x2000)) CPC::SelectROM(DataBUS);
-            else if (!(AddressBUS & 0x0800)) PPI::WR();
-            else if (!(AddressBUS & 0x0480)) FDC::WR();
-        }
-        else if (lastMEMRD && !MEMRD) // MEMRD falling edge
-        {
-            DataBUS = GetByteAt(AddressBUS);
-        }
-        else if (lastMEMWR && !MEMWR) // MEMWR falling edge
-        {
-            SetByteAt(AddressBUS, DataBUS);
-        }
-        else if (lastINTACK && !INTACK)
-        {
-            GateArray::AckInt();
-        }
+        Z80::Clock2();
+        FDC::Clock();
     }
 
-    if (tick % 4 == 0)
-        Z80::Clock2();
-
-    if ((tick % 16) == 0)
+    if (tick % 16 == 0)
     {
         Tape::Clock();
         PSG::Clock();
