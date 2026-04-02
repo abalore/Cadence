@@ -1,8 +1,8 @@
 ﻿#include "Emulator.h"
 #include "CPC.h"
-#include "Tape.h"
 #include "Disassembler.h"
-#include "CRTScreen.h"
+
+bool Emulator::Breakpoint[65536];
 
 void Emulator::Init()
 {
@@ -23,4 +23,6 @@ void Emulator::Clock()
 void Emulator::Reset()
 {
     CPC::Reset();
+    for (int i = 0; i < 65536; i++)
+        Breakpoint[i] = false;
 }

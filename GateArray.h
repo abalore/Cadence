@@ -7,12 +7,14 @@ class GateArray
 {
 public:
     static void Reset();
-    static void Clock(int tick);
     static void ProcessSync();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
     static void WR(BYTE value);
     static void AckInt();
+    static void SetPixel();
+    static void ReadByte(bool lo);
+    static void LoadVideoAddress();
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
@@ -86,12 +88,10 @@ public:
         };
 
 private:
-    static void SetPixel();
-    static void ReadByte();
     static BYTE RMR;
     static BYTE MMR;
     static bool borderSelected;
-    static BYTE currentByte;
+    static word currentWord;
     static BYTE pixelIndex;
     static BYTE currentInk;
     static bool lastHSYNC;
@@ -100,6 +100,11 @@ private:
     static BYTE vsyncDelay;
     static bool waitingInt;
     static BYTE intTimeout;
+    static BYTE latchLo;
+    static BYTE latchHi;
+    static bool dispEnFF1;
+    static bool dispEnFF2;
 };
 
 #endif // GATEARRAY_H
+

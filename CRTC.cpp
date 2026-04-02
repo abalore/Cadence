@@ -28,6 +28,8 @@ BYTE CRTC::VSP;
 BYTE CRTC::IS;
 BYTE CRTC::MRA;
 
+BYTE CRTC::latchMRA;
+
 BYTE CRTC::VTAC;
 BYTE CRTC::verticalTotal;
 bool CRTC::HDISP;
@@ -51,8 +53,8 @@ void CRTC::Reset()
     VLC = 0;
     HSYNC = false;
     VSYNC = false;
-    HDISP = false;
-    HDISP = false;
+    HDISP = true;
+    VDISP = true;
     BORDER = false;
     HT = 63;
     HD = 40;
@@ -66,6 +68,7 @@ void CRTC::Reset()
     MRA = 7;
     DSA = 0x3000;
     VTAC = 0;
+    latchMRA = 0;
     adjustMode = false;
     DSA = 0;
     MA = DSA;
@@ -174,7 +177,7 @@ void CRTC::RunCombinational()
 
 void CRTC::RunHorizontalChar()
 {
-    MA++;
+    MA = (MA + 1) & 0x3FFF;
     if (HCC == HT)
     {
         MA = baseMA;
@@ -187,16 +190,16 @@ void CRTC::RunHorizontalChar()
     {
         HCC++;
     }
-    if (HSYNC)
-    {
-        HSC++;
-        if (HSC == HSW)
-            HSYNC = false;
-    }
     if (HCC == HSP)
     {
         HSYNC = true;
         HSC = 0;
+    }
+    if (HSYNC)
+    {
+        if (HSC == HSW)
+            HSYNC = false;
+        else HSC++;
     }
     if (HCC == HD)
     {
@@ -210,14 +213,11 @@ void CRTC::RunLine()
 {
     if (VSYNC)
     {
-        VSC++;
-        if (VSC == VSW)
-            VSYNC = false;
+        if (VSC == VSW) VSYNC = false; else VSC++;
     }
     if (adjustMode)
     {
-        RA = (RA + 1) & 0x1F;
-        if (RA == VTA)
+        if (RA == latchMRA)
         {
             baseMA = DSA;
             MA = baseMA;
@@ -225,51 +225,44 @@ void CRTC::RunLine()
             VCC = 0;
             adjustMode = false;
             RA = 0;
+            if (VCC == VSP)
+            {
+                VSYNC = true;
+                VSC = 0;
+            }
+            if (VCC == VD) VDISP = false;
         }
+        else
+            RA = (RA + 1) & 0x1F;
     }
     else
     {
         if (RA == MRA)
         {
             RA = 0;
-            RunVerticalChar();
+            VCC = (VCC + 1) & 0x7F;
+            if (VCC == VT) adjustMode = true;
+            if (VCC == VSP)
+            {
+                VSYNC = true;
+                VSC = 0;
+            }
+            if (VCC == VD) VDISP = false;
         }
         else
-        {
             RA = (RA + 1) & 0x1F;
-        }
     }
+    latchMRA = MRA + VTA;
 }
 
 void CRTC::RunVerticalChar()
 {
-    if (VCC == VT)
-    {
-        if (VTA == 0)
-        {
-            baseMA = DSA;
-            MA = baseMA;
-            VDISP = (VD > 0);
-            VCC = 0;
-        }
-        else
-            adjustMode = true;
-    }
-    else
-    {
-        VCC = (VCC + 1) & 0x7F;
-    }
-    if (VCC == VD)
-        VDISP = false;
-    if (VCC == VSP)
-    {
-        VSYNC = true;
-        VSC = 0;
-    }
+
 }
 
 void CRTC::ResetFrame()
 {
+
 }
 
 void CRTC::Clock()

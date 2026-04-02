@@ -11,7 +11,7 @@ BYTE GateArray::MMR;
 BYTE GateArray::currentPen = 0;
 bool GateArray::borderSelected = false;
 word GateArray::videoAddress = 0;
-BYTE GateArray::currentByte = 0;
+word GateArray::currentWord = 0;
 BYTE GateArray::pixelIndex = 0;
 BYTE GateArray::currentInk = 0;
 bool GateArray::CCLK = false;
@@ -32,6 +32,10 @@ bool GateArray::Monochrome;
 BYTE GateArray::intTimeout;
 BYTE GateArray::porch;
 BYTE GateArray::ready;
+BYTE GateArray::latchLo;
+BYTE GateArray::latchHi;
+bool GateArray::dispEnFF1;
+bool GateArray::dispEnFF2;
 
 void GateArray::Reset()
 {
@@ -55,7 +59,7 @@ void GateArray::Reset()
     CCLK = false;
     VideoAccess = false;
     videoAddress = 0;
-    currentByte = 0;
+    currentWord = 0;
     pixelIndex = 0;
     lastHSYNC = false;
     lastVSYNC = false;
@@ -70,26 +74,6 @@ void GateArray::Reset()
                 decodedPen[m][i][b] = GetPenForPixel(m, b, i);
 }
 
-void GateArray::Clock(int tick)
-{
-    // 2 Mhz
-    if ((tick % 8) == 0)
-    {
-        ReadByte();
-        CCLK = !CCLK;
-    }
-    if ((tick % 4) == 0)
-    {
-        Z80::WAIT = (ready % 4) == 1;
-        ready++;
-        if (ready == 4)
-            ready = 0;
-    }
-
-    // 16 Mhz
-    SetPixel();
-}
-
 void GateArray::AckInt()
 {
     R52 &= 0x1F;
@@ -98,25 +82,14 @@ void GateArray::AckInt()
 
 void GateArray::ProcessSync()
 {
-
+    dispEnFF2 = dispEnFF1;
+    dispEnFF1 = CRTC::BORDER;
     bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
     bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
-    bool vsyncRisingEdge = !lastVSYNC && CRTC::VSYNC;
-
-    if (hsyncDelay > 0)
-    {
-        hsyncDelay--;
-        if (hsyncDelay == 0)
-            hsyncTrigger = true;
-    }
-    if (hsyncRisingEdge)
-    {
-        hsyncDelay = 2;
-    }
+    if (hsyncRisingEdge) hsyncTrigger = true;
     if (hsyncFallingEdge)
     {
-        if (porch > 0)
-            porch--;
+        if (porch > 0) porch--;
         R52++;
         if (R52 == 52)
         {
@@ -127,21 +100,15 @@ void GateArray::ProcessSync()
         {
             vsyncDelay--;
             if (vsyncDelay == 1)
-            {
                 vsyncTrigger = true;
-            }
             if (vsyncDelay == 0)
             {
-                if (R52 >= 32)
-                {
-                    Z80::InterruptRequest = false;
-                }
+                if (R52 >= 32) Z80::IRQ();
                 R52 = 0;
             }
         }
     }
-
-    if (vsyncRisingEdge)
+    if (!lastVSYNC && CRTC::VSYNC)
     {
         vsyncDelay = 2;
         porch = 26;
@@ -163,15 +130,17 @@ void GateArray::SetPixel()
         Color = &NormalBlack[0];
         return;
     }
-    currentInk = CRTC::BORDER ? BORDER : INK[decodedPen[mode][pixelIndex][currentByte]];
+    BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
+    currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex % 8][currentByte]];
     //if (SpeedController::overrun && BORDER)
-    /*if (CRTC::BORDER && !Z80::IFF1)
+    if (dispEnFF2 && !Z80::IFF1)
         currentInk = 0;
+    /*
     if (CRTC::VSYNC)
         currentInk = 1;
     if (CRTC::HSYNC)
         currentInk = 2;*/
-    if (++pixelIndex == 8) pixelIndex = 0;
+    if (++pixelIndex == 16) pixelIndex = 0;
     if (Monochrome)
         Color = &GreenPalette[currentInk * 3];
     else
@@ -207,14 +176,23 @@ BYTE GateArray::GetPenForPixel(BYTE m, BYTE b, BYTE i)
     }
 }
 
-void GateArray::ReadByte()
+void GateArray::LoadVideoAddress()
 {
     videoAddress = (CRTC::MA & 0x03FF) << 1;
     videoAddress += (CRTC::RA & 0x07) << 11;
     videoAddress += (CRTC::MA & 0x3000) << 2;
-    videoAddress += CCLK;
+
+    currentWord = latchHi * 256 + latchLo;
+}
+
+void GateArray::ReadByte(bool lo)
+{
     int ramIndex = videoAddress >> 14;
-    currentByte = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
+    if (lo)
+        latchLo = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
+    else
+        latchHi = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
+    videoAddress++;
 }
 
 void GateArray::WR(BYTE value)

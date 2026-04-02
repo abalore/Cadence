@@ -81,7 +81,7 @@ bool Z80::ShiftOpIndHL(BYTE opCode)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::READ;
+        mCycleType = MCycleType::READ4;
         AR = HL.Get();
         break;
     case 2:
@@ -109,7 +109,7 @@ bool Z80::SET_x_Ind_HL(int X)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::READ;
+        mCycleType = MCycleType::READ4;
         AR = HL.Get();
         break;
     case 2:
@@ -127,7 +127,7 @@ bool Z80::RES_x_Ind_HL(int X)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::READ;
+        mCycleType = MCycleType::READ4;
         AR = HL.Get();
         break;
     case 2:
@@ -145,7 +145,7 @@ bool Z80::BIT_x_Ind_HL(int X)
     switch(mCycle)
     {
     case 1:
-        mCycleType = MCycleType::READ;
+        mCycleType = MCycleType::READ4;
         AR = HL.Get();
         break;
     case 2:

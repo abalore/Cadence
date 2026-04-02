@@ -24,7 +24,7 @@ GraphicsInspector::~GraphicsInspector()
 
 void GraphicsInspector::UpdateGraphics()
 {
-    BYTE xSize = 32;
+    BYTE xSize = ui->inputWidth->text().toInt(nullptr, 10);
     BYTE ySize = 32;
     int byteSize = xSize * 16 * ySize * 16 * 3;
     word baseAddress = 0xC000;

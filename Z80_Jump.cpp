@@ -14,11 +14,10 @@ bool Z80::DJNZ()
         B--;
         if (B == 0)
             return true;
-        else
-            PC += (sbyte) DR;
-        mCycleType = MCycleType::ALU4;
+        mCycleType = MCycleType::ALU5;
         break;
     case 3:
+        PC += (sbyte) DR;
         return true;
     }
     return false;
@@ -35,8 +34,7 @@ bool Z80::JR(bool condition)
     case 2:
         if (!condition)
             return true;
-        else
-            mCycleType = MCycleType::RELADDR;
+        mCycleType = MCycleType::RELADDR;
         AR = PC;
         break;
     case 3:
@@ -121,18 +119,19 @@ bool Z80::CALL(bool condition)
     case 2:
         *t16.L = DR;
         AR = PC++;
+        if (condition)
+            mCycleType = MCycleType::READ4;
+        else
+            mCycleType = MCycleType::READ;
         break;
     case 3:
         *t16.H = DR;
-        if (condition)
-        {
-            mCycleType = MCycleType::WRITE;
-            AR = SP;
-            AR--;
-            DR = (BYTE)(PC >> 8);
-        }
-        else
+        if (!condition)
             return true;
+        mCycleType = MCycleType::WRITE;
+        AR = SP;
+        AR--;
+        DR = (BYTE)(PC >> 8);
         break;
     case 4:
         AR--;

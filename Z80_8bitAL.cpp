@@ -43,7 +43,7 @@ switch(mCycle)\
 switch(mCycle)\
     {\
         case 1:\
-            mCycleType = MCycleType::READ;\
+            mCycleType = MCycleType::READ4;\
             AR = HL.Get();\
             break;\
         case 2:\
@@ -87,7 +87,7 @@ switch(mCycle)\
             mCycleType = MCycleType::RELADDR;\
             break;\
         case 3:\
-            mCycleType = MCycleType::READ;\
+            mCycleType = MCycleType::READ4;\
             break;\
         case 4:\
             op(DR);\

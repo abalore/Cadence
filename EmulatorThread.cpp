@@ -1,19 +1,19 @@
 #include "EmulatorThread.h"
 #include "Emulator.h"
+#include "CPC.h"
 #include "Z80.h"
 #include "CRTScreen.h"
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0x0003;
+volatile ushort EmulatorThread::stopPoint = 0x0938;
 volatile bool EmulatorThread::running = true;
-volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
+volatile RunMode EmulatorThread::runMode = RunMode::Run;
 volatile bool EmulatorThread::end = false;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
     Emulator::Init();
-
 }
 
 EmulatorThread::~EmulatorThread()
@@ -65,6 +65,7 @@ void EmulatorThread::Stop ()
 void EmulatorThread::run()
 {
     Emulator::Reset();
+    Emulator::Breakpoint[0x90D] = true;
     while (!end)
     {
         if (running)
@@ -72,19 +73,21 @@ void EmulatorThread::run()
             while (!CRTScreen::frameFinished && running)
             {
                 Emulator::Clock();
-                switch(runMode)
-                {
-                case RunMode::StepByStep:
-                    if (Z80::stopPoint)
+                if (Z80::stopPoint && CPC::tick % 4 == 0)
+                    switch(runMode)
+                    {
+                    case RunMode::StepByStep:
                         Stop();
-                    break;
-                case RunMode::StopPoint:
-                    if (Z80::stopPoint && Z80::PC == stopPoint)
-                        Stop();
-                    break;
-                case RunMode::Run:
-                    break;
-                }
+                        break;
+                    case RunMode::StopPoint:
+                        if (Z80::PC == stopPoint)
+                            Stop();
+                        break;
+                    case RunMode::Run:
+                        if (Emulator::Breakpoint[Z80::PC])
+                            Stop();
+                        break;
+                    }
             }
             CRTScreen::frameFinished = false;
             SoundThread::waitCondition.wakeOne();

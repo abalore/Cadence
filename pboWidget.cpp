@@ -32,10 +32,10 @@ void PboWidget::initializeGL()
 
 void PboWidget::paintGL()
 {
-    float xOffset = 0; //14.0f / 64.0f;
-    float xSize = 1; //48.0f / 64.0f;
-    float yOffset = 0; //3.0f / 34.0f;
-    float ySize = 1; //34.0f / 39.0f;
+    float xOffset = 15.0f / 64.0f; //14.0f / 64.0f;
+    float xSize = 48.0f / 64.0f; //48.0f / 64.0f;
+    float yOffset = 3.5f / 39.0f; //3.0f / 39.0f;
+    float ySize = 34.0f / 39.0f; //34.0f / 39.0f;
 
     glBindTexture(GL_TEXTURE_2D, ID);
     glBegin(GL_QUADS);

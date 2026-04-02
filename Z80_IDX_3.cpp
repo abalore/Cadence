@@ -10,19 +10,14 @@ bool Z80::Step_IDX_3()
         break;
     case 2: // 3T
         index = (sbyte)DR;
-        AR = IDX->Get();
-        mCycleType = MCycleType::RELADDR;
+        AR = PC++;
+        mCycleType = MCycleType::READ5;
         break;
     case 3: // 5T
-        w1 = AR;
-        AR = PC++;
-        mCycleType = MCycleType::READ;
-        break;
-    case 4: // 3T
-        AR = w1;
+        AR = IDX->Get() + index;
         mCycleType = MCycleType::WRITE;
         break;
-    case 5: // 3T
+    case 4: // 3T
         return true;
     }
     return false;

@@ -1,5 +1,6 @@
 #include "Debugger.h"
 #include "ui_Debugger.h"
+#include "Emulator.h"
 #include "EmulatorThread.h"
 #include "Disassembler.h"
 #include "Z80.h"
@@ -66,7 +67,7 @@ void Debugger::Update()
         string label, address, bytes, instruction;
         ushort position = Disassembler::addr;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction);
-        sprintf(buff, "%16s  %4s  %12s  %s", label.data(), address.data(), bytes.data(), instruction.data());
+        sprintf(buff, "%s %14s  %4s  %12s  %s", Emulator::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
         if (!pcFound && position >= Z80::PC)
         {
@@ -126,7 +127,7 @@ void Debugger::Update()
 
 void Debugger::onRunClicked()
 {
-    hide();
+   // hide();
     EmulatorThread::Run();
 }
 
@@ -230,7 +231,7 @@ string Debugger::GetGateArrayDebugLine()
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord);
+    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b  Window: %d", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord, (CPC::tick % 16) >> 2);
     d += buff;
     return d;
 }

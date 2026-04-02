@@ -107,26 +107,42 @@ void CPC::Finalize()
 
 void CPC::Clock()
 {
-    Z80::stopPoint = false;
-
-    if (tick % 4 == 0)
+    switch(tick % 16)
     {
+    case 0:
+        Z80::WAIT = false;
+        Z80::Clock();
+        CRTC::Clock();
+        GateArray::ProcessSync();
+        GateArray::LoadVideoAddress();
+        GateArray::ReadByte(true);
+        Z80::Clock2();
+        FDC::Clock();
+        Tape::Clock();
+        PSG::Clock();
+        break;
+    case 4:
+        GateArray::ReadByte(false);
+        Z80::WAIT = true;
         Z80::Clock();
         Z80::Clock2();
         FDC::Clock();
+        break;
+    case 8:
+        Z80::WAIT = false;
+        Z80::Clock();
+        Z80::Clock2();
+        FDC::Clock();
+        break;
+    case 12:
+        Z80::WAIT = false;
+        Z80::Clock();
+        Z80::Clock2();
+        FDC::Clock();
+        break;
     }
-
-    if (tick % 16 == 0)
-    {
-        Tape::Clock();
-        PSG::Clock();
-        CRTC::Clock();
-        GateArray::ProcessSync();
-    }
-
-    GateArray::Clock(tick);
+    GateArray::SetPixel();
     CRTScreen::Clock();
-
     tick++;
 }
 

@@ -8,6 +8,8 @@ public:
     static void Finalize();
     static void Clock();
     static void Reset();
+
+    static bool Breakpoint[65536];
 };
 
 #endif // EMULATOR_H

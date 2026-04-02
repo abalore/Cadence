@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1118</width>
-    <height>782</height>
+    <width>821</width>
+    <height>693</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -46,8 +46,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>1024</width>
-      <height>624</height>
+      <width>768</width>
+      <height>544</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -86,8 +86,8 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>650</y>
-      <width>1024</width>
+      <y>544</y>
+      <width>768</width>
       <height>3</height>
      </rect>
     </property>
@@ -98,10 +98,10 @@
    <widget class="Line" name="vLine">
     <property name="geometry">
      <rect>
-      <x>1050</x>
+      <x>768</x>
       <y>0</y>
       <width>3</width>
-      <height>624</height>
+      <height>544</height>
      </rect>
     </property>
     <property name="orientation">
@@ -114,7 +114,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1118</width>
+     <width>821</width>
      <height>23</height>
     </rect>
    </property>

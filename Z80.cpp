@@ -94,19 +94,18 @@ bool Z80::ProcessINT()
     {
     case 1:
         M1 = false;
+        IORQ = false;
+        break;
+    case 2:
+        GateArray::AckInt();
         break;
     case 3:
-        IORQ = false;
-        GateArray::AckInt();
         break;
     case 4:
         if (!WAIT)
-        {
             tCycle--;
-            return false;
-        }
         break;
-    case 5:
+    case 7:
         M1 = true;
         IORQ = true;
         R = (R & 0x80) | ((R + 1) & 0x7F);
@@ -147,11 +146,17 @@ bool Z80::ProcessFETCH()
         M1 = true;
         break;
     case 4:
-        //if (!ExtendedM1[IR] || (idMode != IDMode::BASIC && idMode != IDMode::IDX))
+        if ((ExtendedM1[IR] == 1 || ExtendedM1[IR] == 2) && (idMode == IDMode::BASIC || idMode == IDMode::IDX))
+            return false;
+        if (ExtendedM1[IR] == 3 && idMode == IDMode::MISC)
+            return false;
         return true;
-        //break;
-        //case 8:
-        //return true;
+    case 5:
+        if (ExtendedM1[IR] == 3 && idMode == IDMode::MISC)
+            return false;
+        return true;
+    case 6:
+        return true;
     }
     return false;
 }
@@ -172,6 +177,52 @@ bool Z80::ProcessREAD()
         DR = CPC::GetByteAt(AR);
         MREQ = true;
         RD = true;
+        return true;
+    }
+    return false;
+}
+
+bool Z80::ProcessREAD4()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        RD = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        return false;
+    case 3:
+        DR = CPC::GetByteAt(AR);
+        MREQ = true;
+        RD = true;
+        return false;
+    case 4:
+        return true;
+    }
+    return false;
+}
+
+bool Z80::ProcessREAD5()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        RD = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        return false;
+    case 3:
+        DR = CPC::GetByteAt(AR);
+        MREQ = true;
+        RD = true;
+        return false;
+    case 5:
         return true;
     }
     return false;
@@ -198,6 +249,108 @@ bool Z80::ProcessWRITE()
     return false;
 }
 
+bool Z80::ProcessWRITE5()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        WR = false;
+        CPC::SetByteAt(AR, DR);
+        return false;
+    case 3:
+        MREQ = true;
+        WR = true;
+        return false;
+    case 5:
+        return true;
+    }
+    return false;
+}
+
+bool Z80::ProcessWRITE4()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        WR = false;
+        CPC::SetByteAt(AR, DR);
+        return false;
+    case 3:
+        MREQ = true;
+        WR = true;
+        return false;
+    case 4:
+        return true;
+    }
+    return false;
+}
+
+bool Z80::ProcessWRITEI()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        WR = false;
+        CPC::SetByteAt(AR, DR);
+        return false;
+    case 3:
+        MREQ = true;
+        WR = true;
+        return false;
+    case 4:
+        DE.Set(DE.Get() + 1);
+        HL.Set(HL.Get() + 1);
+        return false;
+    case 5:
+        BC.Set(BC.Get() - 1);
+        return true;
+    }
+    return false;
+}
+
+bool Z80::ProcessWRITED()
+{
+    switch(tCycle)
+    {
+    case 1:
+        MREQ = false;
+        return false;
+    case 2:
+        if (!WAIT)
+            tCycle--;
+        WR = false;
+        CPC::SetByteAt(AR, DR);
+        return false;
+    case 3:
+        MREQ = true;
+        WR = true;
+        return false;
+    case 4:
+        DE.Set(DE.Get() - 1);
+        HL.Set(HL.Get() - 1);
+        return false;
+    case 5:
+        BC.Set(BC.Get() - 1);
+        return true;
+    }
+    return false;
+}
+
 bool Z80::ProcessIN()
 {
     switch(tCycle)
@@ -207,6 +360,15 @@ bool Z80::ProcessIN()
     case 2:
         IORQ = false;
         RD = false;
+        break;
+    case 3:
+        if (!WAIT)
+        {
+            tCycle--;
+            return false;
+        }
+        break;
+    case 4:
         if (!(AR & 0x4000)) DR = CRTC::RD((AR & 0x0300) >> 8);
         else if (!(AR & 0x0800)) DR = PPI::RD((AR & 0x0300) >> 8);
         else if (!(AR & 0x0480))
@@ -219,15 +381,6 @@ bool Z80::ProcessIN()
                     DR = FDC::RD_Data();
             }
         }
-        break;
-    case 3:
-        if (!WAIT)
-        {
-            tCycle--;
-            return false;
-        }
-        break;
-    case 4:
         IORQ = true;
         RD = true;
         return true;
@@ -253,7 +406,7 @@ bool Z80::ProcessOUT()
             if ((AR & 0x0100) == 0)
                 FDC::SetMotor(DR);
             else if ((AR & 0x0001) != 0)
-            FDC::WR(DR);
+                FDC::WR(DR);
         }
 
         break;
@@ -283,18 +436,14 @@ bool Z80::ProcessRELADDR()
     return false;
 }
 
-bool Z80::ProcessALU4()
+bool Z80::ProcessALU(BYTE length)
 {
-    switch(tCycle)
-    {
-    case 4:
-        return true;
-    }
-    return false;
+    return tCycle == length;
 }
 
 void Z80::Clock()
 {
+    Z80::stopPoint = false;
     RunMCycle();
 }
 
@@ -345,9 +494,17 @@ void Z80::RunTCycle()
     case MCycleType::FETCH: lastTCycle = ProcessFETCH(); break;
     case MCycleType::IN: lastTCycle = ProcessIN(); break;
     case MCycleType::OUT: lastTCycle = ProcessOUT(); break;
-    case MCycleType::ALU4: lastTCycle = ProcessALU4(); break;
+    case MCycleType::ALU3: lastTCycle = ProcessALU(3); break;
+    case MCycleType::ALU4: lastTCycle = ProcessALU(4); break;
+    case MCycleType::ALU5: lastTCycle = ProcessALU(5); break;
     case MCycleType::INT: lastTCycle = ProcessINT();  break;
     case MCycleType::RELADDR: lastTCycle = ProcessRELADDR(); break;
+    case MCycleType::WRITEI: lastTCycle = ProcessWRITEI(); break;
+    case MCycleType::WRITED: lastTCycle = ProcessWRITED(); break;
+    case MCycleType::WRITE5: lastTCycle = ProcessWRITE5(); break;
+    case MCycleType::READ4: lastTCycle = ProcessREAD4(); break;
+    case MCycleType::WRITE4: lastTCycle = ProcessWRITE4(); break;
+    case MCycleType::READ5: lastTCycle = ProcessREAD5(); break;
     }
     nops++;
     if (lastTCycle)
@@ -377,3 +534,4 @@ void Z80::IRQ()
 {
     InterruptRequest = false;
 }
+

@@ -11,9 +11,17 @@ enum MCycleType
     WRITE,
     IN,
     OUT,
+    ALU3,
     ALU4,
+    ALU5,
     INT,
-    RELADDR
+    RELADDR,
+    WRITEI,
+    WRITED,
+    READ4,
+    READ5,
+    WRITE5,
+    WRITE4
 };
 
 enum IDMode
@@ -75,11 +83,17 @@ private:
     static bool ProcessINT();
     static bool ProcessFETCH();
     static bool ProcessREAD();
+    static bool ProcessREAD4();
+    static bool ProcessREAD5();
     static bool ProcessWRITE();
+    static bool ProcessWRITE4();
+    static bool ProcessWRITE5();
+    static bool ProcessWRITEI();
+    static bool ProcessWRITED();
     static bool ProcessIN();
     static bool ProcessOUT();
     static bool ProcessRELADDR();
-    static bool ProcessALU4();
+    static bool ProcessALU(BYTE length);
     static void FinishInstruction();
     static BYTE t8;
     static Reg16 t16, tt16;
@@ -248,24 +262,24 @@ private:
     static void EncodeF();
     static void DecodeF();
     static void SetFlagsAfterShiftOp(BYTE b);
-    static constexpr bool ExtendedM1[256] =
+    static constexpr BYTE ExtendedM1[256] =
     {
-        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
-        1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
-        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
-        0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,
+        0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,
+        1,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,
+        0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,
+        0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,3,3,0,0,0,0,0,0,3,3,0,0,0,0,
+        0,0,3,3,0,0,0,0,0,0,3,3,0,0,0,0,
         1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
         1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
         1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,1,
-        1,0,0,0,0,1,0,1,1,1,0,0,0,0,0,1
+        1,0,0,0,0,1,0,1,1,2,0,0,0,0,0,1
     };
 };
 
