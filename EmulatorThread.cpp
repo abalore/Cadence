@@ -65,7 +65,7 @@ void EmulatorThread::Stop ()
 void EmulatorThread::run()
 {
     Emulator::Reset();
-    Emulator::Breakpoint[0x90D] = true;
+    //Emulator::Breakpoint[0x89F] = true;
     while (!end)
     {
         if (running)

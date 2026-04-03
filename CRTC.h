@@ -30,7 +30,7 @@ public:
 
     static BYTE HT, HD, HSP, HSW, VSW, VT, VTA, VD, VSP, IS, MRA;
 
-    static BYTE latchMRA;
+    static BYTE latchMRA, latchVTA;
 
     static bool HDISP;
     static bool VDISP;

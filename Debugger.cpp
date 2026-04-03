@@ -167,7 +167,7 @@ void Debugger::onRunToClicked()
 {
     setEnabled(false);
     int index = ui->listDisassembly->currentIndex().row();
-    QString string = listDisassembly.at(index).mid(18, 4);
+    QString string = listDisassembly.at(index).mid(19, 4);
     EmulatorThread::RunTo(string.toInt(nullptr, 16));
 }
 
