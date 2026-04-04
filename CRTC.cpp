@@ -1,7 +1,4 @@
 #include "CRTC.h"
-#include "CPC.h"
-#include "Z80.h"
-#include "GateArray.h"
 
 BYTE CRTC::Index;
 BYTE CRTC::RA;
@@ -40,6 +37,9 @@ bool CRTC::adjustMode;
 BYTE CRTC::crtcType = 0;
 
 word CRTC::DSA;
+
+bool CRTC::EndScreen;
+bool CRTC::EndChar;
 
 void CRTC::Reset()
 {
@@ -191,8 +191,11 @@ void CRTC::RunHorizontalChar()
         HCC = 0;
         if (HD > 0)
             HDISP = true;
+        if (!EndScreen)
+            EndChar = RA == MRA;
         RunLine();
-        latchVT = VT;
+        EndScreen = VT == VCC;
+        EndChar = RA == MRA;
     }
     else
     {
@@ -233,11 +236,10 @@ void CRTC::RunLine()
     }
     else
     {
-        bool canPass = (VCC == latchVT) ? (RA == latchMRA) : (RA == MRA);
-        if (canPass)
+        if (EndChar)
         {
             RA = 0;
-            if (VCC == latchVT)
+            if (EndScreen)
             {
                 if (VTA > 0) adjustMode = true;
                 else resetFrame = true;
@@ -257,7 +259,6 @@ void CRTC::RunLine()
         {
             RA = (RA + 1) & 0x1F;
         }
-        latchMRA = MRA;
     }
     if (resetFrame)
     {

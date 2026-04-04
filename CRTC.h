@@ -40,7 +40,6 @@ public:
     static BYTE newVT;
     static bool EndLine, EndChar, EndScreen;
 
-
 private:
     static void RunHorizontalChar();
     static void RunAdj();
