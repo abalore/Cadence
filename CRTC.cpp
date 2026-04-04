@@ -176,6 +176,8 @@ void CRTC::RunCombinational()
 {
 }
 
+bool willAdjust = false;
+
 void CRTC::RunHorizontalChar()
 {
     MA = (MA + 1) & 0x3FFF;
@@ -183,8 +185,18 @@ void CRTC::RunHorizontalChar()
     {
         if (HSC == HSW)
             HSYNC = false;
-        else HSC++;
+        else HSC = (HSC + 1) % 0x0F;
     }
+    // Timing for CRTC 0
+    if (HCC == 1)
+        EndScreen = VT == VCC;
+
+    if (HCC == 2)
+    {
+        if (RA == MRA && VCC == VT && VTA > 0)
+            willAdjust = true;
+    }
+
     if (HCC == HT)
     {
         MA = baseMA;
@@ -194,7 +206,7 @@ void CRTC::RunHorizontalChar()
         if (!EndScreen)
             EndChar = RA == MRA;
         RunLine();
-        EndScreen = VT == VCC;
+
         EndChar = RA == MRA;
     }
     else
@@ -212,16 +224,21 @@ void CRTC::RunHorizontalChar()
         if (RA == MRA)
             baseMA = MA;
     }
+    if (!VSYNC && VCC == VSP)
+    {
+        VSYNC = true;
+        VSC = 0;
+    }
+
+    if (VDISP && VCC == VD) VDISP = false;
 }
-
-
 
 void CRTC::RunLine()
 {
     if (VSYNC)
     {
         if (VSC == VSW) VSYNC = false;
-        else VSC++;
+        else VSC = (VSC + 1) & 0x0F;
     }
     bool resetFrame = false;
     if (adjustMode)
@@ -229,9 +246,10 @@ void CRTC::RunLine()
         RA = (RA + 1) & 0x1F;
         if (RA == VTA)
         {
-            adjustMode = false;
             RA = 0;
+            adjustMode = false;
             resetFrame = true;
+            willAdjust = false;
         }
     }
     else
@@ -241,18 +259,13 @@ void CRTC::RunLine()
             RA = 0;
             if (EndScreen)
             {
-                if (VTA > 0) adjustMode = true;
-                else resetFrame = true;
+                if (willAdjust) adjustMode = true;
+                else
+                    resetFrame = true;
             }
             else
             {
                 VCC = (VCC + 1) & 0x7F;
-                if (VCC == VD) VDISP = false;
-                if (VCC == VSP)
-                {
-                    VSYNC = true;
-                    VSC = 0;
-                }
             }
         }
         else
@@ -266,11 +279,6 @@ void CRTC::RunLine()
         MA = baseMA;
         VDISP = (VD > 0);
         VCC = 0;
-        if (VSP == 0)
-        {
-            VSYNC = true;
-            VSC = 0;
-        }
     }
 }
 
