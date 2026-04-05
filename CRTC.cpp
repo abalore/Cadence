@@ -56,6 +56,7 @@ void CRTC::Reset()
     HDISP = true;
     VDISP = true;
     BORDER = false;
+
     HT = 63;
     HD = 40;
     HSP = 46;
@@ -71,9 +72,10 @@ void CRTC::Reset()
     latchMRA = MRA;
     latchVTA = VTA;
     adjustMode = false;
-    DSA = 0;
     MA = DSA;
-    VSW = 8; //CPC::DataBUS >> 4;
+    baseMA = DSA;
+    VSW = 8;
+
 }
 
 BYTE CRTC::RD(BYTE address)
@@ -181,12 +183,6 @@ bool willAdjust = false;
 void CRTC::RunHorizontalChar()
 {
     MA = (MA + 1) & 0x3FFF;
-    if (HSYNC)
-    {
-        if (HSC == HSW)
-            HSYNC = false;
-        else HSC = (HSC + 1) % 0x0F;
-    }
     // Timing for CRTC 0
     if (HCC == 1)
         EndScreen = VT == VCC;
@@ -218,6 +214,12 @@ void CRTC::RunHorizontalChar()
         HSYNC = true;
         HSC = 0;
     }
+    if (HSYNC)
+    {
+        if (HSC == HSW)
+            HSYNC = false;
+        else HSC = (HSC + 1) % 0x0F;
+    }
     if (HCC == HD)
     {
         HDISP = false;
@@ -237,9 +239,14 @@ void CRTC::RunLine()
 {
     if (VSYNC)
     {
-        if (VSC == VSW) VSYNC = false;
-        else VSC = (VSC + 1) & 0x0F;
+        VSC = (VSC + 1) & 0x0F;
+        if (VSC == VSW)
+        {
+            VSYNC = false;
+            VSC = 0;
+        }
     }
+
     bool resetFrame = false;
     if (adjustMode)
     {
@@ -280,16 +287,15 @@ void CRTC::RunLine()
         VDISP = (VD > 0);
         VCC = 0;
     }
+
 }
 
 void CRTC::RunVerticalChar()
 {
-
 }
 
 void CRTC::ResetFrame()
 {
-
 }
 
 void CRTC::Clock()

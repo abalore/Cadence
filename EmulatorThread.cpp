@@ -6,9 +6,9 @@
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0x0938;
+volatile ushort EmulatorThread::stopPoint = 0xc006;
 volatile bool EmulatorThread::running = true;
-volatile RunMode EmulatorThread::runMode = RunMode::Run;
+volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorThread::end = false;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
@@ -65,7 +65,7 @@ void EmulatorThread::Stop ()
 void EmulatorThread::run()
 {
     Emulator::Reset();
-    //Emulator::Breakpoint[0x89F] = true;
+    Emulator::Breakpoint[0xA6F8] = true;
     while (!end)
     {
         if (running)

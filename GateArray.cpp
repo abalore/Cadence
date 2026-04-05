@@ -133,8 +133,8 @@ void GateArray::SetPixel()
     BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
     currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex % 8][currentByte]];
     //if (SpeedController::overrun && BORDER)
-    if (dispEnFF2 && !Z80::IFF1)
-        currentInk = 0;
+    //if (dispEnFF2 && !Z80::IFF1)
+    //    currentInk = 0;
     /*
     if (CRTC::VSYNC)
         currentInk = 1;
