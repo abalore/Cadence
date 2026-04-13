@@ -322,7 +322,7 @@ void FDC::ProcessExecution()
         // wait head settle time
         stSE = 0b00000000; // Seek End
         sectorInfo = drives[US].GetSectorInfo(PCN, R);
-        if (sectorInfo.SI_C != 0xFF)
+        if (sectorInfo.SI_C != 0xFF && R > 0)
         {
             dataSize = sectorInfo.SI_size * 256;
             data = sectorInfo.SectorData;

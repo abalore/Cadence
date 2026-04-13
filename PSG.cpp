@@ -233,7 +233,6 @@ BYTE PSG::ReadData()
 
 void PSG::WriteData(BYTE data)
 {
-
     inputRegister = data;
     ApplyChange();
 }

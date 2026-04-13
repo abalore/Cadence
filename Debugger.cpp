@@ -127,7 +127,7 @@ void Debugger::Update()
 
 void Debugger::onRunClicked()
 {
-   // hide();
+    hide();
     EmulatorThread::Run();
 }
 

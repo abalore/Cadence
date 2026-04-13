@@ -59,16 +59,18 @@ void EmulatorThread::Stop ()
 {
     Z80::stopPoint = false;
     running = false;
+    paused = true;
     emit OnPause();
 }
 
 void EmulatorThread::run()
 {
+    paused = false;
     Emulator::Reset();
     Emulator::Breakpoint[0xA6F8] = true;
     while (!end)
     {
-        if (running)
+        if (!paused)
         {
             while (!CRTScreen::frameFinished && running)
             {
@@ -94,6 +96,14 @@ void EmulatorThread::run()
             emit OnFinishedFrame();
             SpeedController::Run();
         }
-        else QThread::msleep(5);
+        else
+        {
+            if (running)
+            {
+                paused = false;
+                emit OnResume();
+            }
+            QThread::msleep(5);
+        }
     }
 }

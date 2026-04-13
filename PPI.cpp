@@ -111,16 +111,27 @@ void PPI::WR(BYTE reg, BYTE value)
         if (value & 0x80)
         {
             controlWord = value;
-            PSG::WriteData(0);
-            Keyboard::SetRow(0);
-            PSG::SelectFunction(false, false);
-            Tape::SetMotorState(false);
-            aMode = (controlWord & 0x7F) >> 5;
-            bMode = (controlWord & 0x07) >> 2;
+            aMode = (controlWord & 0x60) >> 5;
+            bMode = (controlWord & 0x04) >> 2;
             lCIO = controlWord & 0x01;
             hCIO = controlWord & 0x08;
             aIO = controlWord & 0x10;
             bIO = controlWord & 0x02;
+
+            if (!lCIO)
+            {
+                lC =0;
+                ApplyLC();
+            }
+            if (!hCIO)
+            {
+                hC = 0;
+                ApplyHC();
+            }
+            if (!aIO || aMode == 2)
+            {
+                PSG::WriteData(0);
+            }
         }
         else
         {
@@ -165,7 +176,7 @@ void PPI::ApplyHC()
     switch(aMode)
     {
     case 0:
-        PSG::SelectFunction((hC & 0x80) > 0, (hC & 0x40) > 0);
+        PSG::SelectFunction(hC & 0x80, hC & 0x40);
         Tape::SetMotorState(hC & 0x10);
         break;
     case 1:

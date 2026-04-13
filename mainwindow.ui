@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>821</width>
-    <height>693</height>
+    <width>768</width>
+    <height>567</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,7 +26,7 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">background-color:gray;</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -51,35 +51,7 @@
      </rect>
     </property>
     <property name="autoFillBackground">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QLabel" name="imgScreen_frame">
-    <property name="enabled">
      <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>0</width>
-      <height>0</height>
-     </rect>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="pixmap">
-     <pixmap resource="screen_frame.qrc">:/images/monitor_frame.png</pixmap>
-    </property>
-    <property name="scaledContents">
-     <bool>true</bool>
     </property>
    </widget>
    <widget class="Line" name="hLine">
@@ -114,9 +86,15 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>821</width>
+     <width>768</width>
      <height>23</height>
     </rect>
+   </property>
+   <property name="acceptDrops">
+    <bool>false</bool>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>true</bool>
    </property>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -188,11 +166,18 @@
     <addaction name="actionROM_Box"/>
     <addaction name="menuCartridge_2"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionFull_screen"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDebug"/>
    <addaction name="menuScreen"/>
    <addaction name="menuMemory"/>
    <addaction name="menuDevices"/>
+   <addaction name="menuView"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -206,7 +191,7 @@
     <string>Pause</string>
    </property>
    <property name="shortcut">
-    <string>F6</string>
+    <string>F5</string>
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
@@ -224,7 +209,7 @@
     <string>Reset</string>
    </property>
    <property name="shortcut">
-    <string>F4</string>
+    <string>F12</string>
    </property>
   </action>
   <action name="actionLoad_File">
@@ -241,6 +226,9 @@
    </property>
    <property name="text">
     <string>Smooth</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F11</string>
    </property>
   </action>
   <action name="actionInspect_video_memory">
@@ -317,15 +305,24 @@
    <property name="text">
     <string>Green monitor</string>
    </property>
+   <property name="shortcut">
+    <string>Shift+F11</string>
+   </property>
   </action>
   <action name="actionInsert_disk">
    <property name="text">
     <string>Insert disk...</string>
    </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
   </action>
   <action name="actionRemove_disk">
    <property name="text">
     <string>Remove disk</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F2</string>
    </property>
   </action>
   <action name="actionInsert_disk_2">
@@ -342,25 +339,51 @@
    <property name="text">
     <string>Insert tape...</string>
    </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
   </action>
   <action name="actionRemove_tape">
    <property name="text">
     <string>Remove tape</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F1</string>
    </property>
   </action>
   <action name="actionROM_Box">
    <property name="text">
     <string>ROM Box...</string>
    </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
   </action>
   <action name="actionInsert_cartridge">
    <property name="text">
     <string>Insert cartridge...</string>
    </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
   </action>
   <action name="actionRemove_cartridge">
    <property name="text">
     <string>Remove cartridge</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F3</string>
+   </property>
+  </action>
+  <action name="actionFull_screen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Full screen</string>
+   </property>
+   <property name="shortcut">
+    <string>F11</string>
    </property>
   </action>
  </widget>
@@ -371,8 +394,6 @@
    <header>pboWidget.h</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="screen_frame.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
