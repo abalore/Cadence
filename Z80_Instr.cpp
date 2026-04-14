@@ -572,6 +572,8 @@ bool Z80::IN_A_n()
     case 2:
         mCycleType = MCycleType::IN;
         AR = A * 256 + DR;
+        break;
+    case 3:
         A = DR;
         fS = DR & 0x80;
         fZ = DR == 0;
@@ -580,8 +582,6 @@ bool Z80::IN_A_n()
         fN = false;
         f3 = A & 0x08;
         f5 = A & 0x20;
-        break;
-    case 3:
         return true;
     }
     return false;
