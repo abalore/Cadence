@@ -104,6 +104,7 @@ private:
     static BYTE latchHi;
     static bool dispEnFF1;
     static bool dispEnFF2;
+    static BYTE nextMode;
 };
 
 #endif // GATEARRAY_H

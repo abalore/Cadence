@@ -36,6 +36,7 @@ BYTE GateArray::latchLo;
 BYTE GateArray::latchHi;
 bool GateArray::dispEnFF1;
 bool GateArray::dispEnFF2;
+BYTE GateArray::nextMode;
 
 void GateArray::Reset()
 {
@@ -47,6 +48,7 @@ void GateArray::Reset()
     currentPen = 0;
     R52 = 0;
     mode  = 0;
+    nextMode = 0;
     pi = 0;
     hsyncTrigger = false;
     vsyncTrigger = false;
@@ -89,6 +91,7 @@ void GateArray::ProcessSync()
     if (hsyncRisingEdge) hsyncTrigger = true;
     if (hsyncFallingEdge)
     {
+        mode = nextMode;
         if (porch > 0) porch--;
         R52++;
         if (R52 == 52)
@@ -223,7 +226,7 @@ void GateArray::WR(BYTE value)
         }
         LoROMActive = (RMR & 0x04) != 0;
         HiROMActive = (RMR & 0x08) != 0;
-        mode = RMR & 0x03;
+        nextMode = RMR & 0x03;
         break;
     case 0xC0: // MMR
         CPC::SelectRAM(value & 0x3F);
