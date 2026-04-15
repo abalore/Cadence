@@ -88,10 +88,13 @@ void GateArray::ProcessSync()
     dispEnFF1 = CRTC::BORDER;
     bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
     bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
-    if (hsyncRisingEdge) hsyncTrigger = true;
+    if (hsyncRisingEdge)
+    {
+        hsyncTrigger = true;
+        mode = nextMode;
+    }
     if (hsyncFallingEdge)
     {
-        mode = nextMode;
         if (porch > 0) porch--;
         R52++;
         if (R52 == 52)
@@ -136,8 +139,8 @@ void GateArray::SetPixel()
     BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
     currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex % 8][currentByte]];
     //if (SpeedController::overrun && BORDER)
-    //if (dispEnFF2 && !Z80::IFF1)
-    //    currentInk = 0;
+    if (dispEnFF2 && !Z80::IFF1)
+        currentInk = 0;
     /*
     if (CRTC::VSYNC)
         currentInk = 1;
