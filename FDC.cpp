@@ -322,37 +322,47 @@ void FDC::ProcessExecution()
         // wait head settle time
         stSE = 0b00000000; // Seek End
         sectorInfo = drives[US].GetSectorInfo(PCN, R);
-        if (sectorInfo.SI_C != 0xFF && R > 0)
-        {
-            dataSize = sectorInfo.SI_size * 256;
-            data = sectorInfo.SectorData;
-            if (sectorInfo.copies > 1)
-                data += (weakSectorCycle++ % sectorInfo.copies) * dataSize;
-            dataIndex = 0;
-
-            PCN = sectorInfo.SI_C;
-            H = sectorInfo.SI_H;
-            N = sectorInfo.SI_size;
-            stIC = 0b00000000; // Interrupt
-            stEC = 0b00000000; // Equipment Check
-            resultCount = 7;
-            result[0] = GetStatusReg0();
-            result[1] = sectorInfo.SI_reg1;
-            result[2] = sectorInfo.SI_reg2;
-        }
-        else
-        {
-            stIC = 0b01000000;
-            stEC = 0b00010000; // Equipment Check
-            result[0] = GetStatusReg0();
-            result[1] = GetStatusReg1();
-            result[2] = GetStatusReg2();
-        }
+        resultCount = 7;
         result[3] = PCN;
         result[4] = H;
         result[5] = R;
         result[6] = N;
-        GoToTransferState();
+        switch(sectorInfo.SI_C)
+        {
+        case 0xFE: // Data not found
+            stIC = 0b01000000; // Interrupt
+            stEC = 0b00000000; // Equipment Check
+            stMA = 0b00000001; // Missing Address Mark
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        case 0xFF: // No disc
+            stIC = 0b01000000; // Interrupt
+            stEC = 0b00010000; // Equipment Check
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        default:
+            stIC = 0b00000000; // Interrupt
+            stEC = 0b00000000; // Equipment Check
+            dataSize = (1 << sectorInfo.SI_size) * 128;
+            data = sectorInfo.SectorData;
+            if (sectorInfo.copies > 1)
+                data += (weakSectorCycle++ % sectorInfo.copies) * dataSize;
+            dataIndex = 0;
+            PCN = sectorInfo.SI_C;
+            H = sectorInfo.SI_H;
+            N = sectorInfo.SI_size;
+            result[0] = GetStatusReg0();
+            result[1] = sectorInfo.SI_reg1;
+            result[2] = sectorInfo.SI_reg2;
+            GoToTransferState();
+            break;
+        }
         break;
     case FDC_CommandReadTrack:
     case FDC_CommandWriteData:
