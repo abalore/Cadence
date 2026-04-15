@@ -398,10 +398,10 @@ bool Z80::ProcessOUT()
         IORQ = false;
         WR = false;
         if (!(AR & 0x8000)) GateArray::WR(DR);
-        else if (!(AR & 0x4000)) CRTC::WR((AR & 0x0300) >> 8, DR);
-        else if (!(AR & 0x2000)) CPC::SelectROM(DR);
-        else if (!(AR & 0x0800)) PPI::WR((AR & 0x0300) >> 8, DR);
-        else if (!(AR & 0x0480))
+        if (!(AR & 0x4000)) CRTC::WR((AR & 0x0300) >> 8, DR);
+        if (!(AR & 0x2000)) CPC::SelectROM(DR);
+        if (!(AR & 0x0800)) PPI::WR((AR & 0x0300) >> 8, DR);
+        if (!(AR & 0x0480))
         {
             if ((AR & 0x0100) == 0)
                 FDC::SetMotor(DR);

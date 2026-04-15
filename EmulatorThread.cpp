@@ -67,7 +67,7 @@ void EmulatorThread::run()
 {
     paused = false;
     Emulator::Reset();
-    Emulator::Breakpoint[0xA6F8] = true;
+    //Emulator::Breakpoint[0xA6F8] = true;
     while (!end)
     {
         if (!paused)
