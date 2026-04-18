@@ -2,6 +2,7 @@
 #define EMULATORWORKERTHREAD_H
 
 #include <QThread>
+#include <QMutex>
 #include <string>
 
 using namespace std;
@@ -23,6 +24,7 @@ public:
     static volatile ushort stopPoint;
     static volatile bool end;
     static volatile RunMode runMode;
+    static QMutex frameMutex;
 public slots:
     static void Run();
     static void RunStep();

@@ -43,7 +43,7 @@ public:
 private:
     void AddSector(int track, int sector, BYTE *info, BYTE *address);
     std::vector<std::vector<std::optional<SectorInfo>>> sectors;
-    void LoadDSK(bool extended);
+    void ParseSectors(bool extended);
 };
 
 #endif // DSK_H

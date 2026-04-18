@@ -11,67 +11,148 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Graphics Inspector</string>
   </property>
-  <widget class="QLabel" name="label_2">
+  <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>190</x>
-     <y>30</y>
-     <width>66</width>
-     <height>18</height>
+     <x>10</x>
+     <y>10</y>
+     <width>175</width>
+     <height>80</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Width:</string>
+   <property name="title">
+    <string>Address</string>
    </property>
+   <widget class="QRadioButton" name="radioButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>28</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>#0000</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>52</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>#4000</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_3">
+    <property name="geometry">
+     <rect>
+      <x>93</x>
+      <y>28</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>#8000</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_4">
+    <property name="geometry">
+     <rect>
+      <x>93</x>
+      <y>52</y>
+      <width>75</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>#C000</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
-  <widget class="QLineEdit" name="inputHeight">
+  <widget class="QGroupBox" name="groupBoxSize">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>60</y>
-     <width>31</width>
-     <height>26</height>
+     <x>195</x>
+     <y>10</y>
+     <width>150</width>
+     <height>80</height>
     </rect>
    </property>
-   <property name="text">
-    <string>25</string>
+   <property name="title">
+    <string>Size</string>
    </property>
-  </widget>
-  <widget class="QLineEdit" name="inputWidth">
-   <property name="geometry">
-    <rect>
-     <x>240</x>
-     <y>30</y>
-     <width>31</width>
-     <height>26</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>40</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>60</y>
-     <width>66</width>
-     <height>18</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Height:</string>
-   </property>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>50</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Width:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="inputWidth">
+    <property name="geometry">
+     <rect>
+      <x>65</x>
+      <y>27</y>
+      <width>70</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>40</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>56</y>
+      <width>50</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Height:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="inputHeight">
+    <property name="geometry">
+     <rect>
+      <x>65</x>
+      <y>53</y>
+      <width>70</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>25</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QGraphicsView" name="graphicsView">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>100</y>
-     <width>1051</width>
-     <height>651</height>
+     <width>1046</width>
+     <height>686</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -86,87 +167,6 @@
    <property name="horizontalScrollBarPolicy">
     <enum>Qt::ScrollBarAlwaysOff</enum>
    </property>
-  </widget>
-  <widget class="QPushButton" name="btnUpdate">
-   <property name="geometry">
-    <rect>
-     <x>560</x>
-     <y>10</y>
-     <width>88</width>
-     <height>26</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Update</string>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>171</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Address</string>
-   </property>
-   <widget class="QRadioButton" name="radioButton">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>71</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>#0000</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_2">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>50</y>
-      <width>71</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>#4000</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_3">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>30</y>
-      <width>71</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>#8000</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_4">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>50</y>
-      <width>71</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>#C000</string>
-    </property>
-    <property name="checked">
-     <bool>true</bool>
-    </property>
-   </widget>
   </widget>
  </widget>
  <resources/>

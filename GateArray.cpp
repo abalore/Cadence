@@ -142,7 +142,7 @@ void GateArray::SetPixel()
         return;
     }
     BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
-    currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex % 8][currentByte]];
+    currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex & 7][currentByte]];
     //if (SpeedController::overrun && BORDER)
     //if (dispEnFF2 && !Z80::IFF1)
     //    currentInk = 0;
@@ -235,6 +235,7 @@ void GateArray::WR(BYTE value)
         LoROMActive = (RMR & 0x04) != 0;
         HiROMActive = (RMR & 0x08) != 0;
         nextMode = RMR & 0x03;
+        CPC::UpdateMemoryMap();
         break;
     case 0xC0: // MMR
         CPC::SelectRAM(value & 0x3F);

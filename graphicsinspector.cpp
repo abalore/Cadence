@@ -14,7 +14,12 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
     ui->graphicsView->setScene(scene);
     pixItem = 0;
 
-    connect(ui->btnUpdate, &QPushButton::clicked, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->inputWidth, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->inputHeight, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->radioButton, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->radioButton_2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->radioButton_3, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->radioButton_4, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
 }
 
 GraphicsInspector::~GraphicsInspector()
@@ -25,14 +30,14 @@ GraphicsInspector::~GraphicsInspector()
 void GraphicsInspector::UpdateGraphics()
 {
     BYTE xSize = ui->inputWidth->text().toInt(nullptr, 10);
-    BYTE ySize = 32;
+    BYTE ySize = ui->inputHeight->text().toInt(nullptr, 10);
     int byteSize = xSize * 16 * ySize * 16 * 3;
     word baseAddress = 0xC000;
     if (ui->radioButton->isChecked()) baseAddress = 0x0000;
     if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
     if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
     int mode = GateArray::mode;
-    static BYTE *Pixels = (BYTE *)malloc(byteSize);
+    pixels.resize(byteSize);
     for (int i = 0; i < xSize * 2; i++)
         for  (int j = 0; j < ySize; j++)
             for (int k = 0; k < 8; k++)
@@ -49,13 +54,13 @@ void GraphicsInspector::UpdateGraphics()
                     if (pixelBase < byteSize - 2)
                         for (int m = 0; m < 3; m++)
                         {
-                            Pixels[pixelBase + m] = color[m];
-                            Pixels[pixelBase + m + xSize * 16 * 3] = color[m];
+                            pixels[pixelBase + m] = color[m];
+                            pixels[pixelBase + m + xSize * 16 * 3] = color[m];
                         }
                 }
             }
-    if (pixItem) scene->removeItem(pixItem);
-    QImage image(&Pixels[0], xSize * 16, ySize * 16, QImage::Format_RGB888);
+    if (pixItem) { scene->removeItem(pixItem); delete pixItem; }
+    QImage image(&pixels[0], xSize * 16, ySize * 16, QImage::Format_RGB888);
     QPixmap pixmap = QPixmap::fromImage(image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
     pixItem->setPos(0, 0);

@@ -8,7 +8,6 @@ class CRTScreen
 public:
     static void Init();
     static void Clock();
-    static void OneMhzClock();
     static const int PixelWidth = 1024;
     static const int PixelHeight = 312;
     static const int BytesPerPixel = 3;

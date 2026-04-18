@@ -2,6 +2,7 @@
 #define PSG_H
 
 #include "defs.h"
+#include <cstdint>
 
 #define PSG_BUFFER_SIZE 1500
 
@@ -50,6 +51,7 @@ private:
     static bool envelopeRunning;
     static BYTE noiseDivider;
     static bool noiseLevel;
+    static uint32_t noiseLFSR;
     static bool bitA;
     static bool bitB;
     static bool bitC;

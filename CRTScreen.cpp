@@ -46,18 +46,13 @@ void CRTScreen::Clock()
             vPos = 0;
             frameFinished = true;
             GateArray::vsyncTrigger = false;
-            pixelIndex = 0;
         }
     }
-    pixelIndex = vPos * Stride + hPos * 3;
+    unsigned int pixelIndex = vPos * Stride + hPos * 3;
     if (hOffset + pixelIndex < DataSize)
     {
         Pixels[hOffset + pixelIndex++] = GateArray::Color[0];
         Pixels[hOffset + pixelIndex++] = GateArray::Color[1];
         Pixels[hOffset + pixelIndex++] = GateArray::Color[2];
     }
-}
-
-void CRTScreen::OneMhzClock()
-{
 }

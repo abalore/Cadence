@@ -171,10 +171,6 @@ void CRTC::WR(BYTE address, BYTE value)
     }
 }
 
-void CRTC::RunCombinational()
-{
-}
-
 bool willAdjust = false;
 
 void CRTC::RunHorizontalChar()
@@ -198,7 +194,7 @@ void CRTC::RunHorizontalChar()
             HDISP = true;
         if (!EndScreen)
             EndChar = RA == MRA;
-        RunLine();
+        EndOfLine();
 
         EndChar = RA == MRA;
     }
@@ -232,7 +228,7 @@ void CRTC::RunHorizontalChar()
     if (VDISP && VCC == VD) VDISP = false;
 }
 
-void CRTC::RunLine()
+void CRTC::EndOfLine()
 {
     if (VSYNC)
     {
@@ -285,14 +281,6 @@ void CRTC::RunLine()
         VCC = 0;
     }
 
-}
-
-void CRTC::RunVerticalChar()
-{
-}
-
-void CRTC::ResetFrame()
-{
 }
 
 void CRTC::Clock()

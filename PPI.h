@@ -11,8 +11,8 @@ public:
     static void WR(BYTE reg, BYTE value);
     static BYTE controlWord;
 private:
-    static void ApplyLC();
-    static void ApplyHC();
+    static void UpdatePortC_Low();
+    static void UpdatePortC_High();
     static BYTE aMode;
     static BYTE bMode;
     static BYTE aHandshake;

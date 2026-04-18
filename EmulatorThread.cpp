@@ -10,6 +10,7 @@ volatile ushort EmulatorThread::stopPoint = 0x1CB3; //0x4921;
 volatile bool EmulatorThread::running = true;
 volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
 volatile bool EmulatorThread::end = false;
+QMutex EmulatorThread::frameMutex;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
@@ -72,6 +73,7 @@ void EmulatorThread::run()
     {
         if (!paused)
         {
+            frameMutex.lock();
             while (!CRTScreen::frameFinished && running)
             {
                 Emulator::Clock();
@@ -92,6 +94,7 @@ void EmulatorThread::run()
                     }
             }
             CRTScreen::frameFinished = false;
+            frameMutex.unlock();
             SoundThread::waitCondition.wakeOne();
             emit OnFinishedFrame();
             SpeedController::Run();

@@ -32,6 +32,7 @@ word PSG::envelopeCounter;
 bool PSG::envelopeRunning;
 BYTE PSG::noiseDivider;
 bool PSG::noiseLevel;
+uint32_t PSG::noiseLFSR;
 bool PSG::bitA;
 bool PSG::bitB;
 bool PSG::bitC;
@@ -79,6 +80,7 @@ void PSG::Reset()
     envelopeRunning = false;
     noiseDivider = 0;
     noiseLevel = 0;
+    noiseLFSR = 1;
     bitA = false;
     bitB = false;
     bitC = false;
@@ -313,8 +315,7 @@ void PSG::UpdateNoise()
     if (noiseDivider == 0)
     {
         noiseDivider = (registers[6] & 0x1F);
-        static uint32_t lfsr = 1;
-        lfsr = (lfsr >> 1) | (((lfsr ^ (lfsr >> 3)) & 1) << 16);
-        noiseLevel = lfsr & 1;
+        noiseLFSR = (noiseLFSR >> 1) | (((noiseLFSR ^ (noiseLFSR >> 3)) & 1) << 16);
+        noiseLevel = noiseLFSR & 1;
     }
 }

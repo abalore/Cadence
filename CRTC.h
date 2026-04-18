@@ -2,9 +2,6 @@
 #define CRTC_H
 
 #include "defs.h"
-#include "Counter.h"
-#include "DFlipFlop.h"
-#include "RSFlipFlop.h"
 
 class CRTC
 {
@@ -42,10 +39,7 @@ public:
 private:
     static void RunHorizontalChar();
     static void RunAdj();
-    static void RunLine();
-    static void RunVerticalChar();
-    static void ResetFrame();
-    static void RunCombinational();
+    static void EndOfLine();
 
 };
 

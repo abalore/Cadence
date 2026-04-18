@@ -99,12 +99,12 @@ void PPI::WR(BYTE reg, BYTE value)
         if (!lCIO)
         {
             lC = value & 0x0F;
-            ApplyLC();
+            UpdatePortC_Low();
         }
         if (!hCIO)
         {
             hC = value & 0xF0;
-            ApplyHC();
+            UpdatePortC_High();
         }
         break;
     case 3: // 8255 PPI Control-Register (W)
@@ -121,12 +121,12 @@ void PPI::WR(BYTE reg, BYTE value)
             if (!lCIO)
             {
                 lC =0;
-                ApplyLC();
+                UpdatePortC_Low();
             }
             if (!hCIO)
             {
                 hC = 0;
-                ApplyHC();
+                UpdatePortC_High();
             }
             if (!aIO || aMode == 2)
             {
@@ -143,14 +143,14 @@ void PPI::WR(BYTE reg, BYTE value)
                 else        lC &= ~(1 << bit);
 
                 lC &= 0x0F;
-                ApplyLC();
+                UpdatePortC_Low();
             }
             else
             {
                 if (setBit) hC |= (1 << bit);
                 else        hC &= ~(1 << bit);
                 hC &= 0xF0;
-                ApplyHC();
+                UpdatePortC_High();
             }
         }
         break;
@@ -158,7 +158,7 @@ void PPI::WR(BYTE reg, BYTE value)
 }
 
 
-void PPI::ApplyLC()
+void PPI::UpdatePortC_Low()
 {
     if (aMode != 0)
     {
@@ -171,7 +171,7 @@ void PPI::ApplyLC()
         bHandshake = lC & 0x07;
 }
 
-void PPI::ApplyHC()
+void PPI::UpdatePortC_High()
 {
     switch(aMode)
     {

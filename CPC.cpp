@@ -13,12 +13,12 @@
 #include <sys/stat.h>
 
 BYTE *CPC::RAM[4];
+BYTE *CPC::memPage[4];
+BYTE CPC::zeroPage[0x4000] = {};
 BYTE *CPC::LoROM;
 BYTE *CPC::HiROM;
 BYTE *CPC::HiROMs[ROM_SLOTS];
 BYTE *CPC::RAMs[8];
-BYTE CPC::bank;
-word CPC::addr;
 BYTE *CPC::Cartridge;
 bool CPC::cartridgeEnabled;
 CPCType CPC::cpcType = CPCType::CPC6128;
@@ -174,41 +174,20 @@ BYTE CPC::GetRAMByteAt(word address)
     return RAM[bank][addr];
 }
 
-BYTE CPC::GetByteAt(word address)
+void CPC::UpdateMemoryMap()
 {
-    bank = address >> 14;
-    addr = address & 0x3FFF;
-    switch(bank)
-    {
-    case 0:
-        if (!GateArray::LoROMActive)
-        {
-            if (cartridgeEnabled)
-            {
-                if (Cartridge == nullptr)
-                    return 0;
-                return Cartridge[addr];
-            }
-            return LoROM[addr];
-        }
-        else
-            return RAM[bank][addr];
-        break;
-    case 1:
-    case 2:
-        return RAM[bank][addr];
-        break;
-    case 3:
-        if (!GateArray::HiROMActive)
-        {
-            if (HiROM == nullptr)
-                return 0;
-            return HiROM[addr];
-        }
-        else
-            return RAM[bank][addr];
-    }
-    return 0;
+    if (!GateArray::LoROMActive)
+        memPage[0] = (cartridgeEnabled && Cartridge) ? Cartridge : LoROM;
+    else
+        memPage[0] = RAM[0];
+
+    memPage[1] = RAM[1];
+    memPage[2] = RAM[2];
+
+    if (!GateArray::HiROMActive)
+        memPage[3] = HiROM ? HiROM : zeroPage;
+    else
+        memPage[3] = RAM[3];
 }
 
 void CPC::SetByteAt(word address, BYTE b)
@@ -241,6 +220,7 @@ void CPC::SelectROM(BYTE number)
         else
             HiROM = HiROMs[0];
     }
+    UpdateMemoryMap();
 }
 
 void CPC::SelectRAM(BYTE mmr)
@@ -269,4 +249,5 @@ void CPC::SelectRAM(BYTE mmr)
             break;
         }
     }
+    UpdateMemoryMap();
 }

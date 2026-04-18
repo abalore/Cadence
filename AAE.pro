@@ -5,8 +5,8 @@ QT += openglwidgets
 
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
-QMAKE_CXXFLAGS+=-fsanitize=address,leak
-QMAKE_LFLAGS+=-fsanitize=address,leak
+#QMAKE_CXXFLAGS+=-fsanitize=address,leak
+#QMAKE_LFLAGS+=-fsanitize=address,leak
 
 LIBS += -lasound
 
@@ -22,15 +22,12 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 SOURCES += \
     Debugger.cpp \
     CRTScreen.cpp \
-    Counter.cpp \
-    DFlipFlip.cpp \
     DSK.cpp \
     FDC.cpp \
     FloppyDrive.cpp \
     Keyboard.cpp \
     PPI.cpp \
     PSG.cpp \
-    RSFlipFlop.cpp \
     Tape.cpp \
     Z80_16bitAL.cpp \
     Z80_8bitAL.cpp \
@@ -66,8 +63,6 @@ SOURCES += \
 
 HEADERS += \
     Debugger.h \
-    Counter.h \
-    DFlipFlop.h \
     CDT.h \
     CPC.h \
     CRTC.h \
@@ -85,7 +80,6 @@ HEADERS += \
     Tape.h \
     Z80.h \
     defs.h \
-    RSFlipFlop.h \
     EmulatorThread.h \
     KeyPressFilter.h \
     SoundThread.h \

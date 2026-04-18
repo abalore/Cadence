@@ -7,8 +7,8 @@ class Reg16
 {
 public:
     Reg16(BYTE *h, BYTE *l);
-    void Set(word value);
-    word Get();
+    inline word Get() { return (*H << 8) | *L; }
+    inline void Set(word value) { *H = value >> 8; *L = value & 0xFF; }
     BYTE *H;
     BYTE *L;
 };

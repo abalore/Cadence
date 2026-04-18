@@ -13,12 +13,12 @@ bool DSK::Init(BYTE *dskFileData, size_t dataSize)
     if (strncmp("MV - CPC", (const char *)dskFileData, 8) == 0)
     {
         trackSize = dskFileData[0x32] + dskFileData[0x33] * 256;
-        LoadDSK(false);
+        ParseSectors(false);
         return true;
     }
     else if (strncmp("EXTENDED", (const char *)dskFileData, 8) == 0)
     {
-        LoadDSK(true);
+        ParseSectors(true);
         return true;
     }
     return false;
@@ -54,7 +54,7 @@ void DSK::AddSector(int track, int sector, BYTE *info, BYTE *address)
     }
 }
 
-void DSK::LoadDSK(bool extended)
+void DSK::ParseSectors(bool extended)
 {
     int t = 0;
     isExtended = extended;
