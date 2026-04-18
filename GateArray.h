@@ -99,7 +99,6 @@ private:
     static bool lastHDISP;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;
-    static bool waitingInt;
     static BYTE intTimeout;
     static BYTE latchLo;
     static BYTE latchHi;

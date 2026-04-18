@@ -25,7 +25,6 @@ BYTE CRTC::VSP;
 BYTE CRTC::IS;
 BYTE CRTC::MRA;
 
-BYTE CRTC::latchMRA, CRTC::latchVTA, CRTC::latchVT;
 
 BYTE CRTC::VTAC;
 BYTE CRTC::verticalTotal;
@@ -69,8 +68,6 @@ void CRTC::Reset()
     MRA = 7;
     DSA = 0x3000;
     VTAC = 0;
-    latchMRA = MRA;
-    latchVTA = VTA;
     adjustMode = false;
     MA = DSA;
     baseMA = DSA;
@@ -218,7 +215,7 @@ void CRTC::RunHorizontalChar()
     {
         if (HSC == HSW)
             HSYNC = false;
-        else HSC = (HSC + 1) % 0x0F;
+        else HSC = (HSC + 1) & 0x0F;
     }
     if (HCC == HD)
     {
