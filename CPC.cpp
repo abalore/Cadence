@@ -40,16 +40,22 @@ void CPC::ReadROM(char *filename, int number)
         dest = HiROMs[number];
     }
     FILE *file = fopen(filename, "r");
-    if (!fread(dest, 1, 16384, file)) {}
-    fclose(file);
+    if (file)
+    {
+        fread(dest, 1, 16384, file);
+        fclose(file);
+    }
 }
 
 void CPC::ReadCartridge(char *filename)
 {
     Cartridge = (BYTE *)malloc(524288);
     FILE *file = fopen(filename, "r");
-    if (!fread(Cartridge, 1, 524288, file)) {}
-    fclose(file);
+    if (file)
+    {
+        fread(Cartridge, 1, 524288, file);
+        fclose(file);
+    }
 }
 
 void CPC::Init()

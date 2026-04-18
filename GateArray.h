@@ -41,7 +41,7 @@ public:
     static word videoAddress;
     static BYTE ready;
 
-    constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
+    constexpr static const BYTE AbsoluteBlack[3] = {0, 100, 0};
     constexpr static const BYTE NormalBlack[3] = {cL, cL, cL};
     constexpr static const BYTE Palette[3 * 32] =
         {
@@ -96,6 +96,7 @@ private:
     static BYTE currentInk;
     static bool lastHSYNC;
     static bool lastVSYNC;
+    static bool lastHDISP;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;
     static bool waitingInt;

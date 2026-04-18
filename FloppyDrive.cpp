@@ -13,7 +13,7 @@ bool FloppyDrive::InsertDSK(char *filename)
     FILE *f = fopen(filename, "r");
     fread(buffer, 1, bufferSize, f);
     fclose(f);
-    if (dsk.Init(buffer))
+    if (dsk.Init(buffer, bufferSize))
         DiskInserted = true;
     else
     {
@@ -47,13 +47,9 @@ SectorInfo FloppyDrive::GetSectorInfo(BYTE track, BYTE sector)
 {
     SectorInfo si;
     if (DiskInserted)
-    {
         si = dsk.GetSectorInfo(track, sector);
-        if (si.SectorData == NULL)
-            si.SI_C = 0xFE;
-    }
     else
-        si.SI_C = 0xFF;
+        si.SI_ID = 0xFF;
     return si;
 }
 

@@ -5,6 +5,8 @@ QT += openglwidgets
 
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
+QMAKE_CXXFLAGS+=-fsanitize=address,leak
+QMAKE_LFLAGS+=-fsanitize=address,leak
 
 LIBS += -lasound
 

@@ -18,6 +18,7 @@ bool GateArray::CCLK = false;
 bool GateArray::VideoAccess = false;
 bool GateArray::lastHSYNC = false;
 bool GateArray::lastVSYNC = false;
+bool GateArray::lastHDISP = false;
 BYTE GateArray::R52 = 0;
 BYTE GateArray::hsyncDelay = 0;
 BYTE GateArray::vsyncDelay = 0;
@@ -88,10 +89,14 @@ void GateArray::ProcessSync()
     dispEnFF1 = CRTC::BORDER;
     bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
     bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
+    bool hdispRisingEdge = !lastHDISP && CRTC::HDISP;
+    if (hdispRisingEdge)
+    {
+        mode = nextMode;
+    }
     if (hsyncRisingEdge)
     {
         hsyncTrigger = true;
-        mode = nextMode;
     }
     if (hsyncFallingEdge)
     {
@@ -105,10 +110,9 @@ void GateArray::ProcessSync()
         if (vsyncDelay > 0)
         {
             vsyncDelay--;
-            if (vsyncDelay == 1)
-                vsyncTrigger = true;
             if (vsyncDelay == 0)
             {
+                vsyncTrigger = true;
                 if (R52 >= 32) Z80::IRQ();
                 R52 = 0;
             }
@@ -122,6 +126,7 @@ void GateArray::ProcessSync()
 
     lastVSYNC = CRTC::VSYNC;
     lastHSYNC = CRTC::HSYNC;
+    lastHDISP = CRTC::HDISP;
 }
 
 void GateArray::SetPixel()
@@ -139,8 +144,8 @@ void GateArray::SetPixel()
     BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
     currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex % 8][currentByte]];
     //if (SpeedController::overrun && BORDER)
-    if (dispEnFF2 && !Z80::IFF1)
-        currentInk = 0;
+    //if (dispEnFF2 && !Z80::IFF1)
+    //    currentInk = 0;
     /*
     if (CRTC::VSYNC)
         currentInk = 1;

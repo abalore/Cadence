@@ -175,6 +175,7 @@ string Debugger::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
+    Z80::EncodeF();
     sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
             Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),

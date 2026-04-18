@@ -60,6 +60,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
+
+    ui->hLine->setVisible(false);
+    ui->vLine->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -105,7 +108,7 @@ void MainWindow::onEmulatorPaused()
     ui->hLine->setVisible(true);
     ui->vLine->setVisible(true);
     ui->hLine->move(0, CRTScreen::vPos * 2 - 56);
-    ui->vLine->move(CRTScreen::hPos - 240, 0);
+    ui->vLine->move(CRTScreen::hPos + 240, 0);
     ui->vLine->pos().setX(CRTScreen::vPos);
     if (debugger->isHidden())
         debugger->show();

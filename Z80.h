@@ -68,6 +68,8 @@ public:
     static bool M1;
     static bool WAIT;
 
+    static void EncodeF();
+
 private:
     static void RunMCycle();
     static void RunTCycle();
@@ -259,7 +261,7 @@ private:
     static void IM(int mode);
     // Helpers
     static bool GetParity(BYTE b);
-    static void EncodeF();
+
     static void DecodeF();
     static void SetFlagsAfterShiftOp(BYTE b);
     static constexpr BYTE ExtendedM1[256] =

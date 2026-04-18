@@ -612,7 +612,7 @@ bool Z80::OUT_n_A()
         break;
     case 2:
         mCycleType = MCycleType::OUT;
-        AR = DR;
+        AR = A * 256 + DR;
         DR = A;
         break;
     case 3:

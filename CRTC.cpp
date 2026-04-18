@@ -139,8 +139,8 @@ void CRTC::WR(BYTE address, BYTE value)
         case 3:
             HSW = value & 0x0F;
             VSW = value >> 4;
-            if (VSW == 0)
-                VSW = 16;               // Check CRTC Type
+            //if (VSW == 0)
+//                VSW = 16;               // Check CRTC Type
             break;
         case 4:
             VT = value & 0x7F;

@@ -18,7 +18,7 @@ Reg16 Z80::IX(&IXH, &IXL);
 Reg16 Z80::IY(&IYH, &IYL);
 Reg16 Z80::AF_(&A_,&F_);
 Reg16 Z80::BC_(&B_, &C_);
-Reg16 Z80::DE_(&C_, &D_);
+Reg16 Z80::DE_(&D_, &E_);
 Reg16 Z80::HL_(&H_, &L_);
 bool Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC;
 BYTE Z80::A, Z80::F, Z80::B, Z80::C, Z80::D, Z80::E, Z80::H, Z80::L;
@@ -408,7 +408,6 @@ bool Z80::ProcessOUT()
             else if ((AR & 0x0001) != 0)
                 FDC::WR(DR);
         }
-
         break;
     case 3:
         if (!WAIT)

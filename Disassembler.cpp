@@ -29,7 +29,7 @@ string Disassembler::idx = "";
 string Disassembler::d;
 BYTE Disassembler::op;
 BYTE Disassembler::length;
-map<word, string> *Disassembler::labels = new map<word, string>();
+map<word, string> Disassembler::labels;
 
 char buff[100];
 
@@ -47,6 +47,11 @@ void Disassembler::Init()
     AddNewLabel(0x8ECA, "LineAddrTable");
     AddNewLabel(0xBB09, "KMReadChar");
     AddNewLabel(0xBCAA, "SoundQueue");
+
+    // AMSDOS routines
+    AddNewLabel(0xC7C7, "FDC_SenseINT");
+    AddNewLabel(0xC91C, "FDC_ReadResult");
+    AddNewLabel(0xC95C, "FDC_SendByte");
 }
 
 BYTE Disassembler::ReadNext()
@@ -77,8 +82,8 @@ string Disassembler::ReadHex8()
 string Disassembler::ReadHex16()
 {
     word w = (int)ReadNext() + (int)ReadNext() * 256;
-    auto pos = labels->find(w);
-    if (pos != labels->end())
+    auto pos = labels.find(w);
+    if (pos != labels.end())
         return pos->second;
     sprintf(buff, "&%04X", w);
     return (string)buff;
@@ -98,13 +103,13 @@ void Disassembler::SetPoint(ushort address)
 
 void Disassembler::AddNewLabel(word address, string label)
 {
-    labels->insert_or_assign(address, label);
+    labels.insert_or_assign(address, label);
 }
 
 void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode, string *label, string *addressStr, string *bytesStr, string *instrStr)
 {
-    auto pos = labels->find(addr);
-    if (pos != labels->end())
+    auto pos = labels.find(addr);
+    if (pos != labels.end())
         *label = pos->second;
     else
         *label = (string)"";

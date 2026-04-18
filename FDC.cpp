@@ -327,7 +327,7 @@ void FDC::ProcessExecution()
         result[4] = H;
         result[5] = R;
         result[6] = N;
-        switch(sectorInfo.SI_C)
+        switch(sectorInfo.SI_ID)
         {
         case 0xFE: // Data not found
             stIC = 0b01000000; // Interrupt
@@ -350,9 +350,7 @@ void FDC::ProcessExecution()
             stIC = 0b00000000; // Interrupt
             stEC = 0b00000000; // Equipment Check
             dataSize = (1 << sectorInfo.SI_size) * 128;
-            data = sectorInfo.SectorData;
-            if (sectorInfo.copies > 1)
-                data += (weakSectorCycle++ % sectorInfo.copies) * dataSize;
+            data = sectorInfo.SectorData[weakSectorCycle++ % sectorInfo.copies];
             dataIndex = 0;
             PCN = sectorInfo.SI_C;
             H = sectorInfo.SI_H;

@@ -49,7 +49,7 @@ void CRTScreen::Clock()
             pixelIndex = 0;
         }
     }
-    //pixelIndex = vPos * Stride + hPos * 3;
+    pixelIndex = vPos * Stride + hPos * 3;
     if (hOffset + pixelIndex < DataSize)
     {
         Pixels[hOffset + pixelIndex++] = GateArray::Color[0];
