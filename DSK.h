@@ -2,6 +2,8 @@
 #define DSK_H
 
 #include "defs.h"
+#include <vector>
+#include <optional>
 
 struct TrackInfo
 {
@@ -22,25 +24,26 @@ public:
     BYTE SI_reg1;
     BYTE SI_reg2;
     BYTE copies;
-    BYTE *SectorData;
+    BYTE *SectorData[3];
 };
 
 class DSK
 {
 public:
-    bool Init(BYTE *dskFileData);
+    bool Init(BYTE *dskFileData, size_t dataSize);
     TrackInfo GetTrackInfo(int track, int side);
     SectorInfo GetSectorInfo(BYTE track, BYTE sector);
     BYTE GetSectorID(BYTE track);
     BYTE *data;
+    size_t dataSize;
     BYTE tracks;
     BYTE sides;
     word trackSize;
     bool isExtended;
 private:
-    SectorInfo sectors[100][20];
-    void LoadNormalDSK();
-    void LoadExtendedDSK();
+    void AddSector(int track, int sector, BYTE *info, BYTE *address);
+    std::vector<std::vector<std::optional<SectorInfo>>> sectors;
+    void LoadDSK(bool extended);
 };
 
 #endif // DSK_H

@@ -7,16 +7,19 @@ class GateArray
 {
 public:
     static void Reset();
-    static void Clock(int tick);
+    static void ProcessSync();
     static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     static const BYTE *GetPaletteEntry(BYTE entry);
-    static void WR();
+    static void WR(BYTE value);
     static void AckInt();
+    static void SetPixel();
+    static void ReadByte(bool lo);
+    static void LoadVideoAddress();
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
     static BYTE currentPen;
-    static const BYTE cL = 0;
+    static const BYTE cL = 5;
     static const BYTE cMR = 127;
     static const BYTE cMG = 127;
     static const BYTE cMB = 127;
@@ -32,8 +35,14 @@ public:
     static bool LoROMActive;
     static bool HiROMActive;
     static bool Monochrome;
+    static bool CCLK;
+    static bool VideoAccess;
+    static BYTE porch;
+    static word videoAddress;
+    static BYTE ready;
 
-    constexpr static const BYTE AbsoluteBlack[3] = {0, 0, 0};
+    constexpr static const BYTE AbsoluteBlack[3] = {0, 100, 0};
+    constexpr static const BYTE NormalBlack[3] = {cL, cL, cL};
     constexpr static const BYTE Palette[3 * 32] =
         {
             cMR, cMG, cMB, // White
@@ -79,23 +88,25 @@ public:
         };
 
 private:
-    static void ProcessSync();
-    static void SetPixel();
-    static void ReadByte();
     static BYTE RMR;
     static BYTE MMR;
     static bool borderSelected;
-    static word videoAddress;
-    static BYTE currentByte;
+    static word currentWord;
     static BYTE pixelIndex;
     static BYTE currentInk;
-    static bool CCLK;
     static bool lastHSYNC;
     static bool lastVSYNC;
+    static bool lastHDISP;
     static BYTE hsyncDelay;
     static BYTE vsyncDelay;
     static bool waitingInt;
     static BYTE intTimeout;
+    static BYTE latchLo;
+    static BYTE latchHi;
+    static bool dispEnFF1;
+    static bool dispEnFF2;
+    static BYTE nextMode;
 };
 
 #endif // GATEARRAY_H
+

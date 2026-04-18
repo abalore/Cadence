@@ -5,6 +5,8 @@ QT += openglwidgets
 
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
+QMAKE_CXXFLAGS+=-fsanitize=address,leak
+QMAKE_LFLAGS+=-fsanitize=address,leak
 
 LIBS += -lasound
 
@@ -32,8 +34,10 @@ SOURCES += \
     Tape.cpp \
     Z80_16bitAL.cpp \
     Z80_8bitAL.cpp \
+    Z80_8bitShift.cpp \
     Z80_IDX_3.cpp \
     Z80_Jump.cpp \
+    Z80_Load.cpp \
     Z80_intexec.cpp \
     EmulatorThread.cpp \
     SoundThread.cpp \

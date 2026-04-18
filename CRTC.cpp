@@ -1,7 +1,4 @@
 #include "CRTC.h"
-#include "CPC.h"
-#include "Z80.h"
-#include "GateArray.h"
 
 BYTE CRTC::Index;
 BYTE CRTC::RA;
@@ -28,6 +25,8 @@ BYTE CRTC::VSP;
 BYTE CRTC::IS;
 BYTE CRTC::MRA;
 
+BYTE CRTC::latchMRA, CRTC::latchVTA, CRTC::latchVT;
+
 BYTE CRTC::VTAC;
 BYTE CRTC::verticalTotal;
 bool CRTC::HDISP;
@@ -38,6 +37,9 @@ bool CRTC::adjustMode;
 BYTE CRTC::crtcType = 0;
 
 word CRTC::DSA;
+
+bool CRTC::EndScreen;
+bool CRTC::EndChar;
 
 void CRTC::Reset()
 {
@@ -51,9 +53,10 @@ void CRTC::Reset()
     VLC = 0;
     HSYNC = false;
     VSYNC = false;
-    HDISP = false;
-    HDISP = false;
+    HDISP = true;
+    VDISP = true;
     BORDER = false;
+
     HT = 63;
     HD = 40;
     HSP = 46;
@@ -66,114 +69,104 @@ void CRTC::Reset()
     MRA = 7;
     DSA = 0x3000;
     VTAC = 0;
+    latchMRA = MRA;
+    latchVTA = VTA;
     adjustMode = false;
-    DSA = 0;
     MA = DSA;
-    VSW = 8; //Z80::DR >> 4;
+    baseMA = DSA;
+    VSW = 8;
+
 }
 
-void CRTC::RD()
+BYTE CRTC::RD(BYTE address)
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    switch(address)
     {
     case 2: // Status out
-        //////////////////////////////////////////
-        break;
+        return 0;
     case 3: // Data out
         switch(Index)
         {
         case 0:
-            Z80::DR = HT;
-            break;
+            return HT;
         case 1:
-            Z80::DR = HD;
-            break;
+            return HD;
         case 2:
-            Z80::DR = HSP;
-            break;
+            return HSP;
         case 3:
-            HSW = Z80::DR = VSW * 16 + HSW;
-            break;
+            return VSW * 16 + HSW;
         case 4:
-            Z80::DR = VT;
-            break;
+            return VT;
         case 5:
-            Z80::DR = VTA;
-            break;
+            return VTA;
         case 6:
-            Z80::DR = VD;
-            break;
+            return VD;
         case 7:
-            Z80::DR = VSP;
-            break;
+            return VSP;
         case 8:
-            Z80::DR = IS;
-            break;
+            return IS;
         case 9:
-            MRA = Z80::DR = MRA;
-            break;
+            return MRA;
         case 12:
-            Z80::DR = DSA >> 8;
-            break;
+            return DSA >> 8;
         case 13:
-            Z80::DR = DSA & 0xFF;
-            break;
+            return DSA & 0xFF;
         }
-
         break;
     }
+    return 0;
 }
 
-void CRTC::WR()
+void CRTC::WR(BYTE address, BYTE value)
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    switch(address)
     {
     case 0: // Index in
-        Index = Z80::DR;
+        Index = value;
         break;
     case 1: // Data in
         switch(Index)
         {
         case 0:
-            HT = Z80::DR;
+            HT = value;
             break;
         case 1:
-            HD = Z80::DR;
+            HD = value;
             break;
         case 2:
-            HSP = Z80::DR;
+            HSP = value;
             break;
         case 3:
-            HSW = Z80::DR & 0x0F;
-            VSW = Z80::DR >> 4;
-            if (VSW == 0)
-                VSW = 16;               // Check CRTC Type
+            HSW = value & 0x0F;
+            VSW = value >> 4;
+            //if (VSW == 0)
+//                VSW = 16;               // Check CRTC Type
             break;
         case 4:
-            VT = Z80::DR & 0x7F;
+            VT = value & 0x7F;
             break;
         case 5:
-            VTA = Z80::DR & 0x1F;
+            VTA = value & 0x1F;
             break;
         case 6:
-            VD = Z80::DR & 0x7F;
+            VD = value & 0x7F;
             break;
         case 7:
-            VSP = Z80::DR & 0x7F;
+            VSP = value & 0x7F;
             break;
         case 8:
-            IS = Z80::DR;
+            IS = value;
             break;
         case 9:
-            MRA = Z80::DR;
+            MRA = value;
             break;
         case 12:
             DSA &= 0x00FF;
-            DSA |= (Z80::DR & 0x3F) * 256;
+            DSA |= (value & 0x3F) * 256;
             break;
         case 13:
             DSA &= 0xFF00;
-            DSA |= Z80::DR;
+            DSA |= value;
             break;
         }
 
@@ -183,121 +176,122 @@ void CRTC::WR()
 
 void CRTC::RunCombinational()
 {
-    /*
-
-
-
-
-
-    if (VCC == VT)
-    {
-        VCC = 0;
-    }
-    else
-    {
-        VCC = (VCC + 1) & 0x7F;
-    }
-
-
-    */
 }
+
+bool willAdjust = false;
 
 void CRTC::RunHorizontalChar()
 {
-    if (HDISP && VDISP)
-        MA++;
+    MA = (MA + 1) & 0x3FFF;
+    // Timing for CRTC 0
+    if (HCC == 1)
+        EndScreen = VT == VCC;
+
+    if (HCC == 2)
+    {
+        if (RA == MRA && VCC == VT && VTA > 0)
+            willAdjust = true;
+    }
+
     if (HCC == HT)
     {
+        MA = baseMA;
         HCC = 0;
         if (HD > 0)
             HDISP = true;
+        if (!EndScreen)
+            EndChar = RA == MRA;
         RunLine();
+
+        EndChar = RA == MRA;
     }
     else
     {
         HCC++;
-    }
-    if (HSYNC)
-    {
-        HSC++;
-        if (HSC == HSW || (HSW == 0 && HSC == 16))
-            HSYNC = false;
     }
     if (HCC == HSP)
     {
         HSYNC = true;
         HSC = 0;
     }
+    if (HSYNC)
+    {
+        if (HSC == HSW)
+            HSYNC = false;
+        else HSC = (HSC + 1) % 0x0F;
+    }
     if (HCC == HD)
+    {
         HDISP = false;
+        if (RA == MRA)
+            baseMA = MA;
+    }
+    if (!VSYNC && VCC == VSP)
+    {
+        VSYNC = true;
+        VSC = 0;
+    }
+
+    if (VDISP && VCC == VD) VDISP = false;
 }
 
 void CRTC::RunLine()
 {
     if (VSYNC)
     {
-        VSC++;
-        if (VSC == VSW || (VSW == 0 && VSC == 16))
+        VSC = (VSC + 1) & 0x0F;
+        if (VSC == VSW)
+        {
             VSYNC = false;
+            VSC = 0;
+        }
     }
 
-    if (adjustMode ? (RA == VTA - 1) : (RA == MRA))
+    bool resetFrame = false;
+    if (adjustMode)
     {
-        RA = 0;
-
-        if (adjustMode)
+        RA = (RA + 1) & 0x1F;
+        if (RA == VTA)
         {
-            MA = DSA;
-            baseMA = MA;
-            VCC = 0;
+            RA = 0;
             adjustMode = false;
-
-            if (VSP == 0)
-            {
-                VSYNC = true;
-                VSC = 0;
-            }
-            VDISP = (VD > 0);
-        }
-        else
-        {
-            RunVerticalChar();
-            baseMA = MA;
+            resetFrame = true;
+            willAdjust = false;
         }
     }
     else
     {
-        RA = (RA + 1) & 0x1F;
-        MA = baseMA;
+        if (EndChar)
+        {
+            RA = 0;
+            if (EndScreen)
+            {
+                if (willAdjust) adjustMode = true;
+                else
+                    resetFrame = true;
+            }
+            else
+            {
+                VCC = (VCC + 1) & 0x7F;
+            }
+        }
+        else
+        {
+            RA = (RA + 1) & 0x1F;
+        }
     }
+    if (resetFrame)
+    {
+        baseMA = DSA;
+        MA = baseMA;
+        VDISP = (VD > 0);
+        VCC = 0;
+    }
+
 }
 
 void CRTC::RunVerticalChar()
 {
-    if (VCC == VT)
-    {
-        if (VTA == 0)
-        {
-            MA = DSA;
-            baseMA = MA;
-            VDISP = (VD > 0);
-            VCC = 0;
-        }
-        else
-        {
-            adjustMode = true;
-        }
-    } else
-    {
-        VCC = (VCC + 1) & 0x7F;
-    }
-    if (VCC == VD)
-        VDISP = false;
-    if (VCC == VSP)
-    {
-        VSYNC = true;
-        VSC = 0;
-    }
 }
 
 void CRTC::ResetFrame()
@@ -307,5 +301,5 @@ void CRTC::ResetFrame()
 void CRTC::Clock()
 {
     RunHorizontalChar();
-    BORDER = !HDISP || !VDISP;// || verticalAdjust > 0;
+    BORDER = !HDISP || !VDISP;
 }

@@ -32,9 +32,11 @@ protected:
     void run() override;
 signals:
     void OnPause();
+    void OnResume();
     void OnFinishedFrame();
 private:
     void Stop();
+    bool paused;
 };
 
 #endif // EMULATORWORKERTHREAD_H

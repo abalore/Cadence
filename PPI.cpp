@@ -33,63 +33,61 @@ void PPI::Reset()
     hC = 0;
 }
 
-void PPI::RD()
+BYTE PPI::RD(BYTE reg)
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    BYTE value = 0;
+    switch(reg)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-        Z80::DR = aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
-        break;
+        return aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-        Z80::DR = bIO ? (Tape::GetLevel() << 7 ) + CRTC::VSYNC + 0x3E : 0x00;
-        break;
+        return bIO ? (Tape::GetLevel() << 7 ) + CRTC::VSYNC + 0x3E : 0x00;
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {
             // bits 2..0
             if (bMode == 0)
-                Z80::DR = lC;
+                value = lC;
             else
-                Z80::DR = bHandshake;
+                value = bHandshake;
             // bit 3
             if (aMode != 0)
             {
-                Z80::DR &= 0xF7;
-                Z80::DR |= aHandshake & 0x08;
+                value &= 0xF7;
+                value |= aHandshake & 0x08;
             }
         }
         else
-            Z80::DR &= 0xF0;
+            value &= 0xF0;
         if (!hCIO)
         {
             switch(aMode)
             {
             case 0:
-                Z80::DR |= hC;
+                value |= hC;
                 break;
             case 1:
             case 2:
-                Z80::DR |= aHandshake & 0xF0;
+                value |= aHandshake & 0xF0;
                 break;
             }
         }
         else
-            Z80::DR &= 0x0F;
-
-        break;
+            value &= 0x0F;
+        return value;
     case 3: // 8255 PPI Control-Register (W)
-        Z80::DR = 0x00;
-        break;
+        return 0x00;
     }
+    return value;
 }
 
-void PPI::WR()
+void PPI::WR(BYTE reg, BYTE value)
 {
-    switch((Z80::AR & 0x0300) >> 8)
+    switch(reg)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
         if (!aIO || aMode == 2)
-            PSG::WriteData(Z80::DR);
+            PSG::WriteData(value);
         break;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
         if (!bIO)
@@ -100,34 +98,45 @@ void PPI::WR()
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {
-            lC = Z80::DR & 0x0F;
+            lC = value & 0x0F;
             ApplyLC();
         }
         if (!hCIO)
         {
-            hC = Z80::DR & 0xF0;
+            hC = value & 0xF0;
             ApplyHC();
         }
         break;
     case 3: // 8255 PPI Control-Register (W)
-        if (Z80::DR & 0x80)
+        if (value & 0x80)
         {
-            controlWord = Z80::DR;
-            PSG::WriteData(0);
-            Keyboard::SetRow(0);
-            PSG::SelectFunction(false, false);
-            Tape::SetMotorState(false);
-            aMode = (controlWord & 0x7F) >> 5;
-            bMode = (controlWord & 0x07) >> 2;
+            controlWord = value;
+            aMode = (controlWord & 0x60) >> 5;
+            bMode = (controlWord & 0x04) >> 2;
             lCIO = controlWord & 0x01;
             hCIO = controlWord & 0x08;
             aIO = controlWord & 0x10;
             bIO = controlWord & 0x02;
+
+            if (!lCIO)
+            {
+                lC =0;
+                ApplyLC();
+            }
+            if (!hCIO)
+            {
+                hC = 0;
+                ApplyHC();
+            }
+            if (!aIO || aMode == 2)
+            {
+                PSG::WriteData(0);
+            }
         }
         else
         {
-            BYTE bit = (Z80::DR & 0x0E) >> 1;
-            bool setBit = (Z80::DR & 0x01) != 0;
+            BYTE bit = (value & 0x0E) >> 1;
+            bool setBit = (value & 0x01) != 0;
             if (bit < 4)
             {
                 if (setBit) lC |= (1 << bit);
@@ -167,7 +176,7 @@ void PPI::ApplyHC()
     switch(aMode)
     {
     case 0:
-        PSG::SelectFunction((hC & 0x80) > 0, (hC & 0x40) > 0);
+        PSG::SelectFunction(hC & 0x80, hC & 0x40);
         Tape::SetMotorState(hC & 0x10);
         break;
     case 1:

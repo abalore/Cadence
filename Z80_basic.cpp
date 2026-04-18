@@ -1,6 +1,6 @@
 #include "Z80.h"
 
-void Z80::Step_basic()
+bool Z80::Step_basic()
 {
     switch(IR >> 4)
     {
@@ -10,14 +10,11 @@ void Z80::Step_basic()
         case 0x0: // NOP  {4T}
             break;
         case 0x1: // LD BC,nn   {12T}
-            LD_RR_nn(BC);
-            break;
+            return LD_RR_nn(BC);
         case 0x2: // LD (BC),A    {8T}
-            LD_Ind_RR_A(BC);
-            break;
+            return LD_Ind_RR_A(BC);
         case 0x3: // INC BC   {8T}
-            INC_RR(BC);
-            break;
+            return INC_RR(BC);
         case 0x4: // INC B  {4T}
             INC_R(B);
             break;
@@ -25,8 +22,7 @@ void Z80::Step_basic()
             DEC_R(B);
             break;
         case 0x6: // LD B,n  {8T}
-            LD_R_n(B);
-            break;
+            return LD_R_n(B);
         case 0x7: // RLCA  {4T}
             RLCA();
             break;
@@ -34,14 +30,11 @@ void Z80::Step_basic()
             EX_AF_AF_();
             break;
         case 0x9: // ADD HL,BC  {12T}
-            ADD_HL_vv(BC.Get());
-            break;
+            return ADD_HL_vv(BC.Get());
         case 0xA: // LD A,(BC)    {8T}
-            LD_A_I_RR(BC);
-            break;
+            return LD_A_Ind_RR(BC);
         case 0xB: // DEC BC   {8T}
-            DEC_RR(BC);
-            break;
+            return DEC_RR(BC);
         case 0xC: // INC C  {4T}
             INC_R(C);
             break;
@@ -49,8 +42,7 @@ void Z80::Step_basic()
             DEC_R(C);
             break;
         case 0xE: // LD C,n {8T}
-            LD_R_n(C);
-            break;
+            return LD_R_n(C);
         case 0xF: // RRCA   {4T}
             RRCA();
             break;
@@ -60,17 +52,13 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // DJNZ d   {B>0 16T / B=0 8T}
-            DJNZ();
-            break;
+            return DJNZ();
         case 0x1: // LD DE,nn   {12T}
-            LD_RR_nn(DE);
-            break;
+            return LD_RR_nn(DE);
         case 0x2: // LD (DE),A    {8T}
-            LD_Ind_RR_A(DE);
-            break;
+            return LD_Ind_RR_A(DE);
         case 0x3: // INC DE   {8T}
-            INC_RR(DE);
-            break;
+            return INC_RR(DE);
         case 0x4: // INC D    {4T}
             INC_R(D);
             break;
@@ -78,23 +66,18 @@ void Z80::Step_basic()
             DEC_R(D);
             break;
         case 0x6: // LD D,n   {8T}
-            LD_R_n(D);
-            break;
+            return LD_R_n(D);
         case 0x7: // RLA    {4T}
             RLA();
             break;
         case 0x8: // JR d   {12T}
-            JR(true);
-            break;
+            return JR(true);
         case 0x9: // ADD HL,DE    {12T}
-            ADD_HL_vv(DE.Get());
-            break;
+            return ADD_HL_vv(DE.Get());
         case 0xA: // LD A,(DE)    {8T}
-            LD_A_I_RR(DE);
-            break;
+            return LD_A_Ind_RR(DE);
         case 0xB: // DEC DE   {8T}
-            DEC_RR(DE);
-            break;
+            return DEC_RR(DE);
         case 0xC: // INC E    {4T}
             INC_R(E);
             break;
@@ -102,8 +85,7 @@ void Z80::Step_basic()
             DEC_R(E);
             break;
         case 0xE: // LD E,n   {8T}
-            LD_R_n(E);
-            break;
+            return LD_R_n(E);
         case 0xF: // RRA    {4T}
             RRA();
             break;
@@ -113,17 +95,13 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // JR NZ,d    {fZ 8T, !fZ 12T}
-            JR(!fZ);
-            break;
+            return JR(!fZ);
         case 0x1: // LD HL,nn   {12T}
-            LD_RR_nn(HL);
-            break;
+            return LD_RR_nn(HL);
         case 0x2: //  LD (nn),HL     {20T}
-            LD_Ind_RR(HL);
-            break;
+            return LD_Ind_RR(HL);
         case 0x3: // INC HL   {8T}
-            INC_RR(HL);
-            break;
+            return INC_RR(HL);
         case 0x4: // INC H    {4T}
             INC_R(H);
             break;
@@ -131,23 +109,18 @@ void Z80::Step_basic()
             DEC_R(H);
             break;
         case 0x6: // LD H,n   {8T}
-            LD_R_n(H);
-            break;
+            return LD_R_n(H);
         case 0x7: // DAA    {4T}
             DAA();
             break;
         case 0x8: // JR Z,d    {fZ 8T, !fZ 12T}
-            JR(fZ);
-            break;
+            return JR(fZ);
         case 0x9: // ADD HL,HL
-            ADD_HL_vv(HL.Get());
-            break;
+            return ADD_HL_vv(HL.Get());
         case 0xA: // LD HL,(nn)
-            LD_RR_Ind(HL);
-            break;
+            return LD_RR_Ind(HL);
         case 0xB: // DEC HL
-            DEC_RR(HL);
-            break;
+            return DEC_RR(HL);
         case 0xC: // INC L
             INC_R(L);
             break;
@@ -155,8 +128,7 @@ void Z80::Step_basic()
             DEC_R(L);
             break;
         case 0xE: // LD L,n   {8T}
-            LD_R_n(L);
-            break;
+            return LD_R_n(L);
         case 0xF: // CPL
             CPL();
             break;
@@ -166,41 +138,30 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // JR NC,D    {fC 8T, !fC 12T}
-            JR(!fC);
-            break;
+            return JR(!fC);
         case 0x1: // LD SP,nn   {12T}
-            LD_WW_nn(SP);
-            break;
+            return LD_WW_nn(SP);
         case 0x2: // LD (nn),A    {16T}
-            LD_Ind_A();
-            break;
+            return LD_Ind_A();
         case 0x3: // INC SP   {8T}
-            INC_WW(SP);
-            break;
+            return INC_WW(SP);
         case 0x4: // INC (HL)
-            INC_Ind_HL();
-            break;
+            return INC_Ind_HL();
         case 0x5: // DEC (HL)
-            DEC_Ind_HL();
-            break;
+            return DEC_Ind_HL();
         case 0x6: // LD (HL),n
-            LD_Ind_HL_n();
-            break;
+            return LD_Ind_HL_n();
         case 0x7: // SCF
             SCF();
             break;
         case 0x8: // JR C,d
-            JR(fC);
-            break;
+            return JR(fC);
         case 0x9: // ADD HL,SP
-            ADD_HL_vv(SP);
-            break;
+            return ADD_HL_vv(SP);
         case 0xA: // LD A,(nn)
-            LD_A_Ind();
-            break;
+            return LD_A_Ind();
         case 0xB: // DEC SP
-            DEC_WW(SP);
-            break;
+            return DEC_WW(SP);
         case 0xC: // INC A
             INC_R(A);
             break;
@@ -208,8 +169,7 @@ void Z80::Step_basic()
             DEC_R(A);
             break;
         case 0xE: // LD A,n
-            LD_R_n(A);
-            break;
+            return LD_R_n(A);
         case 0xF: // CCF
             CCF();
             break;
@@ -236,8 +196,7 @@ void Z80::Step_basic()
             B = L;
             break;
         case 0x6: // LD B,(HL)
-            LD_R_Ind_HL(B);
-            break;
+            return LD_R_Ind_HL(B);
         case 0x7: // LD B,A
             B = A;
             break;
@@ -259,8 +218,7 @@ void Z80::Step_basic()
             C = L;
             break;
         case 0xE: // LD C,(HL)
-            LD_R_Ind_HL(C);
-            break;
+            return LD_R_Ind_HL(C);
         case 0xF: // LD C,A
             C = A;
             break;
@@ -287,8 +245,7 @@ void Z80::Step_basic()
             D = L;
             break;
         case 0x6: // LD D,(HL)
-            LD_R_Ind_HL(D);
-            break;
+            return LD_R_Ind_HL(D);
         case 0x7: // LD D,A
             D = A;
             break;
@@ -310,8 +267,7 @@ void Z80::Step_basic()
             E = L;
             break;
         case 0xE: // LD E,(HL)
-            LD_R_Ind_HL(E);
-            break;
+            return LD_R_Ind_HL(E);
         case 0xF: // LD E,A
             E = A;
             break;
@@ -338,8 +294,7 @@ void Z80::Step_basic()
             H = L;
             break;
         case 0x6: // LD H,(HL)
-            LD_R_Ind_HL(H);
-            break;
+            return LD_R_Ind_HL(H);
         case 0x7: // LD H,A
             H = A;
             break;
@@ -361,8 +316,7 @@ void Z80::Step_basic()
         case 0xD: // LD L,L
             break;
         case 0xE: // LD L,(HL)
-            LD_R_Ind_HL(L);
-            break;
+            return LD_R_Ind_HL(L);
         case 0xF: // LD L,A
             L = A;
             break;
@@ -372,30 +326,23 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // LD (HL),B
-            LD_Ind_HL_R(B);
-            break;
+            return LD_Ind_HL_R(B);
         case 0x1: // LD (HL),C
-            LD_Ind_HL_R(C);
-            break;
+            return LD_Ind_HL_R(C);
         case 0x2: // LD (HL),D
-            LD_Ind_HL_R(D);
-            break;
+            return LD_Ind_HL_R(D);
         case 0x3: // LD (HL),E
-            LD_Ind_HL_R(E);
-            break;
+            return LD_Ind_HL_R(E);
         case 0x4: // LD (HL),H
-            LD_Ind_HL_R(H);
-            break;
+            return LD_Ind_HL_R(H);
         case 0x5: // LD (HL),L
-            LD_Ind_HL_R(L);
-            break;
+            return LD_Ind_HL_R(L);
         case 0x6: // HALT
             Z80::halted = true;
             PC--;
             break;
         case 0x7: // LD (HL),A
-            LD_Ind_HL_R(A);
-            break;
+            return LD_Ind_HL_R(A);
         case 0x8: // LD A,B
             A = B;
             break;
@@ -415,8 +362,7 @@ void Z80::Step_basic()
             A = L;
             break;
         case 0xE: // LD A,(HL)
-            LD_R_Ind_HL(A);
-            break;
+            return LD_R_Ind_HL(A);
         case 0xF: // LD A,A
             break;
         }
@@ -443,8 +389,7 @@ void Z80::Step_basic()
             ADD_v(L);
             break;
         case 0x6: // ADD A,(HL)
-            ADD_Ind_HL();
-            break;
+            return ADD_Ind_HL();
         case 0x7: // ADD A,A
             ADD_v(A);
             break;
@@ -467,8 +412,7 @@ void Z80::Step_basic()
             ADC_v(L);
             break;
         case 0xE: // ADC A,(HL)
-            ADC_Ind_HL();
-            break;
+            return ADC_Ind_HL();
         case 0xF: // ADC A,A
             ADC_v(A);
             break;
@@ -496,8 +440,7 @@ void Z80::Step_basic()
             SUB_v(L);
             break;
         case 0x6: // SUB (HL)
-            SUB_Ind_HL();
-            break;
+            return SUB_Ind_HL();
         case 0x7: // SUB A
             SUB_v(A);
             break;
@@ -520,8 +463,7 @@ void Z80::Step_basic()
             SBC_v(L);
             break;
         case 0xE: // SBC (HL)
-            SBC_Ind_HL();
-            break;
+            return SBC_Ind_HL();
         case 0xF: // SBC A
             SBC_v(A);
             break;
@@ -549,8 +491,7 @@ void Z80::Step_basic()
             AND_v(L);
             break;
         case 0x6: // AND (HL)
-            AND_Ind_HL();
-            break;
+            return AND_Ind_HL();
         case 0x7: // AND A
             AND_v(A);
             break;
@@ -573,8 +514,7 @@ void Z80::Step_basic()
             XOR_v(L);
             break;
         case 0xE: // XOR (HL)
-            XOR_Ind_HL();
-            break;
+            return XOR_Ind_HL();
         case 0xF: // XOR A
             XOR_v(A);
             break;
@@ -602,8 +542,7 @@ void Z80::Step_basic()
             OR_v(L);
             break;
         case 0x6: // OR (HL)
-            OR_Ind_HL();
-            break;
+            return OR_Ind_HL();
         case 0x7: // OR A
             OR_v(A);
             break;
@@ -626,8 +565,7 @@ void Z80::Step_basic()
             CP_v(L);
             break;
         case 0xE: // CP (HL)
-            CP_Ind_HL();
-            break;
+            return CP_Ind_HL();
         case 0xF: // CP A
             CP_v(A);
             break;
@@ -637,218 +575,172 @@ void Z80::Step_basic()
         switch(IR & 0x0F)
         {
         case 0x0: // RET NZ
-            RET(!fZ);
-            break;
+            return RET(!fZ);
         case 0x1: // POP BC
-            POP_RR(BC);
-            break;
+            return POP_RR(BC);
         case 0x2: // JP NZ,nn
-            JP(!fZ);
-            break;
+            return JP(!fZ);
         case 0x3: // JP nn
-            JP(true);
-            break;
+            return JP(true);
         case 0x4: // CALL NZ,nn
-            CALL(!fZ);
-            break;
+            return CALL(!fZ);
         case 0x5: // PUSH BC
-            PUSH_RR(BC);
-            break;
+            return PUSH_RR(BC);
         case 0x6: // ADD A,n
-            ADD_n();
-            break;
+            return ADD_n();
         case 0x7: // RST 00h
-            RST(0);
-            break;
+            return RST(0);
         case 0x8: // RET z
-            RET(fZ);
-            break;
+            return RET(fZ);
         case 0x9: // RET
-            RET();
-            break;
+            return RET();
         case 0xA: // JP Z,nn
-            JP(fZ);
-            break;
+            return JP(fZ);
         case 0xB: // BIT OP
             idMode = IDMode::BIT;
-            break;
+            mCycle--;
+            return false;
         case 0xC: // CALL Z,nn
-            CALL(fZ);
-            break;
+            return CALL(fZ);
         case 0xD: // CALL nn
-            CALL(true);
-            break;
+            return CALL(true);
         case 0xE: // ADC A,n
-            ADC_n();
-            break;
+            return ADC_n();
         case 0xF: // RST 08h
-            RST(0x08);
-            break;
+            return RST(0x08);
         }
         break;
     case 0xD:
         switch(IR & 0x0F)
         {
         case 0x0: // RET NC
-            RET(!fC);
-            break;
+            return RET(!fC);
         case 0x1: // POP DE
-            POP_RR(DE);
-            break;
+            return POP_RR(DE);
         case 0x2: // JP NC,NN
-            JP(!fC);
-            break;
+            return JP(!fC);
         case 0x3: // OUT (n),A
-            OUT_n_A();
-            break;
+            return OUT_n_A();
         case 0x4: // CALL NC,nn
-            CALL(!fC);
-            break;
+            return CALL(!fC);
         case 0x5: // PUSH_DE
-            PUSH_RR(DE);
-            break;
+            return PUSH_RR(DE);
         case 0x6: // SUB n
-            SUB_n();
-            break;
+            return SUB_n();
         case 0x7: // RST 10h
-            RST(0x10);
-            break;
+            return RST(0x10);
         case 0x8: // RET C
-            RET(fC);
-            break;
+            return RET(fC);
         case 0x9: // EXX
             EXX();
             break;
         case 0xA: // JP C,nn
-            JP(fC);
-            break;
+            return JP(fC);
         case 0xB: // IN A,(n)
-            IN_A_n();
-            break;
+            return IN_A_n();
         case 0xC: // CALL C,nn
-            CALL(fC);
+            return CALL(fC);
             break;
         case 0xD: // IX OP
             IDX = &IX;
             idMode = IDMode::IDX;
-            break;
+            mCycle--;
+            return false;
         case 0xE: // SBC A,n
-            SBC_n();
-            break;
+            return SBC_n();
         case 0xF: // RST 18h
-            RST(0x18);
-            break;
+            return RST(0x18);
         }
         break;
     case 0xE:
         switch(IR & 0x0F)
         {
         case 0x0: // RET PO
-            RET(!fP);
-            break;
+            return RET(!fP);
         case 0x1: // POP HL
-            POP_RR(HL);
-            break;
+            return POP_RR(HL);
         case 0x2: // JP PO,nn
-            JP(!fP);
-            break;
+            return JP(!fP);
         case 0x3: // EX (SP),HL
-            EX_HL_Ind_SP();
-            break;
+            return EX_HL_Ind_SP();
         case 0x4: // CALL PO,nn
-            CALL(!fP);
-            break;
+            return CALL(!fP);
         case 0x5: // PUSH_HL
-            PUSH_RR(HL);
-            break;
+            return PUSH_RR(HL);
         case 0x6: // AND n
-            AND_n();
-            break;
+            return AND_n();
         case 0x7: // RST 20h
-            RST(0x20);
-            break;
+            return RST(0x20);
         case 0x8: // RET PE
-            RET(fP);
-            break;
+            return RET(fP);
         case 0x9: // JP (HL)
             JP_HL();
             break;
         case 0xA: // JP PE,nn
-            JP(fP);
-            break;
+            return JP(fP);
         case 0xB: // EX DE,HL
             EX_DE_HL();
             break;
         case 0xC: // CALL PE,nn
-            CALL(fP);
-            break;
+            return CALL(fP);
         case 0xD: // MISC
             idMode = IDMode::MISC;
-            break;
+            mCycle--;
+            return false;
         case 0xE: // XOR n
-            XOR_n();
-            break;
+            return XOR_n();
         case 0xF: // RST 28h
-            RST(0x28);
-            break;
+            return RST(0x28);
         }
         break;
     case 0xF:
         switch(IR & 0x0F)
         {
         case 0x0: // RET P
-            RET(!fS);
-            break;
+            return RET(!fS);
         case 0x1: // POP AF
-            POP_RR(AF);
-            DecodeF();
-            break;
+            tC = POP_RR(AF);
+            if (tC)
+                DecodeF();
+            return tC;
         case 0x2: // JP P,nn
-            JP(!fS);
-            break;
+            return JP(!fS);
         case 0x3: // DI
             IFF1 = false;
             IFF2 = false;
             break;
         case 0x4: // CALL P,nn
-            CALL(!fS);
-            break;
+            return CALL(!fS);
         case 0x5: // PUSH_AF
-            EncodeF();
-            PUSH_RR(AF);
-            break;
+            if (mCycle == 1)
+                EncodeF();
+            return PUSH_RR(AF);
         case 0x6: // OR n
-            OR_n();
-            break;
+            return OR_n();
         case 0x7: // RST 30h
-            RST(0x30);
-            break;
+            return RST(0x30);
         case 0x8: // RET M
-            RET(fS);
-            break;
+            return RET(fS);
         case 0x9: // LD SP,HL
-            LD_SP_HL();
-            break;
+            return LD_SP_HL();
         case 0xA: // JP M,nn
-            JP(fS);
-            break;
+            return JP(fS);
         case 0xB: // EI
             Z80::EIRequest = true;
             break;
         case 0xC: // CALL M,nn
-            CALL(fS);
-            break;
+            return CALL(fS);
         case 0xD: // IY op
             IDX = &IY;
             idMode = IDMode::IDX;
-            break;
+            mCycle--;
+            return false;
         case 0xE: // CP n
-            CP_n();
-            break;
+            return CP_n();
         case 0xF: // RST 38h
-            RST(0x38);
-            break;
+            return RST(0x38);
         }
         break;
     }
+    return true; // For simple instructions
 }

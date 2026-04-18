@@ -55,13 +55,15 @@ class FDC
 public:
     static void Reset();
     static void Clock();
-    static void RD();
-    static void WR();
+    static BYTE RD_State();
+    static BYTE RD_Data();
+    static void WR(BYTE value);
+    static void SetMotor(BYTE value);
     static FloppyDrive *GetDrive(int number);
 private:
     static void ProcessCommand(BYTE data);
     static void ProcessExecution();
-    static void ProcessResult();
+    static BYTE ProcessResult();
     static void GoToCommandState();
     static void GoToExecutionState();
     static void GoToTransferState();
@@ -103,6 +105,7 @@ private:
     static BYTE stIC, stSE, stEC, stNR; // For Reg0
     static BYTE stEN, stDE, stOR, stND, stNW, stMA; // For Reg1
     static BYTE stCM, stDD, stWC, stSH, stSN, stBC, stMD; // For Reg2
+    static bool MotorState;
 };
 
 #endif // FDC_H

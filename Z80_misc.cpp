@@ -1,6 +1,6 @@
 #include "Z80.h"
 
-void Z80::Step_misc()
+bool Z80::Step_misc()
 {
     switch(IR >> 4)
     {
@@ -8,214 +8,167 @@ void Z80::Step_misc()
         switch(IR & 0x0F)
         {
         case 0x0: // IN B,(C)
-            IN_R_PortBC(B);
-            break;
+            return IN_R_PortBC(B);
         case 0x1: // OUT (C),B
-            OUT_PortBC_R(B);
-            break;
+            return OUT_PortBC_R(B);
         case 0x2: // SBC HL,BC
-            SBC_HL_vv(BC.Get());
-            break;
+            return SBC_HL_vv(BC.Get());
         case 0x3: // LD (nn),BC
-            LD_Ind_RR(BC);
-            break;
+            return LD_Ind_RR(BC);
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0x6: // IM 0
             IM(0);
             break;
         case 0x7: // LD I,A
-            LD_I_A();
-            break;
+            return LD_I_A();
         case 0x8: // IN C,(C)
-            IN_R_PortBC(C);
-            break;
+            return IN_R_PortBC(C);
         case 0x9: // OUT (C),C
-            OUT_PortBC_R(C);
-            break;
+            return OUT_PortBC_R(C);
         case 0xA: // ADC HL,BC
-            ADC_HL_vv(BC.Get());
-            break;
+            return ADC_HL_vv(BC.Get());
         case 0xB: // LD BC,(nn)
-            LD_RR_Ind(BC);
-            break;
+            return LD_RR_Ind(BC);
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETI
-            RET();
-            break;
+            return RET();
         case 0xE: // IM 0
             IM(0);
             break;
         case 0xF: // LD R,A
-            LD_R_A();
-            break;
+            return LD_R_A();
         }
         break;
     case 0x5:
         switch(IR & 0x0F)
         {
         case 0x0: // IN D,(C)
-            IN_R_PortBC(D);
-            break;
+            return IN_R_PortBC(D);
         case 0x1: // OUT (C),D
-            OUT_PortBC_R(D);
-            break;
+            return OUT_PortBC_R(D);
         case 0x2: // SBC HL,DE
-            SBC_HL_vv(DE.Get());
-            break;
+            return SBC_HL_vv(DE.Get());
         case 0x3: // LD (nn),DE
-            LD_Ind_RR(DE);
-            break;
+            return LD_Ind_RR(DE);
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0x6: // IM 1
             IM(1);
             break;
         case 0x7: // LD A,I
-            LD_A_I();
-            break;
+            return LD_A_I();
         case 0x8: // IN E,(C)
-            IN_R_PortBC(E);
-            break;
+            return IN_R_PortBC(E);
         case 0x9: // OUT (C),E
-            OUT_PortBC_R(E);
-            break;
+            return OUT_PortBC_R(E);
         case 0xA: // ADC HL,DE
-            ADC_HL_vv(DE.Get());
-            break;
+            return ADC_HL_vv(DE.Get());
         case 0xB: // LD DE,(nn)
-            LD_RR_Ind(DE);
-            break;
+            return LD_RR_Ind(DE);
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0xE: // IM 2
             IM(2);
             break;
         case 0xF: // LD A,R
-            LD_A_R();
-            break;
+            return LD_A_R();
         }
         break;
     case 0x6:
         switch(IR & 0x0F)
         {
         case 0x0: // IN H,(C)
-            IN_R_PortBC(H);
-            break;
+            return IN_R_PortBC(H);
         case 0x1: // OUT (C),H
-            OUT_PortBC_R(H);
-            break;
+            return OUT_PortBC_R(H);
         case 0x2: // SBC HL,HL
-            SBC_HL_vv(HL.Get());
-            break;
+            return SBC_HL_vv(HL.Get());
         case 0x3: // LD (nn),HL
-            LD_Ind_RR(HL);
-            break;
+            return LD_Ind_RR(HL);
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0x6: // IM 0
             IM(0);
             break;
         case 0x7: // RRD
-            RRD();
-            break;
+            return RRD();
         case 0x8: // IN L,(C)
-            IN_R_PortBC(L);
-            break;
+            return IN_R_PortBC(L);
         case 0x9: // OUT (C),L
-            OUT_PortBC_R(L);
-            break;
+            return OUT_PortBC_R(L);
         case 0xA: // ADC HL,HL
-            ADC_HL_vv(HL.Get());
-            break;
+            return ADC_HL_vv(HL.Get());
         case 0xB: // LD HL,(nn)
-            LD_RR_Ind(HL);
-            break;
+            return LD_RR_Ind(HL);
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0xE: // IM 0
             IM(0);
             break;
         case 0xF: // RLD
-            RLD();
-            break;
+            return RLD();
         }
         break;
     case 0x7:
         switch(IR & 0x0F)
         {
         case 0x0: // IN (C) Flags only
-            IN_R_PortBC(t8);
-            break;
+            return IN_R_PortBC(t8);
         case 0x1: // OUT (C),0
             t8 = 0;
-            OUT_PortBC_R(t8);
-            break;
+            return OUT_PortBC_R(t8);
         case 0x2: // SBC HL,SP
-            SBC_HL_vv(SP);
-            break;
+            return SBC_HL_vv(SP);
         case 0x3: // LD (nn),SP
-            LD_Ind_WW(SP);
-            break;
+            return LD_Ind_WW(SP);
         case 0x4: // NEG
             NEG();
             break;
         case 0x5: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0x6: // IM 1
             IM(1);
             break;
         case 0x7: // LD I,A
-            LD_I_A();
-            break;
+            return LD_I_A();
         case 0x8: // IN A,(C)
-            IN_R_PortBC(A);
-            break;
+            return IN_R_PortBC(A);
         case 0x9: // OUT (C),A
-            OUT_PortBC_R(A);
-            break;
+            return OUT_PortBC_R(A);
         case 0xA: // ADC HL,SP
-            ADC_HL_vv(SP);
-            break;
+            return ADC_HL_vv(SP);
         case 0xB: // LD SP,(nn)
-            LD_WW_Ind(SP);
-            break;
+            return LD_WW_Ind(SP);
         case 0xC: // NEG
             NEG();
             break;
         case 0xD: // RETN
-            RET();
             IFF1 = IFF2;
-            break;
+            return RET();
         case 0xE: // IM 2
             IM(2);
             break;
@@ -225,61 +178,44 @@ void Z80::Step_misc()
         switch(IR & 0x0F)
         {
         case 0x0: // LDI
-            LDI(false);
-            break;
+            return LDI(false);
         case 0x1: // CPI
-            CPI(false);
-            break;
+            return CPI(false);
         case 0x2: // INI
-            INI(false, true);
-            break;
+            return INI(false, true);
         case 0x3: // OUTI
-            OUTI(false, true);
-            break;
+            return OUTI(false, true);
         case 0x8: // LDD
-            LDD(false);
-            break;
+            return LDD(false);
         case 0x9: // CPD
-            CPD(false);
-            break;
+            return CPD(false);
         case 0xA: // IND
-            INI(false, false);
-            break;
+            return INI(false, false);
         case 0xB: // OUTD
-            OUTI(false, false);
-            break;
+            return OUTI(false, false);
         }
         break;
     case 0xB:
         switch(IR & 0x0F)
         {
         case 0x0: // LDIR
-            LDI(true);
-            break;
+            return LDI(true);
         case 0x1: // CPIR
-            CPI(true);
-            break;
+            return CPI(true);
         case 0x2: // INIR
-            INI(true, true);
-            break;
+            return INI(true, true);
         case 0x3: // OUTIR
-            OUTI(true, true);
-            break;
+            return OUTI(true, true);
         case 0x8: // LDDR
-            LDD(true);
-            break;
+            return LDD(true);
         case 0x9: // CPDR
-            CPD(true);
-            break;
+            return CPD(true);
         case 0xA: // INDR
-            INI(true, false);
-            break;
+            return INI(true, false);
         case 0xB: // OUTDR
-            OUTI(true, false);
-            break;
+            return OUTI(true, false);
         }
         break;
     }
-    if (mCycleType == MCycleType::FETCH)
-        idMode = IDMode::BASIC;
+    return true; // For simple instructions
 }

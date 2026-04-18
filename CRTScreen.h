@@ -20,6 +20,7 @@ public:
 private:
     static unsigned int pixelIndex;
     static int hSyncPos;
+    static int hOffset;
 };
 
 #endif // CRTSCREEN_H

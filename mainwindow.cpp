@@ -14,6 +14,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QByteArray>
+#include <QWindow>
 
 using namespace std;
 
@@ -36,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     soundThread = new SoundThread(this);
 
     connect(workerThread, &EmulatorThread::OnPause, this, &MainWindow::onEmulatorPaused);
+    connect(workerThread, &EmulatorThread::OnResume, this, &MainWindow::onEmulatorResumed);
     connect(workerThread, &EmulatorThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
 
     StartThreads();
@@ -53,10 +55,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionRemove_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveCartridge);
     connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
     connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
+    connect(ui->actionFull_screen, &QAction::changed, this, &MainWindow::onMenuViewFullScreen);
 
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
+
+    ui->hLine->setVisible(false);
+    ui->vLine->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -93,16 +99,26 @@ void MainWindow::ResetEmulation()
 void MainWindow::onMenuMemoryEnterBytes()
 {
     enterBytesDialog->show();
+    debugger->show();
+
 }
 
 void MainWindow::onEmulatorPaused()
 {
-    ui->hLine->move(0, CRTScreen::vPos * 2);
-    ui->vLine->move(CRTScreen::hPos, 0);
+    ui->hLine->setVisible(true);
+    ui->vLine->setVisible(true);
+    ui->hLine->move(0, CRTScreen::vPos * 2 - 56);
+    ui->vLine->move(CRTScreen::hPos + 240, 0);
     ui->vLine->pos().setX(CRTScreen::vPos);
     if (debugger->isHidden())
         debugger->show();
     debugger->Update();
+}
+
+void MainWindow::onEmulatorResumed()
+{
+    ui->hLine->setVisible(false);
+    ui->vLine->setVisible(false);
 }
 
 void MainWindow::onEmulatorFinishedFrame()
@@ -192,6 +208,28 @@ void MainWindow::onMenuMediaInsertCartridge()
 void MainWindow::onMenuScreenGreenMonitor()
 {
     GateArray::Monochrome = ui->actionGreen_monitor->isChecked();
+}
+
+void MainWindow::onMenuViewFullScreen()
+{
+    QSize size = QSize(768, 544);
+    if (ui->actionFull_screen->isChecked())
+    {
+        float ratio = (float)size.height() / size.width();
+        QScreen *screen = this->windowHandle()->screen();
+        showFullScreen();
+        this->menuBar()->setFixedHeight(0);
+        float height = screen->availableSize().height();
+        ui->openGLWidget->setFixedSize(QSize(height / ratio, height));
+        this->setStyleSheet("background-color:black;");
+    }
+    else
+    {
+        this->menuBar()->setFixedHeight(23);
+        showNormal();
+        ui->openGLWidget->setFixedSize(size);
+        this->setStyleSheet("background-color:gray;");
+    }
 }
 
 void MainWindow::SetCPC464()

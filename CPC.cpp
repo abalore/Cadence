@@ -40,16 +40,22 @@ void CPC::ReadROM(char *filename, int number)
         dest = HiROMs[number];
     }
     FILE *file = fopen(filename, "r");
-    if (!fread(dest, 1, 16384, file)) {}
-    fclose(file);
+    if (file)
+    {
+        fread(dest, 1, 16384, file);
+        fclose(file);
+    }
 }
 
 void CPC::ReadCartridge(char *filename)
 {
     Cartridge = (BYTE *)malloc(524288);
     FILE *file = fopen(filename, "r");
-    if (!fread(Cartridge, 1, 524288, file)) {}
-    fclose(file);
+    if (file)
+    {
+        fread(Cartridge, 1, 524288, file);
+        fclose(file);
+    }
 }
 
 void CPC::Init()
@@ -107,21 +113,41 @@ void CPC::Finalize()
 
 void CPC::Clock()
 {
-    Z80::stopPoint = false;
-    if ((tick % 16) == 0)
+    switch(tick % 16)
     {
+    case 0:
+        Z80::WAIT = false;
         Z80::Clock();
+        CRTC::Clock();
+        GateArray::ProcessSync();
+        GateArray::LoadVideoAddress();
+        GateArray::ReadByte(true);
+        Z80::Clock2();
         FDC::Clock();
         Tape::Clock();
         PSG::Clock();
-        CRTC::Clock();
-        //CRTScreen::OneMhzClock();
-    }
-    GateArray::Clock(tick);
-    if ((tick % 16) == 0)
-    {
+        break;
+    case 4:
+        GateArray::ReadByte(false);
+        Z80::WAIT = true;
+        Z80::Clock();
         Z80::Clock2();
+        FDC::Clock();
+        break;
+    case 8:
+        Z80::WAIT = false;
+        Z80::Clock();
+        Z80::Clock2();
+        FDC::Clock();
+        break;
+    case 12:
+        Z80::WAIT = false;
+        Z80::Clock();
+        Z80::Clock2();
+        FDC::Clock();
+        break;
     }
+    GateArray::SetPixel();
     CRTScreen::Clock();
     tick++;
 }

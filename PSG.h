@@ -67,6 +67,7 @@ private:
     static BYTE tVolC;
     static bool BC1;
     static bool BDIR;
+    static BYTE latch;
     constexpr static const BYTE volumes[16]
     {
         0,

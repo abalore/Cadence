@@ -1,5 +1,6 @@
 #include "Debugger.h"
 #include "ui_Debugger.h"
+#include "Emulator.h"
 #include "EmulatorThread.h"
 #include "Disassembler.h"
 #include "Z80.h"
@@ -66,7 +67,7 @@ void Debugger::Update()
         string label, address, bytes, instruction;
         ushort position = Disassembler::addr;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction);
-        sprintf(buff, "%16s  %4s  %12s  %s", label.data(), address.data(), bytes.data(), instruction.data());
+        sprintf(buff, "%s %14s  %4s  %12s  %s", Emulator::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
         if (!pcFound && position >= Z80::PC)
         {
@@ -166,7 +167,7 @@ void Debugger::onRunToClicked()
 {
     setEnabled(false);
     int index = ui->listDisassembly->currentIndex().row();
-    QString string = listDisassembly.at(index).mid(18, 4);
+    QString string = listDisassembly.at(index).mid(19, 4);
     EmulatorThread::RunTo(string.toInt(nullptr, 16));
 }
 
@@ -174,6 +175,7 @@ string Debugger::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
+    Z80::EncodeF();
     sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
             Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
             Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
@@ -223,14 +225,14 @@ string Debugger::GetGateArrayDebugLine()
 {
     string d;
     char buff[100];
-    sprintf(buff, "Pen: %d   Border: %d\nInks: ", GateArray::currentPen, GateArray::BORDER);
+    sprintf(buff, "Pen: %d   Border: %d  Mode: %d  Video address: %04X\nInks: ", GateArray::currentPen, GateArray::BORDER, GateArray::mode, GateArray::videoAddress);
     d.append(buff);
     for (int i = 0; i < 16; i++)
     {
         sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord);
+    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b  Window: %d", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord, (CPC::tick % 16) >> 2);
     d += buff;
     return d;
 }

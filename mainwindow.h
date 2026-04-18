@@ -26,6 +26,7 @@ public:
     static MainWindow *Instance;
 private slots:
     void onEmulatorPaused();
+    void onEmulatorResumed();
     void onEmulatorFinishedFrame();
     void onMenuMemoryLoadBinaryFile();
     void onMenuMemorySaveBinaryFile();
@@ -38,6 +39,7 @@ private slots:
     void onMenuMediaRemoveCartridge();
     void onMenuMediaInsertCartridge();
     void onMenuScreenGreenMonitor();
+    void onMenuViewFullScreen();
     void StartThreads();
     void StopThreads();
     void ResetEmulation();

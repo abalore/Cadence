@@ -28,6 +28,7 @@ void Keyboard::SetRow(BYTE row)
 
 void Keyboard::KeyEvent(int key, bool release)
 {
+    if (key < 9 || key > 136) return;
     BYTE cpcKey = translation[key - 9];
     if (cpcKey >= 80) return;
     int row = cpcKey % 10;

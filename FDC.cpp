@@ -1,5 +1,5 @@
 #include "FDC.h"
-#include "Z80.h"
+#include "CPC.h"
 
 FDCState FDC::state;
 FDCCommandState FDC::commandState;
@@ -46,6 +46,7 @@ BYTE FDC::INT;
 BYTE FDC::stIC, FDC::stSE, FDC::stEC, FDC::stNR;
 BYTE FDC::stEN, FDC::stDE, FDC::stOR, FDC::stND, FDC::stNW, FDC::stMA;
 BYTE FDC::stCM, FDC::stDD, FDC::stWC, FDC::stSH, FDC::stSN, FDC::stBC, FDC::stMD;
+bool FDC::MotorState;
 
 
 void FDC::Reset()
@@ -96,78 +97,70 @@ void FDC::Clock()
     }
 }
 
-void FDC::RD()
+BYTE FDC::RD_State()
 {
-    if ((Z80::AR & 0x0100) != 0)
-    {
-        if ((Z80::AR & 0x0001) == 0)
-        {
-            Z80::DR = (bit7_RQM << 7)
-                      + (bit6_DIO << 6)
-                      + (bit5_NDMA << 5)
-                      + (bit4_BUSY << 4)
-                      + (bits03_FDDBUSY[3] << 3)
-                      + (bits03_FDDBUSY[2] << 2)
-                      + (bits03_FDDBUSY[1] << 1)
-                      + bits03_FDDBUSY[0];
-        }
-        else
-        {
-            if (state == FDCState::FDC_StateTransfer)
-            {
-                Z80::DR = data[dataIndex];
-                dataIndex++;
-                if (dataIndex == dataSize)
-                {
-                    if (R == EOT)
-                    {
-                        R = 1;
-                        GoToResultState();
-                    }
-                    else
-                    {
-                        R++;
-                        GoToExecutionState();
-                    }
-                }
-                return;
-            }
-            switch(state)
-            {
-            case FDCState::FDC_StateCommand:
-            case FDCState::FDC_StateExecution:
-            case FDCState::FDC_StateTransfer:
-                Z80::DR = 0x00;
-                break;
-            case FDCState::FDC_StateResult:
-                ProcessResult();
-                break;
-            }
-        }
-    }
+    return (bit7_RQM << 7)
+           + (bit6_DIO << 6)
+           + (bit5_NDMA << 5)
+           + (bit4_BUSY << 4)
+           + (bits03_FDDBUSY[3] << 3)
+           + (bits03_FDDBUSY[2] << 2)
+           + (bits03_FDDBUSY[1] << 1)
+           + bits03_FDDBUSY[0];
 }
 
-void FDC::WR()
+BYTE FDC::RD_Data()
 {
-    BYTE data = Z80::DR;
-    if ((Z80::AR & 0x0100) == 0)
+    if (state == FDCState::FDC_StateTransfer)
     {
-        // Set motor
-    }
-    else if ((Z80::AR & 0x0001) != 0)
-    {
-        switch(state)
+        BYTE v = data[dataIndex];
+        dataIndex++;
+        if (dataIndex == dataSize)
         {
-        case FDCState::FDC_StateCommand:
-            ProcessCommand(data);
-            break;
-        case FDCState::FDC_StateExecution:
-            break;
-        case FDCState::FDC_StateResult:
-            break;
-        case FDCState::FDC_StateTransfer:
-            break;
+            if (R == EOT)
+            {
+                R = 1;
+                GoToResultState();
+            }
+            else
+            {
+                R++;
+                GoToExecutionState();
+            }
         }
+        return v;
+    }
+    switch(state)
+    {
+    case FDCState::FDC_StateCommand:
+    case FDCState::FDC_StateExecution:
+    case FDCState::FDC_StateTransfer:
+        return 0x00;
+    case FDCState::FDC_StateResult:
+        return ProcessResult();
+    }
+    return 0;
+}
+
+void FDC::SetMotor(BYTE value)
+{
+    MotorState = value;
+}
+
+void FDC::WR(BYTE value)
+{
+    BYTE data = value;
+    switch(state)
+    {
+    case FDCState::FDC_StateCommand:
+        ProcessCommand(data);
+        break;
+    case FDCState::FDC_StateExecution:
+        break;
+    case FDCState::FDC_StateResult:
+        break;
+    case FDCState::FDC_StateTransfer:
+        break;
     }
 }
 
@@ -329,37 +322,45 @@ void FDC::ProcessExecution()
         // wait head settle time
         stSE = 0b00000000; // Seek End
         sectorInfo = drives[US].GetSectorInfo(PCN, R);
-        if (sectorInfo.SI_C != 0xFF)
-        {
-            dataSize = sectorInfo.SI_size * 256;
-            data = sectorInfo.SectorData;
-            if (sectorInfo.copies > 1)
-                data += (weakSectorCycle++ % sectorInfo.copies) * dataSize;
-            dataIndex = 0;
-
-            PCN = sectorInfo.SI_C;
-            H = sectorInfo.SI_H;
-            N = sectorInfo.SI_size;
-            stIC = 0b00000000; // Interrupt
-            stEC = 0b00000000; // Equipment Check
-            resultCount = 7;
-            result[0] = GetStatusReg0();
-            result[1] = sectorInfo.SI_reg1;
-            result[2] = sectorInfo.SI_reg2;
-        }
-        else
-        {
-            stIC = 0b01000000;
-            stEC = 0b00010000; // Equipment Check
-            result[0] = GetStatusReg0();
-            result[1] = GetStatusReg1();
-            result[2] = GetStatusReg2();
-        }
+        resultCount = 7;
         result[3] = PCN;
         result[4] = H;
         result[5] = R;
         result[6] = N;
-        GoToTransferState();
+        switch(sectorInfo.SI_ID)
+        {
+        case 0xFE: // Data not found
+            stIC = 0b01000000; // Interrupt
+            stEC = 0b00000000; // Equipment Check
+            stMA = 0b00000001; // Missing Address Mark
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        case 0xFF: // No disc
+            stIC = 0b01000000; // Interrupt
+            stEC = 0b00010000; // Equipment Check
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        default:
+            stIC = 0b00000000; // Interrupt
+            stEC = 0b00000000; // Equipment Check
+            dataSize = (1 << sectorInfo.SI_size) * 128;
+            data = sectorInfo.SectorData[weakSectorCycle++ % sectorInfo.copies];
+            dataIndex = 0;
+            PCN = sectorInfo.SI_C;
+            H = sectorInfo.SI_H;
+            N = sectorInfo.SI_size;
+            result[0] = GetStatusReg0();
+            result[1] = sectorInfo.SI_reg1;
+            result[2] = sectorInfo.SI_reg2;
+            GoToTransferState();
+            break;
+        }
         break;
     case FDC_CommandReadTrack:
     case FDC_CommandWriteData:
@@ -462,11 +463,11 @@ void FDC::ProcessExecution()
     }
 }
 
-void FDC::ProcessResult()
+BYTE FDC::ProcessResult()
 {
     if (resultCount)
     {
-        Z80::DR = result[resultIndex];
+        BYTE value = result[resultIndex];
         resultIndex++;
         if (resultIndex == resultCount)
         {
@@ -474,9 +475,11 @@ void FDC::ProcessResult()
                 stSE = 0;
             GoToCommandState();
         }
+        return value;
     }
     else
         GoToCommandState();
+    return 0;
 }
 
 FloppyDrive *FDC::GetDrive(int number)

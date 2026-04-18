@@ -11,8 +11,8 @@ class CRTC
 public:
     static void Reset();
     static void Clock();
-    static void RD();
-    static void WR();
+    static BYTE RD(BYTE address);
+    static void WR(BYTE address, BYTE value);
     static BYTE Index;
     static BYTE RA;
     static bool HSYNC, VSYNC, BORDER;
@@ -30,13 +30,15 @@ public:
 
     static BYTE HT, HD, HSP, HSW, VSW, VT, VTA, VD, VSP, IS, MRA;
 
+    static BYTE latchMRA, latchVTA, latchVT;
+
     static bool HDISP;
     static bool VDISP;
     static word baseMA;
     static bool adjustMode;
     static word DSA;
     static BYTE newVT;
-
+    static bool EndLine, EndChar, EndScreen;
 
 private:
     static void RunHorizontalChar();

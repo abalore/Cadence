@@ -24,7 +24,7 @@ GraphicsInspector::~GraphicsInspector()
 
 void GraphicsInspector::UpdateGraphics()
 {
-    BYTE xSize = 32;
+    BYTE xSize = ui->inputWidth->text().toInt(nullptr, 10);
     BYTE ySize = 32;
     int byteSize = xSize * 16 * ySize * 16 * 3;
     word baseAddress = 0xC000;
@@ -55,8 +55,8 @@ void GraphicsInspector::UpdateGraphics()
                 }
             }
     if (pixItem) scene->removeItem(pixItem);
-    QImage *image = new QImage(&Pixels[0], xSize * 16, ySize * 16, QImage::Format_RGB888);
-    QPixmap pixmap = QPixmap::fromImage(*image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
+    QImage image(&Pixels[0], xSize * 16, ySize * 16, QImage::Format_RGB888);
+    QPixmap pixmap = QPixmap::fromImage(image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
     pixItem->setPos(0, 0);
 }

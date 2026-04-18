@@ -2,6 +2,7 @@
 #include "Keyboard.h"
 #include "Tape.h"
 #include <stdlib.h>
+#include <cstdint>
 
 bool PSG::BC1;
 bool PSG::BDIR;
@@ -46,6 +47,7 @@ bool PSG::noiseC;
 BYTE PSG::tVolA;
 BYTE PSG::tVolB;
 BYTE PSG::tVolC;
+BYTE PSG::latch;
 
 void PSG::Reset()
 {
@@ -94,19 +96,19 @@ void PSG::Reset()
     tVolC = 0;
     BC1 = true;
     BDIR = false;
+    latch = 0;
 }
 
 void PSG::Clock()
 {
     if (envelopeRunning)
     {
+        envelopeDivider++;
         if (envelopeDivider == 16)
         {
             UpdateEnvelope();
             envelopeDivider = 0;
         }
-        else
-            envelopeDivider++;
     }
 
     divider++;
@@ -153,6 +155,13 @@ void PSG::ApplyChange()
 {
     if (BC1 == true && BDIR == true)
         selectedRegister = inputRegister;
+    else if (BC1 == true && BDIR == false)
+    {
+        if (selectedRegister < 0x0E)
+            outputRegister = registers[selectedRegister];
+        else if (selectedRegister == 0x0E)
+            outputRegister = Keyboard::Read();
+    }
     else if (BC1 == false && BDIR == true)
     {
         registers[selectedRegister] = inputRegister;
@@ -182,13 +191,13 @@ void PSG::ApplyChange()
             noiseC = !(inputRegister & 0x20);
             break;
         case 8:
-            tVolA = registers[8];
+            tVolA = registers[8] & 0x1F;
             break;
         case 9:
-            tVolB = registers[9];
+            tVolB = registers[9] & 0x1F;
             break;
         case 10:
-            tVolC = registers[10];
+            tVolC = registers[10] & 0x1F;
             break;
         case 11:
         case 12:
@@ -215,13 +224,6 @@ void PSG::ApplyChange()
             break;
         }
     }
-    else if (BC1 == true && BDIR == false)
-    {
-        if (selectedRegister < 0x0E)
-            outputRegister = registers[selectedRegister];
-        else if (selectedRegister == 0x0E)
-            outputRegister = Keyboard::Read();
-    }
 }
 
 BYTE PSG::ReadData()
@@ -237,10 +239,10 @@ void PSG::WriteData(BYTE data)
 
 void PSG::UpdateEnvelope()
 {
-    envelopeCounter--;
+    if (envelopeCounter > 0) envelopeCounter--;
     if (envelopeCounter == 0)
     {
-        envelopeCounter = envelopePeriod;
+        envelopeCounter = (envelopePeriod == 0) ? 1 : envelopePeriod;
         switch(envelopeDir)
         {
         case EnvelopeDir::EDUp:
@@ -311,6 +313,8 @@ void PSG::UpdateNoise()
     if (noiseDivider == 0)
     {
         noiseDivider = (registers[6] & 0x1F);
-        noiseLevel = random() < (RAND_MAX / 2);
+        static uint32_t lfsr = 1;
+        lfsr = (lfsr >> 1) | (((lfsr ^ (lfsr >> 3)) & 1) << 16);
+        noiseLevel = lfsr & 1;
     }
 }
