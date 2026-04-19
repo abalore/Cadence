@@ -9,7 +9,8 @@ bool DSK::Init(BYTE *dskFileData, size_t dataSize)
     this->dataSize = dataSize;
     tracks = dskFileData[0x30];
     sides = dskFileData[0x31];
-    sectors.resize(tracks);
+    if (sides < 1) sides = 1;
+    sectors.resize(tracks, std::vector<std::vector<std::optional<SectorInfo>>>(sides));
     if (strncmp("MV - CPC", (const char *)dskFileData, 8) == 0)
     {
         trackSize = dskFileData[0x32] + dskFileData[0x33] * 256;
@@ -24,9 +25,11 @@ bool DSK::Init(BYTE *dskFileData, size_t dataSize)
     return false;
 }
 
-void DSK::AddSector(int track, int sector, BYTE *info, BYTE *address)
+void DSK::AddSector(int track, int side, int sector, BYTE *info, BYTE *address)
 {
-    auto& trackSectors = sectors[track];
+    if (track >= (int)sectors.size() || side >= (int)sectors[track].size())
+        return;
+    auto& trackSectors = sectors[track][side];
     if (sector >= (int)trackSectors.size())
         trackSectors.resize(sector + 1);
 
@@ -56,45 +59,46 @@ void DSK::AddSector(int track, int sector, BYTE *info, BYTE *address)
 
 void DSK::ParseSectors(bool extended)
 {
-    int t = 0;
     isExtended = extended;
     BYTE *trackInfo = data + 0x100;
-    while (t < tracks)
+    int totalBlocks = tracks * sides;
+    for (int b = 0; b < totalBlocks; b++)
     {
         if (trackInfo >= data + dataSize) break;
-        if (isExtended) trackSize = data[0x34 + t] * 0x0100;
-        if (trackInfo[0] == 'T')
+        if (isExtended) trackSize = data[0x34 + b] * 0x0100;
+        if (trackSize == 0) { trackInfo += trackSize; continue; }
+        if (trackInfo[0] != 'T') break;
+
+        int logicalTrack = b / sides;
+        int logicalSide  = b % sides;
+        int s = 0, sz = 0;
+        BYTE ns = trackInfo[0x15];
+        while (s < ns)
         {
-            int s = 0;
-            int sz = 0;
-            BYTE ns = trackInfo[0x15];
-            if (trackSize > 0)
-                while (s < ns)
-                {
-                    BYTE *sectorInfo = trackInfo + 0x18 + s * 0x08;
-                    BYTE sectorNum = (sectorInfo[2] & 0x3F) - 1;
-                    int realSize = isExtended ? sectorInfo[6] + sectorInfo[7] * 0x0100 : (1 << trackInfo[0x14]) * 0x0080;
-                    AddSector(t, sectorNum, sectorInfo, trackInfo + 0x0100 + sz);
-                    sz += realSize;
-                    s++;
-                }
-            trackInfo += trackSize;
-            t++;
-        } else break;
+            BYTE *sectorInfo = trackInfo + 0x18 + s * 0x08;
+            BYTE sectorNum = (sectorInfo[2] & 0x3F) - 1;
+            int realSize = isExtended ? sectorInfo[6] + sectorInfo[7] * 0x0100 : (1 << trackInfo[0x14]) * 0x0080;
+            AddSector(logicalTrack, logicalSide, sectorNum, sectorInfo, trackInfo + 0x0100 + sz);
+            sz += realSize;
+            s++;
+        }
+        trackInfo += trackSize;
     }
 }
 
-SectorInfo DSK::GetSectorInfo(BYTE track, BYTE sector)
+SectorInfo DSK::GetSectorInfo(BYTE track, BYTE side, BYTE sector)
 {
     BYTE idx = (sector & 0x3F) - 1;
-    if (track >= sectors.size() || idx >= sectors[track].size() || !sectors[track][idx].has_value())
-        return SectorInfo { track, 0, 0xFF, 0, 0, 0, 0, {NULL, NULL, NULL}};
-    return sectors[track][idx].value();
+    if (track >= sectors.size() || side >= sectors[track].size()
+        || idx >= sectors[track][side].size() || !sectors[track][side][idx].has_value())
+        return SectorInfo { track, side, 0xFF, 0, 0, 0, 0, {NULL, NULL, NULL}};
+    return sectors[track][side][idx].value();
 }
 
-BYTE DSK::GetSectorID(BYTE track)
+BYTE DSK::GetSectorID(BYTE track, BYTE side)
 {
-    if (track >= sectors.size() || sectors[track].empty() || !sectors[track][0].has_value())
+    if (track >= sectors.size() || side >= sectors[track].size()
+        || sectors[track][side].empty() || !sectors[track][side][0].has_value())
         return 0xFF;
-    return sectors[track][0].value().SI_ID;
+    return sectors[track][side][0].value().SI_ID;
 }

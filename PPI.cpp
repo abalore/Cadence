@@ -41,7 +41,7 @@ BYTE PPI::RD(BYTE reg)
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
         return aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-        return bIO ? (Tape::GetLevel() << 7 ) + CRTC::VSYNC + 0x3E : 0x00;
+        return bIO ? (Tape::GetLevel() << 7) + CRTC::VSYNC + 0x3E : 0x00;
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {

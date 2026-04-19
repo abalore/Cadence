@@ -88,6 +88,7 @@ void CPC::Init()
         ReadROM((char *)"ROM/ROM_BIOS_6128.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_6128.bin", 0);
         ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
+        //ReadROM((char *)"ROM/PARADOS.ROM", 7);
         for (int i = 0; i < 8; i++)
             RAMs[i] = (BYTE *) malloc(0x4000);
         break;

@@ -1,5 +1,6 @@
 #include "FDC.h"
 #include "CPC.h"
+#include <stdio.h>
 
 FDCState FDC::state;
 FDCCommandState FDC::commandState;
@@ -187,12 +188,8 @@ void FDC::ProcessCommand(BYTE data)
         case FDC_CommandScanHighOrEqual:
         case FDC_CommandRecalibrate:
         case FDC_CommandSeek:
-            commandState = FDCCommandState::FDC_StateParam;
-            break;
         case FDC_CommandSenseDriveStatus:
-            resultCount = 1;
-            result[0] = GetStatusReg3();
-            GoToResultState();
+            commandState = FDCCommandState::FDC_StateParam;
             break;
         case FDC_CommandSenseInterruptState:
             GoToExecutionState();
@@ -224,6 +221,7 @@ void FDC::ProcessCommand(BYTE data)
         case FDC_CommandReadID:
         case FDC_CommandRecalibrate:
         case FDC_CommandSenseDriveStatus:
+            H = HD ? 1 : 0;
             GoToExecutionState();
             break;
         case FDC_CommandSeek:
@@ -321,7 +319,7 @@ void FDC::ProcessExecution()
         // load head
         // wait head settle time
         stSE = 0b00000000; // Seek End
-        sectorInfo = drives[US].GetSectorInfo(PCN, R);
+        sectorInfo = drives[US].GetSectorInfo(PCN, HD ? 1 : 0, R);
         resultCount = 7;
         result[3] = PCN;
         result[4] = H;
@@ -433,9 +431,10 @@ void FDC::ProcessExecution()
     case FDC_CommandSpecify:
         GoToCommandState();
         break;
-    case FDC_CommandReadID:
-        R = drives[US].GetSectorID(PCN);
-        if (R == 0 || stNR)
+    case FDC_CommandReadID: {
+        BYTE firstID = drives[US].GetSectorID(PCN, H);
+        SectorInfo si = drives[US].GetSectorInfo(PCN, H, firstID);
+        if (firstID == 0xFF || firstID == 0x00 || stNR)
             stIC = 0b01000000;
         else
             stIC = 0b00000000;
@@ -443,12 +442,13 @@ void FDC::ProcessExecution()
         result[0] = GetStatusReg0();
         result[1] = GetStatusReg1();
         result[2] = GetStatusReg2();
-        result[3] = PCN;
-        result[4] = H;
-        result[5] = R;
-        result[6] = N;
+        result[3] = si.SI_C;
+        result[4] = si.SI_H;
+        result[5] = si.SI_ID;
+        result[6] = si.SI_size;
         GoToResultState();
         break;
+    }
     case FDC_CommandSenseDriveStatus:
         resultCount = 1;
         result[0] = GetStatusReg3();
@@ -499,6 +499,28 @@ void FDC::GoToCommandState()
     commandState = FDCCommandState::FDC_StateCommandCode;
 }
 
+static const char* FDC_CommandName(BYTE cmd)
+{
+    switch(cmd & 0x1F) {
+    case 0x06: return "ReadData";
+    case 0x0C: return "ReadDeletedData";
+    case 0x02: return "ReadTrack";
+    case 0x0A: return "ReadID";
+    case 0x0D: return "FormatTrack";
+    case 0x05: return "WriteData";
+    case 0x09: return "WriteDeletedData";
+    case 0x11: return "ScanEqual";
+    case 0x19: return "ScanLowOrEqual";
+    case 0x1D: return "ScanHighOrEqual";
+    case 0x07: return "Recalibrate";
+    case 0x0F: return "Seek";
+    case 0x08: return "SenseInterrupt";
+    case 0x04: return "SenseDriveStatus";
+    case 0x03: return "Specify";
+    default:   return "Unknown";
+    }
+}
+
 void FDC::GoToExecutionState()
 {
     stNR = drives[US].DiskInserted ? 0 :  0b00001000; // Not Ready
@@ -520,6 +542,8 @@ void FDC::GoToExecutionState()
     bit5_NDMA = 1;
     bits03_FDDBUSY[US] = 1;
     state = FDCState::FDC_StateExecution;
+    printf("[FDC] CMD=%s(0x%02X) US=%d HD=%d PCN=%d H=%d R=%d N=%d EOT=%d NCN=%d\n",
+           FDC_CommandName(command), command, US, (int)HD, PCN, H, R, N, EOT, NCN);
 }
 
 void FDC::GoToTransferState()
@@ -536,6 +560,9 @@ void FDC::GoToResultState()
     bit5_NDMA = 0;
     bits03_FDDBUSY[US] = 0;
     state = FDCState::FDC_StateResult;
+    printf("[FDC] RESULT(%s):", FDC_CommandName(command));
+    for (int i = 0; i < resultCount; i++) printf(" %02X", result[i]);
+    printf("\n");
 }
 
 BYTE FDC::GetStatusReg0()
@@ -555,5 +582,6 @@ BYTE FDC::GetStatusReg2()
 
 BYTE FDC::GetStatusReg3()
 {
-    return 0b00000000 + (stNR ? 0 : 0b00100000) + (PCN ? 0 : 0b00010000) + H * 4 + US;
+    BYTE ts = (drives[US].GetSides() > 1) ? 0b00001000 : 0;
+    return (stNR ? 0 : 0b00100000) + (PCN ? 0 : 0b00010000) + ts + ((H & 1) << 2) + US;
 }

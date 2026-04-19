@@ -32,8 +32,8 @@ class DSK
 public:
     bool Init(BYTE *dskFileData, size_t dataSize);
     TrackInfo GetTrackInfo(int track, int side);
-    SectorInfo GetSectorInfo(BYTE track, BYTE sector);
-    BYTE GetSectorID(BYTE track);
+    SectorInfo GetSectorInfo(BYTE track, BYTE side, BYTE sector);
+    BYTE GetSectorID(BYTE track, BYTE side);
     BYTE *data;
     size_t dataSize;
     BYTE tracks;
@@ -41,8 +41,8 @@ public:
     word trackSize;
     bool isExtended;
 private:
-    void AddSector(int track, int sector, BYTE *info, BYTE *address);
-    std::vector<std::vector<std::optional<SectorInfo>>> sectors;
+    void AddSector(int track, int side, int sector, BYTE *info, BYTE *address);
+    std::vector<std::vector<std::vector<std::optional<SectorInfo>>>> sectors;
     void ParseSectors(bool extended);
 };
 
