@@ -156,17 +156,16 @@ void CPC::Clock()
 void CPC::Reset()
 {
     tick = 0;
-    SelectRAM(0);
-    SelectROM(0);
-    CRTScreen::Init();
     Z80::Reset();
     PPI::Reset();
     CRTC::Reset();
     GateArray::Reset();
     Keyboard::Reset();
-    PPI::Reset();
     PSG::Reset();
     FDC::Reset();
+    CRTScreen::Init();
+    SelectRAM(0);
+    SelectROM(0);
 }
 
 BYTE CPC::GetRAMByteAt(word address)
