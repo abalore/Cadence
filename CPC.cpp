@@ -158,6 +158,7 @@ void CPC::Reset()
     tick = 0;
     SelectRAM(0);
     SelectROM(0);
+    CRTScreen::Init();
     Z80::Reset();
     PPI::Reset();
     CRTC::Reset();

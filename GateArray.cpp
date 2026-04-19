@@ -66,8 +66,14 @@ void GateArray::Reset()
     pixelIndex = 0;
     lastHSYNC = false;
     lastVSYNC = false;
+    lastHDISP = false;
     hsyncDelay = 0;
     vsyncDelay = 0;
+    currentInk = 0;
+    latchLo = 0;
+    latchHi = 0;
+    dispEnFF1 = false;
+    dispEnFF2 = false;
     intTimeout = 0;
     porch = 0;
     ready = 0;

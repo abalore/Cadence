@@ -76,6 +76,7 @@ void Z80::Reset()
     I = 0;
     R = 0;
     im = 0;
+    tCycle = 1;
     mCycle = 1;
     nops = 0;
     idMode = IDMode::BASIC;
@@ -86,6 +87,12 @@ void Z80::Reset()
     stopPoint = false;
     halted = false;
     EIRequest = false;
+    M1 = false;
+    AR = 0;
+    IR = 0;
+    DR = 0;
+    t8 = 0;
+    opCode = 0;
 }
 
 bool Z80::ProcessINT()
