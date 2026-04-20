@@ -26,7 +26,7 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color:gray;</string>
+   <string notr="true"/>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -142,6 +142,7 @@
       <string>Audio</string>
      </property>
      <addaction name="actionAudio_enabled"/>
+     <addaction name="actionSFX_enabled"/>
     </widget>
     <widget class="QMenu" name="menuKeyboard">
      <property name="title">
@@ -307,6 +308,17 @@
    </property>
    <property name="text">
     <string>Enabled</string>
+   </property>
+  </action>
+  <action name="actionSFX_enabled">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>SFX</string>
    </property>
   </action>
   <action name="actionQuit">

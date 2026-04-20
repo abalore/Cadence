@@ -11,6 +11,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QTimerEvent>
+#include <QLabel>
+#include <QPixmap>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -32,6 +34,8 @@ private slots:
     void onMenuMemoryLoadBinaryFile();
     void onMenuMemorySaveBinaryFile();
     void onMenuMediaInsertTape();
+    void onMenuMediaRemoveTape();
+    void onMenuMediaRemoveDiskA();
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
     void onMenuMediaInsertDiskA();
@@ -50,11 +54,18 @@ private slots:
     void SetCPC6128();
 private:
     void SwitchMachine(CPCType type);
+    void setMediaText(QLabel *label, const QString &text);
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
     EnterBytesDialog *enterBytesDialog;
     EmulatorThread *workerThread;
     SoundThread *soundThread;
+    QLabel *motorLabel;
+    QPixmap ledOnPixmap;
+    QPixmap ledOffPixmap;
+    QLabel *diskLabel;
+    QLabel *tapeLabel;
+    QLabel *cartridgeLabel;
 };
 #endif // MAINWINDOW_H

@@ -56,7 +56,7 @@ void PSG::Reset()
     outputB = 0;
     outputC = 0;
     for (int i = 0; i < PSG_BUFFER_SIZE; i++)
-        buffer[i] = 0;
+        buffer[i] = 128;
     bufferIndex = 0;
     inputRegister = 0;
     outputRegister = 0;
@@ -133,7 +133,7 @@ void PSG::Clock()
 
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
-            buffer[bufferIndex] = (outputA + outputB + outputC + Tape::GetLevel() * 10);
+            buffer[bufferIndex] = 128 + outputA + outputB + outputC + Tape::GetLevel() * 10;
             bufferIndex++;
         }
     }

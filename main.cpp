@@ -2,10 +2,12 @@
 #include "KeyPressFilter.h"
 #include <QApplication>
 #include <QIcon>
+#include <cstdlib>
 
 
 int main(int argc, char *argv[])
 {
+    setenv("PIPEWIRE_LATENCY", "32/62500", 0);
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);

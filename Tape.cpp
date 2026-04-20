@@ -107,6 +107,12 @@ BYTE Tape::GetLevel()
     return level;
 }
 
+void Tape::Eject()
+{
+    FreeBuffer();
+    tapeSource = TapeSource::None;
+}
+
 void Tape::FreeBuffer()
 {
     if (buffer != 0)

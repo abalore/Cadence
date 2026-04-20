@@ -17,6 +17,7 @@ class Tape
 public:
     static void LoadWAV( char *filename);
     static void LoadCDT( char *filename);
+    static void Eject();
     static void Clock();
     static void SetMotorState(bool state);
     static BYTE GetLevel();

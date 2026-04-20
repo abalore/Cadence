@@ -59,6 +59,8 @@ public:
     static BYTE RD_Data();
     static void WR(BYTE value);
     static void SetMotor(BYTE value);
+    static bool GetMotor() { return MotorState; }
+    static FDCState GetState() { return state; }
     static FloppyDrive *GetDrive(int number);
 private:
     static void ProcessCommand(BYTE data);
@@ -101,6 +103,10 @@ private:
     static BYTE sectorID;
     static BYTE *data;
     static BYTE weakSectorCycle;
+    static int seekCounter;
+public:
+    static volatile int stepPulses;
+private:
     static BYTE INT;
     static BYTE stIC, stSE, stEC, stNR; // For Reg0
     static BYTE stEN, stDE, stOR, stND, stNW, stMA; // For Reg1

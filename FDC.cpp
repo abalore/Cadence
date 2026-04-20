@@ -43,6 +43,8 @@ BYTE FDC::sizeCode;
 BYTE FDC::sectorID;
 BYTE *FDC::data;
 BYTE FDC::weakSectorCycle;
+int FDC::seekCounter;
+volatile int FDC::stepPulses;
 BYTE FDC::INT;
 BYTE FDC::stIC, FDC::stSE, FDC::stEC, FDC::stNR;
 BYTE FDC::stEN, FDC::stDE, FDC::stOR, FDC::stND, FDC::stNW, FDC::stMA;
@@ -84,6 +86,8 @@ void FDC::Reset()
     stSE = stEC = stNR = 0;
     stEN = stDE = stOR = stND = stNW = stMA = 0;
     stCM = stDD = stWC = stSH = stSN = stBC = stMD = 0;
+    seekCounter = 0;
+    stepPulses = 0;
 }
 
 void FDC::Clock()
@@ -384,25 +388,24 @@ void FDC::ProcessExecution()
         GoToResultState();
         break;
     case FDC_CommandRecalibrate:
-        INT++;
-        PCN = 0;
-        if (stNR)
-        {
-            stSE = 0b00100000;
-            stIC = 0b01000000;
-            stEC = 0b00010000;
-        }
-        else
-        {
-            stIC = 0b00000000;
-            stSE = 0b00100000;
-            stEC = 0b00000000;
-        }
-        GoToCommandState();
-        break;
     case FDC_CommandSeek:
+    {
+        BYTE target = (command == FDC_CommandRecalibrate) ? 0 : NCN;
+        if (!stNR && PCN != target)
+        {
+            if (seekCounter < 48000)
+            {
+                seekCounter++;
+                break;
+            }
+            seekCounter = 0;
+            if (PCN < target) PCN++;
+            else PCN--;
+            stepPulses++;
+            if (PCN != target)
+                break;
+        }
         INT++;
-        PCN = NCN;
         if (stNR)
         {
             stSE = 0b00100000;
@@ -415,9 +418,9 @@ void FDC::ProcessExecution()
             stSE = 0b00100000;
             stEC = 0b00000000;
         }
-
         GoToCommandState();
         break;
+    }
     case FDC_CommandSenseInterruptState:
         resultCount = 2;
         if (!INT)
@@ -541,6 +544,8 @@ void FDC::GoToExecutionState()
     bit4_BUSY = 1;
     bit5_NDMA = 1;
     bits03_FDDBUSY[US] = 1;
+    if (command == FDC_CommandSeek || command == FDC_CommandRecalibrate)
+        seekCounter = 0;
     state = FDCState::FDC_StateExecution;
     printf("[FDC] CMD=%s(0x%02X) US=%d HD=%d PCN=%d H=%d R=%d N=%d EOT=%d NCN=%d\n",
            FDC_CommandName(command), command, US, (int)HD, PCN, H, R, N, EOT, NCN);

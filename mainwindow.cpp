@@ -26,6 +26,11 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QStatusBar>
+#include <QFileInfo>
+#include <QIcon>
+#include <QFontMetrics>
+#include <QTimer>
 
 using namespace std;
 
@@ -56,6 +61,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
     connect(ui->actionInsert_tape, &QAction::triggered, this, &MainWindow::onMenuMediaInsertTape);
+    connect(ui->actionRemove_tape, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveTape);
+    connect(ui->actionRemove_disk, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveDiskA);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
@@ -79,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
+    connect(ui->actionSFX_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::sfxEnabled = checked; });
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
     connect(ui->actionAbout, &QAction::triggered, this, [this]{
         QDialog dialog(this);
@@ -130,6 +138,32 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
+
+    const int iconSize = 24;
+    const int sectionWidth = 771 / 4;
+    const int textWidth = sectionWidth - iconSize - 6;
+    auto addMediaLabel = [this](const QString &iconPath, QLabel *&textLabel) {
+        QLabel *icon = new QLabel(this);
+        icon->setPixmap(QIcon(iconPath).pixmap(iconSize, iconSize));
+        textLabel = new QLabel(this);
+        textLabel->setFixedWidth(textWidth);
+        textLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        statusBar()->addPermanentWidget(icon);
+        statusBar()->addPermanentWidget(textLabel);
+        setMediaText(textLabel, "<Empty>");
+    };
+    addMediaLabel(":/images/cartridge.svg", cartridgeLabel);
+    addMediaLabel(":/images/tape.svg", tapeLabel);
+    addMediaLabel(":/images/disk.svg", diskLabel);
+    ledOnPixmap = QIcon(":/images/led_on.svg").pixmap(iconSize, iconSize / 2);
+    ledOffPixmap = QIcon(":/images/led_off.svg").pixmap(iconSize, iconSize / 2);
+    motorLabel = new QLabel(this);
+    motorLabel->setPixmap(ledOffPixmap);
+    statusBar()->addPermanentWidget(motorLabel);
+
+    ui->centralwidget->setFixedSize(771, 547);
+    adjustSize();
+    setFixedSize(size());
 }
 
 MainWindow::~MainWindow()
@@ -189,6 +223,7 @@ void MainWindow::onEmulatorResumed()
 void MainWindow::onEmulatorFinishedFrame()
 {
     ui->openGLWidget->updateTexture();
+    motorLabel->setPixmap(FDC::GetState() != FDC_StateCommand ? ledOnPixmap : ledOffPixmap);
 }
 
 void MainWindow::onMenuMemoryLoadBinaryFile()
@@ -260,6 +295,7 @@ void MainWindow::onMenuMediaInsertTape()
             Tape::LoadWAV((char *)fileName.toUtf8().data());
         else if (extension == "cdt")
             Tape::LoadCDT((char *)fileName.toUtf8().data());
+        setMediaText(tapeLabel, QFileInfo(fileName).fileName());
     }
 }
 
@@ -272,7 +308,20 @@ void MainWindow::onMenuMediaInsertDiskA()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data())) {}
+        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data()))
+            setMediaText(diskLabel, QFileInfo(fileName).fileName());
+}
+
+void MainWindow::onMenuMediaRemoveTape()
+{
+    Tape::Eject();
+    setMediaText(tapeLabel, "<Empty>");
+}
+
+void MainWindow::onMenuMediaRemoveDiskA()
+{
+    if (FDC::GetDrive(0)->RemoveDSK())
+        setMediaText(diskLabel, "<Empty>");
 }
 
 void MainWindow::onMenuROMLoadFromFile()
@@ -285,6 +334,7 @@ void MainWindow::onMenuROMLoadFromFile()
 void MainWindow::onMenuMediaRemoveCartridge()
 {
     CPC::cartridgeEnabled = false;
+    setMediaText(cartridgeLabel, "<Empty>");
     Emulator::Reset();
 }
 
@@ -292,7 +342,10 @@ void MainWindow::onMenuMediaInsertCartridge()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
+    {
         CPC::ReadCartridge((char *)fileName.toUtf8().data());
+        setMediaText(cartridgeLabel, QFileInfo(fileName).fileName());
+    }
     CPC::cartridgeEnabled = true;
     Emulator::Reset();
 }
@@ -309,11 +362,16 @@ void MainWindow::onMenuViewFullScreen()
     {
         float ratio = (float)size.height() / size.width();
         QScreen *screen = this->windowHandle()->screen();
-        showFullScreen();
+        QSize screenSize = screen->size();
+        setMinimumSize(0, 0);
+        setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        ui->centralwidget->setFixedSize(screenSize);
+        statusBar()->hide();
         this->menuBar()->setFixedHeight(0);
-        float height = screen->availableSize().height();
-        ui->openGLWidget->setFixedSize(QSize(height / ratio, height));
         ui->centralwidget->setStyleSheet("background-color:black;");
+        float height = screenSize.height();
+        ui->openGLWidget->setFixedSize(QSize(height / ratio, height));
+        showFullScreen();
     }
     else
     {
@@ -321,7 +379,18 @@ void MainWindow::onMenuViewFullScreen()
         showNormal();
         ui->openGLWidget->setFixedSize(size);
         ui->centralwidget->setStyleSheet("background-color:gray;");
+        ui->centralwidget->setFixedSize(771, 547);
+        statusBar()->show();
+        adjustSize();
+        setFixedSize(this->size());
     }
+}
+
+void MainWindow::setMediaText(QLabel *label, const QString &text)
+{
+    label->setProperty("fullText", text);
+    QFontMetrics fm(label->font());
+    label->setText(fm.elidedText(text, Qt::ElideRight, label->width()));
 }
 
 void MainWindow::SwitchMachine(CPCType type)

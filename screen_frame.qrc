@@ -2,5 +2,12 @@
     <qresource prefix="/images">
         <file>monitor_frame.png</file>
         <file>cadence.svg</file>
+        <file>disk.svg</file>
+        <file>tape.svg</file>
+        <file>cartridge.svg</file>
+        <file>led_off.svg</file>
+        <file>led_on.svg</file>
+        <file>step.wav</file>
+        <file>spin.wav</file>
     </qresource>
 </RCC>
