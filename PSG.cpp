@@ -133,7 +133,7 @@ void PSG::Clock()
 
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
-            buffer[bufferIndex] = 128 + outputA + outputB + outputC + Tape::GetLevel() * 10;
+            buffer[bufferIndex] = 128 + outputA + outputB + outputC + (Tape::audioEnabled ? Tape::GetLevel() * 10 : 0);
             bufferIndex++;
         }
     }

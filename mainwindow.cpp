@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
     connect(ui->actionSFX_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::sfxEnabled = checked; });
+    connect(ui->actionTape_enabled, &QAction::toggled, this, [](bool checked){ Tape::audioEnabled = checked; });
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
     connect(ui->actionAbout, &QAction::triggered, this, [this]{
         QDialog dialog(this);

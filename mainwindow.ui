@@ -143,6 +143,7 @@
      </property>
      <addaction name="actionAudio_enabled"/>
      <addaction name="actionSFX_enabled"/>
+     <addaction name="actionTape_enabled"/>
     </widget>
     <widget class="QMenu" name="menuKeyboard">
      <property name="title">
@@ -319,6 +320,17 @@
    </property>
    <property name="text">
     <string>SFX</string>
+   </property>
+  </action>
+  <action name="actionTape_enabled">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tape</string>
    </property>
   </action>
   <action name="actionQuit">

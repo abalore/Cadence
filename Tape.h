@@ -22,6 +22,7 @@ public:
     static void SetMotorState(bool state);
     static BYTE GetLevel();
     static volatile bool motorState;
+    static volatile bool audioEnabled;
 private:
     static void FreeBuffer();
     static TapeSource tapeSource;

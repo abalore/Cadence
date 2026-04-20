@@ -11,6 +11,7 @@ unsigned long Tape::bufferReadIndex;
 unsigned long Tape::bufferWriteIndex;
 unsigned long Tape::bufferSize;
 volatile bool Tape::motorState = false;
+volatile bool Tape::audioEnabled = true;
 bool Tape::lastLevel = false;
 TapeSource Tape::tapeSource = TapeSource::None;
 class CDT Tape::cdt;
