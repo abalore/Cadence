@@ -17,9 +17,8 @@ public:
     static bool frameFinished;
     static int hPos, vPos;
 private:
-    static unsigned int pixelIndex;
-    static int hSyncPos;
     static int hOffset;
+    static unsigned int writeOffset;
 };
 
 #endif // CRTSCREEN_H

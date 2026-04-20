@@ -10,8 +10,8 @@ DEFINES += APP_VERSION=\\\"0.1a\\\" APP_NAME=\\\"Cadence\\\"
 
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
-#QMAKE_CXXFLAGS+=-fsanitize=address,leak
-#QMAKE_LFLAGS+=-fsanitize=address,leak
+QMAKE_CXXFLAGS+=-flto -fno-strict-aliasing
+QMAKE_LFLAGS+=-flto
 
 LIBS += -lasound
 

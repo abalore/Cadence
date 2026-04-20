@@ -4,11 +4,10 @@
 
 int CRTScreen::hPos = 0;
 int CRTScreen::vPos = 0;
-int CRTScreen::hSyncPos = 0;
 BYTE CRTScreen::Pixels[DataSize];
 bool CRTScreen::frameFinished;
-unsigned int CRTScreen::pixelIndex;
 int CRTScreen::hOffset = 0;
+unsigned int CRTScreen::writeOffset = 0;
 
 void CRTScreen::Init()
 {
@@ -16,15 +15,16 @@ void CRTScreen::Init()
     vPos = 0;
     hOffset = 0;
     frameFinished = false;
+    writeOffset = 0;
 }
 
 void CRTScreen::Clock()
 {
-    hPos ++;
+    hPos++;
     if (GateArray::hsyncTrigger)
     {
         hPos = 0;
-        vPos ++;
+        vPos++;
         switch (CRTC::HSW)
         {
         case 3:
@@ -47,12 +47,14 @@ void CRTScreen::Clock()
             frameFinished = true;
             GateArray::vsyncTrigger = false;
         }
+        writeOffset = (unsigned int)(hOffset + vPos * Stride);
     }
-    unsigned int pixelIndex = vPos * Stride + hPos * 3;
-    if (hOffset + pixelIndex < DataSize)
+    if (writeOffset + 3 <= (unsigned int)DataSize)
     {
-        Pixels[hOffset + pixelIndex++] = GateArray::Color[0];
-        Pixels[hOffset + pixelIndex++] = GateArray::Color[1];
-        Pixels[hOffset + pixelIndex++] = GateArray::Color[2];
+        const BYTE *c = GateArray::Color;
+        Pixels[writeOffset]     = c[0];
+        Pixels[writeOffset + 1] = c[1];
+        Pixels[writeOffset + 2] = c[2];
     }
+    writeOffset += 3;
 }

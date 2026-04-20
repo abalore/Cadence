@@ -22,7 +22,8 @@ void Tape::LoadWAV(char *filename)
     bufferSize = filesystem::file_size(filename);
     buffer = (BYTE *)malloc(bufferSize);
     FILE *f = fopen(filename, "r");
-    fread(buffer, 1, bufferSize, f);
+    size_t n = fread(buffer, 1, bufferSize, f);
+    (void)n;
     fclose(f);
     bufferReadIndex = 44;
     tapeSource = TapeSource::WAV;
@@ -34,7 +35,8 @@ void Tape::LoadCDT(char *filename)
     bufferSize = filesystem::file_size(filename);
     buffer = (BYTE *)malloc(bufferSize);
     FILE *f = fopen(filename, "r");
-    fread(buffer, 1, bufferSize, f);
+    size_t n = fread(buffer, 1, bufferSize, f);
+    (void)n;
     fclose(f);
     if (cdt.Init(buffer, bufferSize))
     {

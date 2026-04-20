@@ -13,7 +13,8 @@ bool GateArray::borderSelected = false;
 word GateArray::videoAddress = 0;
 word GateArray::currentWord = 0;
 BYTE GateArray::pixelIndex = 0;
-BYTE GateArray::currentInk = 0;
+const BYTE *GateArray::blankColor = nullptr;
+const BYTE *GateArray::currentPalette = GateArray::Palette;
 bool GateArray::CCLK = false;
 bool GateArray::VideoAccess = false;
 bool GateArray::lastHSYNC = false;
@@ -69,7 +70,8 @@ void GateArray::Reset()
     lastHDISP = false;
     hsyncDelay = 0;
     vsyncDelay = 0;
-    currentInk = 0;
+    blankColor = nullptr;
+    currentPalette = Palette;
     latchLo = 0;
     latchHi = 0;
     dispEnFF1 = false;
@@ -133,35 +135,32 @@ void GateArray::ProcessSync()
     lastVSYNC = CRTC::VSYNC;
     lastHSYNC = CRTC::HSYNC;
     lastHDISP = CRTC::HDISP;
+
+    if (CRTC::HSYNC || CRTC::VSYNC)
+        blankColor = AbsoluteBlack;
+    else if (porch)
+        blankColor = NormalBlack;
+    else
+        blankColor = nullptr;
 }
 
 void GateArray::SetPixel()
 {
-    if (CRTC::HSYNC || CRTC::VSYNC)
+    if (blankColor)
     {
-        Color = &AbsoluteBlack[0];
+        Color = blankColor;
         return;
     }
-    if (porch)
-    {
-        Color = &NormalBlack[0];
-        return;
-    }
-    BYTE currentByte = pixelIndex < 8 ? currentWord & 0xFF : currentWord >> 8;
-    currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex & 7][currentByte]];
-    //if (SpeedController::overrun && BORDER)
-    //if (dispEnFF2 && !Z80::IFF1)
-    //    currentInk = 0;
-    /*
-    if (CRTC::VSYNC)
-        currentInk = 1;
-    if (CRTC::HSYNC)
-        currentInk = 2;*/
+    BYTE currentByte = (pixelIndex & 8) ? (currentWord >> 8) : (currentWord & 0xFF);
+    BYTE currentInk = dispEnFF2 ? BORDER : INK[decodedPen[mode][pixelIndex & 7][currentByte]];
     if (++pixelIndex == 16) pixelIndex = 0;
-    if (Monochrome)
-        Color = &GreenPalette[currentInk * 3];
-    else
-        Color = &Palette[currentInk * 3];
+    Color = &currentPalette[currentInk * 3];
+}
+
+void GateArray::SetMonochrome(bool m)
+{
+    Monochrome = m;
+    currentPalette = m ? GreenPalette : Palette;
 }
 
 const BYTE *GateArray::GetPaletteEntry(BYTE entry)

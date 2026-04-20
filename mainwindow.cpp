@@ -299,7 +299,7 @@ void MainWindow::onMenuMediaInsertCartridge()
 
 void MainWindow::onMenuScreenGreenMonitor()
 {
-    GateArray::Monochrome = ui->actionGreen_monitor->isChecked();
+    GateArray::SetMonochrome(ui->actionGreen_monitor->isChecked());
 }
 
 void MainWindow::onMenuViewFullScreen()

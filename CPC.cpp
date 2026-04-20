@@ -42,7 +42,8 @@ void CPC::ReadROM(char *filename, int number)
     FILE *file = fopen(filename, "r");
     if (file)
     {
-        fread(dest, 1, 16384, file);
+        size_t n = fread(dest, 1, 16384, file);
+        (void)n;
         fclose(file);
     }
 }
@@ -54,7 +55,8 @@ void CPC::ReadCartridge(char *filename)
     FILE *file = fopen(filename, "r");
     if (file)
     {
-        fread(Cartridge, 1, 524288, file);
+        size_t n = fread(Cartridge, 1, 524288, file);
+        (void)n;
         fclose(file);
     }
 }
@@ -118,39 +120,42 @@ void CPC::Finalize()
 
 void CPC::Clock()
 {
-    switch(tick % 16)
+    if ((tick & 0x03) == 0)
     {
-    case 0:
-        Z80::WAIT = false;
-        Z80::Clock();
-        CRTC::Clock();
-        GateArray::ProcessSync();
-        GateArray::LoadVideoAddress();
-        GateArray::ReadByte(true);
-        Z80::Clock2();
-        FDC::Clock();
-        Tape::Clock();
-        PSG::Clock();
-        break;
-    case 4:
-        GateArray::ReadByte(false);
-        Z80::WAIT = true;
-        Z80::Clock();
-        Z80::Clock2();
-        FDC::Clock();
-        break;
-    case 8:
-        Z80::WAIT = false;
-        Z80::Clock();
-        Z80::Clock2();
-        FDC::Clock();
-        break;
-    case 12:
-        Z80::WAIT = false;
-        Z80::Clock();
-        Z80::Clock2();
-        FDC::Clock();
-        break;
+        switch(tick & 0x0F)
+        {
+        case 0:
+            Z80::WAIT = false;
+            Z80::Clock();
+            CRTC::Clock();
+            GateArray::ProcessSync();
+            GateArray::LoadVideoAddress();
+            GateArray::ReadByte(true);
+            Z80::Clock2();
+            FDC::Clock();
+            Tape::Clock();
+            PSG::Clock();
+            break;
+        case 4:
+            GateArray::ReadByte(false);
+            Z80::WAIT = true;
+            Z80::Clock();
+            Z80::Clock2();
+            FDC::Clock();
+            break;
+        case 8:
+            Z80::WAIT = false;
+            Z80::Clock();
+            Z80::Clock2();
+            FDC::Clock();
+            break;
+        case 12:
+            Z80::WAIT = false;
+            Z80::Clock();
+            Z80::Clock2();
+            FDC::Clock();
+            break;
+        }
     }
     GateArray::SetPixel();
     CRTScreen::Clock();

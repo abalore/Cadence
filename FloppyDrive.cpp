@@ -14,7 +14,8 @@ bool FloppyDrive::InsertDSK(char *filename)
     if (f)
     {
         buffer = (BYTE *)malloc(bufferSize);
-        fread(buffer, 1, bufferSize, f);
+        size_t n = fread(buffer, 1, bufferSize, f);
+        (void)n;
         fclose(f);
         if (dsk.Init(buffer, bufferSize))
             DiskInserted = true;

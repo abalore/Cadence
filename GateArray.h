@@ -15,6 +15,7 @@ public:
     static void SetPixel();
     static void ReadByte(bool lo);
     static void LoadVideoAddress();
+    static void SetMonochrome(bool m);
     static const BYTE *Color;
     static BYTE INK[16];
     static BYTE BORDER;
@@ -93,7 +94,8 @@ private:
     static bool borderSelected;
     static word currentWord;
     static BYTE pixelIndex;
-    static BYTE currentInk;
+    static const BYTE *blankColor;
+    static const BYTE *currentPalette;
     static bool lastHSYNC;
     static bool lastVSYNC;
     static bool lastHDISP;
