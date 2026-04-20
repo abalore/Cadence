@@ -1,10 +1,12 @@
 #include "SoundThread.h"
 #include "PSG.h"
 #include <QMutex>
+#include <cstring>
 
 QWaitCondition SoundThread::waitCondition;
 volatile snd_pcm_sframes_t SoundThread::frames;
 snd_pcm_sframes_t SoundThread::frames_internal;
+volatile bool SoundThread::enabled = true;
 
 SoundThread::SoundThread(QObject *parent) : QThread(parent)
 {
@@ -37,6 +39,8 @@ void SoundThread::run()
     while (!end)
     {
         waitCondition.wait(&mutex);
+        if (!enabled)
+            memset(PSG::buffer, 0x80, PSG::bufferIndex);
         if (snd_pcm_writei(pcm_handle, PSG::buffer, PSG::bufferIndex) == -EPIPE)
             snd_pcm_prepare(pcm_handle);
         PSG::bufferIndex = 0;

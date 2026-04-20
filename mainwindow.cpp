@@ -8,6 +8,7 @@
 #include "FDC.h"
 #include "GateArray.h"
 #include "CRTScreen.h"
+#include "Keyboard.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -73,6 +74,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
+    connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
+    connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);

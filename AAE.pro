@@ -3,6 +3,10 @@ QT += gui
 QT += opengl
 QT += openglwidgets
 
+VERSION = 0.1
+TARGET = cadence
+DEFINES += APP_VERSION=\\\"0.1a\\\" APP_NAME=\\\"Cadence\\\"
+
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
 #QMAKE_CXXFLAGS+=-fsanitize=address,leak

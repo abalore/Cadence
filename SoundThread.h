@@ -12,6 +12,7 @@ public:
     explicit SoundThread(QObject *parent);
     ~SoundThread();
     volatile bool end;
+    static volatile bool enabled;
     static QWaitCondition waitCondition;
     volatile static snd_pcm_sframes_t frames;
 protected:
