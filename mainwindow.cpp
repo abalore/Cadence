@@ -31,6 +31,8 @@
 #include <QIcon>
 #include <QFontMetrics>
 #include <QTimer>
+#include <QSettings>
+#include <QDir>
 
 using namespace std;
 
@@ -56,13 +58,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(workerThread, &EmulatorThread::OnResume, this, &MainWindow::onEmulatorResumed);
     connect(workerThread, &EmulatorThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
 
-    StartThreads();
-
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
     connect(ui->actionInsert_tape, &QAction::triggered, this, &MainWindow::onMenuMediaInsertTape);
     connect(ui->actionRemove_tape, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveTape);
     connect(ui->actionRemove_disk, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveDiskA);
+    connect(ui->actionInsert_disk_2, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskB);
+    connect(ui->actionRemove_disk_2, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveDiskB);
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
@@ -141,7 +143,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->vLine->setVisible(false);
 
     const int iconSize = 24;
-    const int sectionWidth = 771 / 4;
+    const int sectionWidth = 771 / 5;
     const int textWidth = sectionWidth - iconSize - 6;
     auto addMediaLabel = [this](const QString &iconPath, QLabel *&textLabel) {
         QLabel *icon = new QLabel(this);
@@ -156,6 +158,7 @@ MainWindow::MainWindow(QWidget *parent)
     addMediaLabel(":/images/cartridge.svg", cartridgeLabel);
     addMediaLabel(":/images/tape.svg", tapeLabel);
     addMediaLabel(":/images/disk.svg", diskLabel);
+    addMediaLabel(":/images/disk.svg", diskBLabel);
     ledOnPixmap = QIcon(":/images/led_on.svg").pixmap(iconSize, iconSize / 2);
     ledOffPixmap = QIcon(":/images/led_off.svg").pixmap(iconSize, iconSize / 2);
     motorLabel = new QLabel(this);
@@ -165,14 +168,76 @@ MainWindow::MainWindow(QWidget *parent)
     ui->centralwidget->setFixedSize(771, 547);
     adjustSize();
     setFixedSize(size());
+
+    loadSettings();
+    StartThreads();
 }
 
 MainWindow::~MainWindow()
 {
+    saveSettings();
     StopThreads();
     delete graphicsInspector;
     delete debugger;
     delete ui;
+}
+
+void MainWindow::loadSettings()
+{
+    QString path = QDir::homePath() + "/.config/cadence/settings.cfg";
+    QSettings s(path, QSettings::IniFormat);
+
+    bool smooth      = s.value("screen/smooth", true).toBool();
+    bool green       = s.value("screen/green_monitor", false).toBool();
+    bool fullScreen  = s.value("screen/full_screen", false).toBool();
+    bool audio       = s.value("audio/enabled", true).toBool();
+    bool sfx         = s.value("audio/sfx", true).toBool();
+    bool tape        = s.value("audio/tape", true).toBool();
+    bool rsBackslash = s.value("keyboard/right_shift_as_backslash", true).toBool();
+
+    ui->actionSmooth->setChecked(smooth);
+    ui->actionGreen_monitor->setChecked(green);
+    ui->actionAudio_enabled->setChecked(audio);
+    ui->actionSFX_enabled->setChecked(sfx);
+    ui->actionTape_enabled->setChecked(tape);
+    ui->actionRight_shift_as_backslash->setChecked(rsBackslash);
+
+    QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
+    GateArray::SetMonochrome(green);
+    SoundThread::enabled = audio;
+    SoundThread::sfxEnabled = sfx;
+    Tape::audioEnabled = tape;
+    Keyboard::translation[53] = rsBackslash ? 62 : 52;
+
+    if (fullScreen)
+        QTimer::singleShot(0, this, [this]{ ui->actionFull_screen->setChecked(true); });
+
+    QString dA = s.value("media/disk_a").toString();
+    QString dB = s.value("media/disk_b").toString();
+    QString tp = s.value("media/tape").toString();
+    QString ct = s.value("media/cartridge").toString();
+    if (!dA.isEmpty() && QFileInfo::exists(dA)) loadDiskA(dA);
+    if (!dB.isEmpty() && QFileInfo::exists(dB)) loadDiskB(dB);
+    if (!tp.isEmpty() && QFileInfo::exists(tp)) loadTape(tp);
+    if (!ct.isEmpty() && QFileInfo::exists(ct)) loadCartridge(ct);
+}
+
+void MainWindow::saveSettings()
+{
+    QString dirPath = QDir::homePath() + "/.config/cadence";
+    QDir().mkpath(dirPath);
+    QSettings s(dirPath + "/settings.cfg", QSettings::IniFormat);
+    s.setValue("screen/smooth", ui->actionSmooth->isChecked());
+    s.setValue("screen/green_monitor", ui->actionGreen_monitor->isChecked());
+    s.setValue("screen/full_screen", ui->actionFull_screen->isChecked());
+    s.setValue("audio/enabled", ui->actionAudio_enabled->isChecked());
+    s.setValue("audio/sfx", ui->actionSFX_enabled->isChecked());
+    s.setValue("audio/tape", ui->actionTape_enabled->isChecked());
+    s.setValue("keyboard/right_shift_as_backslash", ui->actionRight_shift_as_backslash->isChecked());
+    s.setValue("media/disk_a", diskAPath);
+    s.setValue("media/disk_b", diskBPath);
+    s.setValue("media/tape", tapePath);
+    s.setValue("media/cartridge", cartridgePath);
 }
 
 void MainWindow::StartThreads()
@@ -290,14 +355,7 @@ void MainWindow::onMenuMediaInsertTape()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
-    {
-        QString extension = fileName.last(3);
-        if (extension == "wav")
-            Tape::LoadWAV((char *)fileName.toUtf8().data());
-        else if (extension == "cdt")
-            Tape::LoadCDT((char *)fileName.toUtf8().data());
-        setMediaText(tapeLabel, QFileInfo(fileName).fileName());
-    }
+        loadTape(fileName);
 }
 
 void MainWindow::onMenuScreenSmooth()
@@ -309,20 +367,79 @@ void MainWindow::onMenuMediaInsertDiskA()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        if (FDC::GetDrive(0)->InsertDSK((char *)fileName.toUtf8().data()))
-            setMediaText(diskLabel, QFileInfo(fileName).fileName());
+        loadDiskA(fileName);
+}
+
+void MainWindow::onMenuMediaInsertDiskB()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
+    if (fileName != nullptr)
+        loadDiskB(fileName);
 }
 
 void MainWindow::onMenuMediaRemoveTape()
 {
     Tape::Eject();
+    tapePath.clear();
     setMediaText(tapeLabel, "<Empty>");
 }
 
 void MainWindow::onMenuMediaRemoveDiskA()
 {
-    if (FDC::GetDrive(0)->RemoveDSK())
+    if (FDC::GetDrive(0)->RemoveDSK()) {
+        diskAPath.clear();
         setMediaText(diskLabel, "<Empty>");
+    }
+}
+
+void MainWindow::onMenuMediaRemoveDiskB()
+{
+    if (FDC::GetDrive(1)->RemoveDSK()) {
+        diskBPath.clear();
+        setMediaText(diskBLabel, "<Empty>");
+    }
+}
+
+bool MainWindow::loadDiskA(const QString &path)
+{
+    if (!FDC::GetDrive(0)->InsertDSK((char *)path.toUtf8().data()))
+        return false;
+    diskAPath = path;
+    setMediaText(diskLabel, QFileInfo(path).fileName());
+    return true;
+}
+
+bool MainWindow::loadDiskB(const QString &path)
+{
+    if (!FDC::GetDrive(1)->InsertDSK((char *)path.toUtf8().data()))
+        return false;
+    diskBPath = path;
+    setMediaText(diskBLabel, QFileInfo(path).fileName());
+    return true;
+}
+
+bool MainWindow::loadTape(const QString &path)
+{
+    QString extension = path.last(3).toLower();
+    if (extension == "wav")
+        Tape::LoadWAV((char *)path.toUtf8().data());
+    else if (extension == "cdt")
+        Tape::LoadCDT((char *)path.toUtf8().data());
+    else
+        return false;
+    tapePath = path;
+    setMediaText(tapeLabel, QFileInfo(path).fileName());
+    return true;
+}
+
+bool MainWindow::loadCartridge(const QString &path)
+{
+    CPC::ReadCartridge((char *)path.toUtf8().data());
+    cartridgePath = path;
+    CPC::cartridgeEnabled = true;
+    setMediaText(cartridgeLabel, QFileInfo(path).fileName());
+    Emulator::Reset();
+    return true;
 }
 
 void MainWindow::onMenuROMLoadFromFile()
@@ -335,6 +452,7 @@ void MainWindow::onMenuROMLoadFromFile()
 void MainWindow::onMenuMediaRemoveCartridge()
 {
     CPC::cartridgeEnabled = false;
+    cartridgePath.clear();
     setMediaText(cartridgeLabel, "<Empty>");
     Emulator::Reset();
 }
@@ -343,12 +461,7 @@ void MainWindow::onMenuMediaInsertCartridge()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
-    {
-        CPC::ReadCartridge((char *)fileName.toUtf8().data());
-        setMediaText(cartridgeLabel, QFileInfo(fileName).fileName());
-    }
-    CPC::cartridgeEnabled = true;
-    Emulator::Reset();
+        loadCartridge(fileName);
 }
 
 void MainWindow::onMenuScreenGreenMonitor()

@@ -36,6 +36,8 @@ private slots:
     void onMenuMediaInsertTape();
     void onMenuMediaRemoveTape();
     void onMenuMediaRemoveDiskA();
+    void onMenuMediaInsertDiskB();
+    void onMenuMediaRemoveDiskB();
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
     void onMenuMediaInsertDiskA();
@@ -55,6 +57,8 @@ private slots:
 private:
     void SwitchMachine(CPCType type);
     void setMediaText(QLabel *label, const QString &text);
+    void loadSettings();
+    void saveSettings();
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
@@ -65,7 +69,16 @@ private:
     QPixmap ledOnPixmap;
     QPixmap ledOffPixmap;
     QLabel *diskLabel;
+    QLabel *diskBLabel;
     QLabel *tapeLabel;
     QLabel *cartridgeLabel;
+    QString diskAPath;
+    QString diskBPath;
+    QString tapePath;
+    QString cartridgePath;
+    bool loadDiskA(const QString &path);
+    bool loadDiskB(const QString &path);
+    bool loadTape(const QString &path);
+    bool loadCartridge(const QString &path);
 };
 #endif // MAINWINDOW_H
