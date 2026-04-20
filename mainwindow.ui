@@ -101,24 +101,28 @@
      <string>Debug</string>
     </property>
     <addaction name="actionPause"/>
-    <addaction name="actionReset"/>
     <addaction name="separator"/>
+    <addaction name="actionInspect_video_memory"/>
    </widget>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menuSystem">
     <property name="title">
      <string>System</string>
     </property>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuScreen">
     <property name="title">
      <string>Screen</string>
     </property>
     <addaction name="actionSmooth"/>
-    <addaction name="actionInspect_video_memory"/>
     <addaction name="actionGreen_monitor"/>
+    <addaction name="actionFull_screen"/>
    </widget>
    <widget class="QMenu" name="menuMemory">
     <property name="title">
@@ -146,14 +150,14 @@
      <addaction name="actionInsert_disk_2"/>
      <addaction name="actionRemove_disk_2"/>
     </widget>
-    <widget class="QMenu" name="menuTape_2">
+    <widget class="QMenu" name="menuTape">
      <property name="title">
       <string>Tape</string>
      </property>
      <addaction name="actionInsert_tape"/>
      <addaction name="actionRemove_tape"/>
     </widget>
-    <widget class="QMenu" name="menuCartridge_2">
+    <widget class="QMenu" name="menuCartridge">
      <property name="title">
       <string>Cartridge</string>
      </property>
@@ -162,22 +166,15 @@
     </widget>
     <addaction name="menuDisk_A"/>
     <addaction name="menuDisk_B"/>
-    <addaction name="menuTape_2"/>
+    <addaction name="menuTape"/>
     <addaction name="actionROM_Box"/>
-    <addaction name="menuCartridge_2"/>
+    <addaction name="menuCartridge"/>
    </widget>
-   <widget class="QMenu" name="menuView">
-    <property name="title">
-     <string>View</string>
-    </property>
-    <addaction name="actionFull_screen"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuDebug"/>
+   <addaction name="menuSystem"/>
+   <addaction name="menuDevices"/>
    <addaction name="menuScreen"/>
    <addaction name="menuMemory"/>
-   <addaction name="menuDevices"/>
-   <addaction name="menuView"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -212,11 +209,6 @@
     <string>F12</string>
    </property>
   </action>
-  <action name="actionLoad_File">
-   <property name="text">
-    <string>Load File</string>
-   </property>
-  </action>
   <action name="actionSmooth">
    <property name="checkable">
     <bool>true</bool>
@@ -238,26 +230,37 @@
   </action>
   <action name="actionAmstrad_CPC464">
    <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="text">
     <string>Amstrad CPC464</string>
    </property>
-   <property name="font">
-    <font/>
-   </property>
   </action>
   <action name="actionAmstrad_CPC664">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Amstrad CPC664</string>
    </property>
   </action>
   <action name="actionAmstrad_CPC6128">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Amstrad CPC6128</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
    </property>
   </action>
   <action name="actionLoad_DSK">
@@ -353,7 +356,7 @@
   </action>
   <action name="actionROM_Box">
    <property name="text">
-    <string>ROM Box...</string>
+    <string>Load ROM...</string>
    </property>
    <property name="shortcut">
     <string>F4</string>

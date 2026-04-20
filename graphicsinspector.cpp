@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "GateArray.h"
 #include "CPC.h"
+#include "CRTC.h"
 
 GraphicsInspector::GraphicsInspector(QWidget *parent)
     : QDialog(parent)
@@ -25,6 +26,13 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
 GraphicsInspector::~GraphicsInspector()
 {
     delete ui;
+}
+
+void GraphicsInspector::showEvent(QShowEvent *event)
+{
+    ui->inputWidth->setText(QString::number(CRTC::HD));
+    ui->inputHeight->setText(QString::number(CRTC::VD));
+    QDialog::showEvent(event);
 }
 
 void GraphicsInspector::UpdateGraphics()

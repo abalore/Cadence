@@ -26,16 +26,18 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnStepIn, &QPushButton::clicked, this, &Debugger::onStepInClicked);
     connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
     connect(ui->btnResetNops, &QPushButton::clicked, this, &Debugger::onResetNopsClicked);
+    connect(ui->btnToggleBreakpoint, &QPushButton::clicked, this, &Debugger::onToggleBreakpointClicked);
 
     modelDisassembly = new QStringListModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
     ui->listMemory->setModel(modelMemory);
-    connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
-    connect(new QShortcut(Qt::Key_F9, this), &QShortcut::activated, this, &Debugger::onRunClicked);
-    connect(new QShortcut(Qt::Key_F10, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
-    connect(new QShortcut(Qt::Key_F11, this), &QShortcut::activated, this, &Debugger::onStepInClicked);
-    connect(new QShortcut(Qt::Key_F12, this), &QShortcut::activated, this, &Debugger::onRunToClicked);
+    connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
+    connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
+    connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
+    connect(new QShortcut(Qt::Key_F7, this), &QShortcut::activated, this, &Debugger::onStepInClicked);
+    connect(new QShortcut(Qt::Key_F4, this), &QShortcut::activated, this, &Debugger::onRunToClicked);
+    connect(new QShortcut(Qt::Key_F9, this), &QShortcut::activated, this, &Debugger::onToggleBreakpointClicked);
 }
 
 Debugger::~Debugger()
@@ -169,6 +171,18 @@ void Debugger::onRunToClicked()
     int index = ui->listDisassembly->currentIndex().row();
     QString string = listDisassembly.at(index).mid(19, 4);
     EmulatorThread::RunTo(string.toInt(nullptr, 16));
+}
+
+void Debugger::onToggleBreakpointClicked()
+{
+    int index = ui->listDisassembly->currentIndex().row();
+    if (index < 0) return;
+    word address = listDisassembly.at(index).mid(19, 4).toInt(nullptr, 16);
+    Emulator::Breakpoint[address] = !Emulator::Breakpoint[address];
+    Update();
+    QModelIndex restored = modelDisassembly->index(index);
+    ui->listDisassembly->setCurrentIndex(restored);
+    ui->listDisassembly->scrollTo(restored, QAbstractItemView::PositionAtCenter);
 }
 
 string Debugger::GetZ80RegsDebugLine()

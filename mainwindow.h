@@ -6,6 +6,7 @@
 #include "Debugger.h"
 #include "graphicsinspector.h"
 #include "enterbytesdialog.h"
+#include "CPC.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -48,6 +49,7 @@ private slots:
     void SetCPC664();
     void SetCPC6128();
 private:
+    void SwitchMachine(CPCType type);
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;

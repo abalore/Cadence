@@ -15,6 +15,12 @@
 #include <QFile>
 #include <QByteArray>
 #include <QWindow>
+#include <QInputDialog>
+#include <QDialog>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QDialogButtonBox>
+#include <QActionGroup>
 
 using namespace std;
 
@@ -57,9 +63,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
     connect(ui->actionFull_screen, &QAction::changed, this, &MainWindow::onMenuViewFullScreen);
 
+    QActionGroup *modelGroup = new QActionGroup(this);
+    modelGroup->setExclusive(true);
+    modelGroup->addAction(ui->actionAmstrad_CPC464);
+    modelGroup->addAction(ui->actionAmstrad_CPC664);
+    modelGroup->addAction(ui->actionAmstrad_CPC6128);
+
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
+    connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
@@ -99,8 +112,6 @@ void MainWindow::ResetEmulation()
 void MainWindow::onMenuMemoryEnterBytes()
 {
     enterBytesDialog->show();
-    debugger->show();
-
 }
 
 void MainWindow::onEmulatorPaused()
@@ -134,21 +145,48 @@ void MainWindow::onMenuMemoryLoadBinaryFile()
     if (file.isOpen())
     {
         QByteArray ba = file.readAll();
-        memcpy(CPC::RAM[1], ba.data(), ba.size());
+        file.close();
+        bool ok;
+        QString addressText = QInputDialog::getText(this, tr("Target address"), tr("Target address (hex):"), QLineEdit::Normal, "4000", &ok);
+        if (ok)
+        {
+            word address = addressText.toUShort(nullptr, 16);
+            for (int i = 0; i < ba.size(); i++)
+                CPC::SetByteAt(address + i, (BYTE)ba[i]);
+        }
     }
-    file.close();
 }
 
 void MainWindow::onMenuMemorySaveBinaryFile()
 {
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Save binary"));
+    QFormLayout *layout = new QFormLayout(&dialog);
+    QLineEdit *addressEdit = new QLineEdit("0000", &dialog);
+    QLineEdit *lengthEdit = new QLineEdit("4000", &dialog);
+    layout->addRow(tr("Source address (hex):"), addressEdit);
+    layout->addRow(tr("Length (hex):"), lengthEdit);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    layout->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted) return;
+    word address = addressEdit->text().toUShort(nullptr, 16);
+    int length = lengthEdit->text().toInt(nullptr, 16);
+    if (length <= 0) return;
+
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), ".", tr("Binary Files (*.bin)"));
     QFile file = QFile(fileName);
     file.open(QIODevice::WriteOnly);
     if (file.isOpen())
     {
-        file.write((const char *)CPC::RAM[1] + 0x3000, 0x1000);
+        QByteArray ba;
+        ba.resize(length);
+        for (int i = 0; i < length; i++)
+            ba[i] = (char)CPC::GetByteAt(address + i);
+        file.write(ba);
+        file.close();
     }
-    file.close();
 }
 
 void MainWindow::onMenuScreenInspectGraphics()
@@ -221,31 +259,37 @@ void MainWindow::onMenuViewFullScreen()
         this->menuBar()->setFixedHeight(0);
         float height = screen->availableSize().height();
         ui->openGLWidget->setFixedSize(QSize(height / ratio, height));
-        this->setStyleSheet("background-color:black;");
+        ui->centralwidget->setStyleSheet("background-color:black;");
     }
     else
     {
         this->menuBar()->setFixedHeight(23);
         showNormal();
         ui->openGLWidget->setFixedSize(size);
-        this->setStyleSheet("background-color:gray;");
+        ui->centralwidget->setStyleSheet("background-color:gray;");
     }
+}
+
+void MainWindow::SwitchMachine(CPCType type)
+{
+    StopThreads();
+    Emulator::Finalize();
+    CPC::cpcType = type;
+    Emulator::Init();
+    StartThreads();
 }
 
 void MainWindow::SetCPC464()
 {
-    CPC::cpcType = CPCType::CPC464;
-    ResetEmulation();
+    SwitchMachine(CPCType::CPC464);
 }
 
 void MainWindow::SetCPC664()
 {
-    CPC::cpcType = CPCType::CPC664;
-    ResetEmulation();
+    SwitchMachine(CPCType::CPC664);
 }
 
 void MainWindow::SetCPC6128()
 {
-    CPC::cpcType = CPCType::CPC6128;
-    ResetEmulation();
+    SwitchMachine(CPCType::CPC6128);
 }

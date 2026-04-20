@@ -19,6 +19,8 @@ public:
     explicit GraphicsInspector(QWidget *parent = nullptr);
     ~GraphicsInspector();
     void UpdateGraphics();
+protected:
+    void showEvent(QShowEvent *event) override;
 private:
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixItem;

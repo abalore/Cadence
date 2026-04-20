@@ -28,6 +28,7 @@ private slots:
     void onStepOutClicked();
     void onRunToClicked();
     void onResetNopsClicked();
+    void onToggleBreakpointClicked();
 private:
 
     string GetZ80RegsDebugLine();

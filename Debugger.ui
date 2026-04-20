@@ -159,7 +159,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step in (F11)</string>
+    <string>Step in (F7)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnStepOut">
@@ -181,7 +181,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step out (F8)</string>
+    <string>Step out (F6)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnRun">
@@ -203,7 +203,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Run (F9)</string>
+    <string>Run (F5)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnStepOver">
@@ -225,7 +225,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Step over (F10)</string>
+    <string>Step over (F8)</string>
    </property>
   </widget>
   <widget class="QListView" name="listDisassembly">
@@ -321,7 +321,7 @@
     <enum>Qt::NoFocus</enum>
    </property>
    <property name="text">
-    <string>Run To (F12)</string>
+    <string>Run To (F4)</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -402,6 +402,28 @@
    </property>
    <property name="text">
     <string>Stack</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnToggleBreakpoint">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>370</y>
+     <width>101</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>Breakpoint (F9)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnResetNops">

@@ -49,6 +49,7 @@ void CPC::ReadROM(char *filename, int number)
 
 void CPC::ReadCartridge(char *filename)
 {
+    if (Cartridge != nullptr) free(Cartridge);
     Cartridge = (BYTE *)malloc(524288);
     FILE *file = fopen(filename, "r");
     if (file)
@@ -61,11 +62,6 @@ void CPC::ReadCartridge(char *filename)
 void CPC::Init()
 {
     tick = 0;
-
-    for (int i = 0; i < ROM_SLOTS; i++) HiROMs[i] = nullptr;
-    Cartridge = nullptr;
-    for (int i = 0; i < 8; i++) RAMs[i] = nullptr;
-    LoROM = nullptr;
 
     switch(cpcType)
     {
@@ -103,13 +99,21 @@ void CPC::Finalize()
             HiROMs[i] = nullptr;
         }
     if (Cartridge != nullptr)
+    {
         free(Cartridge);
+        Cartridge = nullptr;
+    }
     for (int i = 0; i < 8; i++) if (RAMs[i] != nullptr)
         {
             free(RAMs[i]);
             RAMs[i] = nullptr;
         }
-    if (LoROM != nullptr) free(LoROM);
+    if (LoROM != nullptr)
+    {
+        free(LoROM);
+        LoROM = nullptr;
+    }
+    HiROM = nullptr;
 }
 
 void CPC::Clock()
@@ -249,6 +253,10 @@ void CPC::SelectRAM(BYTE mmr)
             RAM[0] = RAMs[0]; RAM[1] = RAMs[mmr & 0x07]; RAM[2] = RAMs[2]; RAM[3] = RAMs[3];
             break;
         }
+    }
+    else
+    {
+        RAM[0] = RAMs[0]; RAM[1] = RAMs[1]; RAM[2] = RAMs[2]; RAM[3] = RAMs[3];
     }
     UpdateMemoryMap();
 }
