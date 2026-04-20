@@ -11,8 +11,8 @@ volatile bool SoundThread::enabled = true;
 SoundThread::SoundThread(QObject *parent) : QThread(parent)
 {
     unsigned int rate = 62500;
-    snd_pcm_uframes_t period_size = 32;
-    snd_pcm_uframes_t buffer_size = 64 * 32;
+    snd_pcm_uframes_t period_size = 64;
+    snd_pcm_uframes_t buffer_size = 64 * 64;
     snd_pcm_hw_params_t *params;
     snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
     snd_pcm_hw_params_alloca(&params);
@@ -41,12 +41,22 @@ void SoundThread::run()
         waitCondition.wait(&mutex);
         if (!enabled)
             memset(PSG::buffer, 0x80, PSG::bufferIndex);
-        if (snd_pcm_writei(pcm_handle, PSG::buffer, PSG::bufferIndex) == -EPIPE)
-            snd_pcm_prepare(pcm_handle);
+        BYTE *p = PSG::buffer;
+        int remaining = PSG::bufferIndex;
+        while (remaining > 0) {
+            snd_pcm_sframes_t wr = snd_pcm_writei(pcm_handle, p, remaining);
+            if (wr == -EPIPE) {
+                snd_pcm_prepare(pcm_handle);
+                continue;
+            }
+            if (wr == -EAGAIN || wr == -EINTR) continue;
+            if (wr < 0) break;
+            p += wr;
+            remaining -= wr;
+        }
         PSG::bufferIndex = 0;
         snd_pcm_delay(pcm_handle, &frames_internal);
         frames = frames_internal;
     }
     mutex.unlock();
-
 }
