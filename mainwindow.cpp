@@ -22,6 +22,10 @@
 #include <QLineEdit>
 #include <QDialogButtonBox>
 #include <QActionGroup>
+#include <QMessageBox>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPushButton>
 
 using namespace std;
 
@@ -76,6 +80,53 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
+    connect(ui->actionAbout, &QAction::triggered, this, [this]{
+        QDialog dialog(this);
+        dialog.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
+        dialog.setStyleSheet(
+            "QDialog { background-color: #0b1220; border: 1px solid #00e5ff; }"
+            "QLabel { color: #e0e8f0; background: transparent; }"
+            "QPushButton { background-color: #0b1220; color: #00e5ff; "
+            "border: 1px solid #00e5ff; padding: 6px 28px; border-radius: 4px; font-weight: bold; }"
+            "QPushButton:hover { background-color: #00e5ff; color: #0b1220; }"
+            "QPushButton:pressed { background-color: #00b8cc; color: #0b1220; }"
+        );
+
+        QVBoxLayout *layout = new QVBoxLayout(&dialog);
+        layout->setContentsMargins(40, 28, 40, 24);
+        layout->setSpacing(10);
+
+        QLabel *iconLabel = new QLabel(&dialog);
+        iconLabel->setPixmap(QIcon(":/images/cadence.svg").pixmap(80, 80));
+        iconLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(iconLabel, 0, Qt::AlignHCenter);
+
+        QLabel *titleLabel = new QLabel(QString("%1 %2").arg(APP_NAME, APP_VERSION), &dialog);
+        QFont titleFont = titleLabel->font();
+        titleFont.setBold(true);
+        titleFont.setPointSize(titleFont.pointSize() + 5);
+        titleLabel->setFont(titleFont);
+        titleLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(titleLabel);
+
+        QLabel *copyLabel = new QLabel("(c) Abalore 2026", &dialog);
+        QFont copyFont = copyLabel->font();
+        copyFont.setPointSize(copyFont.pointSize() - 1);
+        copyLabel->setFont(copyFont);
+        copyLabel->setAlignment(Qt::AlignCenter);
+        copyLabel->setStyleSheet("QLabel { color: #8a96a8; }");
+        layout->addWidget(copyLabel);
+
+        layout->addSpacing(12);
+
+        QPushButton *okButton = new QPushButton("OK", &dialog);
+        okButton->setDefault(true);
+        okButton->setFocusPolicy(Qt::StrongFocus);
+        connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+        layout->addWidget(okButton, 0, Qt::AlignHCenter);
+
+        dialog.exec();
+    });
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);

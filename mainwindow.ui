@@ -191,10 +191,17 @@
     <addaction name="actionROM_Box"/>
     <addaction name="menuCartridge"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuSystem"/>
    <addaction name="menuDevices"/>
    <addaction name="menuSettings"/>
    <addaction name="menuDebug"/>
+   <addaction name="menuHelp"/>
   </widget>
   <action name="actionPause">
    <property name="icon">
@@ -284,6 +291,11 @@
    </property>
    <property name="text">
     <string>Right shift as \</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About...</string>
    </property>
   </action>
   <action name="actionAudio_enabled">

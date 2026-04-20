@@ -2,6 +2,7 @@ QT += core
 QT += gui
 QT += opengl
 QT += openglwidgets
+QT += svg
 
 VERSION = 0.1
 TARGET = cadence
