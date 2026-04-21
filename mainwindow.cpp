@@ -9,6 +9,7 @@
 #include "CRTScreen.h"
 #include "Keyboard.h"
 #include "AboutDialog.h"
+#include "ROMBoxDialog.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -54,6 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
     media = new MediaController(this);
+    applyROMOverrides();
 
     connect(workerThread, &EmulatorThread::OnPause, this, &MainWindow::onEmulatorPaused);
     connect(workerThread, &EmulatorThread::OnResume, this, &MainWindow::onEmulatorResumed);
@@ -358,9 +360,18 @@ void MainWindow::onMenuMediaRemoveDiskB()
 
 void MainWindow::onMenuROMLoadFromFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load ROM"), ".", tr("ROM Files (*.bin *.rom)"));
-    if (fileName != nullptr)
-        CPC::ReadROM((char *)fileName.toUtf8().data(), 1);
+    ROMBoxDialog dlg(&settings, this);
+    dlg.exec();
+}
+
+void MainWindow::applyROMOverrides()
+{
+    for (int i = 0; i < 16; i++)
+    {
+        const QString &path = settings.romPaths[i];
+        if (!path.isEmpty() && QFileInfo::exists(path))
+            CPC::ReadROM((char *)path.toUtf8().data(), i);
+    }
 }
 
 void MainWindow::onMenuMediaRemoveCartridge()
@@ -429,6 +440,7 @@ void MainWindow::SwitchMachine(CPCType type)
     CPC::Finalize();
     CPC::cpcType = type;
     CPC::Init();
+    applyROMOverrides();
     StartThreads();
     switch (type) {
     case CPCType::CPC464:  settings.system = "CPC464";  break;

@@ -66,7 +66,8 @@ SOURCES += \
     speedcontroller.cpp \
     Settings.cpp \
     MediaController.cpp \
-    AboutDialog.cpp
+    AboutDialog.cpp \
+    ROMBoxDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -95,7 +96,8 @@ HEADERS += \
     speedcontroller.h \
     Settings.h \
     MediaController.h \
-    AboutDialog.h
+    AboutDialog.h \
+    ROMBoxDialog.h
 
 FORMS += \
     Debugger.ui \

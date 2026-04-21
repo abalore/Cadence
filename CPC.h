@@ -32,6 +32,7 @@ public:
     static void SetByteAt(word address, BYTE b);
     static void SelectROM(BYTE number);
     static void ReadROM(char *filename, int number);
+    static void ClearROM(int number);
     static void ReadCartridge(char *filename);
     static void SelectRAM(BYTE mmr);
     static void UpdateMemoryMap();

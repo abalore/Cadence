@@ -62,6 +62,7 @@ private:
     void SwitchMachine(CPCType type);
     void setMediaText(QLabel *label, const QString &text);
     void applySettingsToUi();
+    void applyROMOverrides();
     void collectSettingsFromUi();
     Ui::MainWindow *ui;
     Debugger *debugger;

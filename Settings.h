@@ -18,6 +18,7 @@ public:
     QString diskBPath;
     QString tapePath;
     QString cartridgePath;
+    QString romPaths[16];
 
     void Load();
     void Save();

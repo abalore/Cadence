@@ -27,6 +27,8 @@ void Settings::Load()
     diskBPath     = s.value("media/disk_b").toString();
     tapePath      = s.value("media/tape").toString();
     cartridgePath = s.value("media/cartridge").toString();
+    for (int i = 0; i < 16; i++)
+        romPaths[i] = s.value(QString("rom/slot_%1").arg(i)).toString();
 }
 
 void Settings::Save()
@@ -45,4 +47,6 @@ void Settings::Save()
     s.setValue("media/disk_b", diskBPath);
     s.setValue("media/tape", tapePath);
     s.setValue("media/cartridge", cartridgePath);
+    for (int i = 0; i < 16; i++)
+        s.setValue(QString("rom/slot_%1").arg(i), romPaths[i]);
 }

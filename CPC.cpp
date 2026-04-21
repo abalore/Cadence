@@ -58,6 +58,16 @@ void CPC::ReadROM(char *filename, int number)
     }
 }
 
+void CPC::ClearROM(int number)
+{
+    if (number < 0 || number >= ROM_SLOTS) return;
+    if (HiROMs[number] != nullptr)
+    {
+        free(HiROMs[number]);
+        HiROMs[number] = nullptr;
+    }
+}
+
 void CPC::ReadCartridge(char *filename)
 {
     if (Cartridge != nullptr) free(Cartridge);
