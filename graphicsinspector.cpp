@@ -20,6 +20,10 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
     connect(ui->radioButton_2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->radioButton_3, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->radioButton_4, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbMode0, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbMode1, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbMode2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbMode3, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
 }
 
 GraphicsInspector::~GraphicsInspector()
@@ -31,6 +35,13 @@ void GraphicsInspector::showEvent(QShowEvent *event)
 {
     ui->inputWidth->setText(QString::number(CPC::crtc.HD));
     ui->inputHeight->setText(QString::number(CPC::crtc.VD));
+    switch (CPC::gateArray.GetMode())
+    {
+    case 0: ui->rbMode0->setChecked(true); break;
+    case 1: ui->rbMode1->setChecked(true); break;
+    case 2: ui->rbMode2->setChecked(true); break;
+    case 3: ui->rbMode3->setChecked(true); break;
+    }
     QDialog::showEvent(event);
 }
 
@@ -44,6 +55,10 @@ void GraphicsInspector::UpdateGraphics()
     if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
     if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
     int mode = CPC::gateArray.GetMode();
+    if (ui->rbMode0->isChecked()) mode = 0;
+    else if (ui->rbMode1->isChecked()) mode = 1;
+    else if (ui->rbMode2->isChecked()) mode = 2;
+    else if (ui->rbMode3->isChecked()) mode = 3;
     pixels.resize(byteSize);
     for (int i = 0; i < xSize * 2; i++)
         for  (int j = 0; j < ySize; j++)
