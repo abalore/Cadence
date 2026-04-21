@@ -1,68 +1,20 @@
 #include "PSG.h"
-#include "Keyboard.h"
-#include "Tape.h"
+#include "CPC.h"
 #include <stdlib.h>
 #include <cstdint>
-
-bool PSG::BC1;
-bool PSG::BDIR;
-BYTE PSG::outputA;
-BYTE PSG::outputB;
-BYTE PSG::outputC;
-BYTE PSG::buffer[PSG_BUFFER_SIZE];
-int PSG::bufferIndex;
-BYTE PSG::inputRegister;
-BYTE PSG::outputRegister;
-BYTE PSG::selectedRegister;
-BYTE PSG::registers[16];
-word PSG::counterA;
-word PSG::counterB;
-word PSG::counterC;
-BYTE PSG::divider;
-BYTE PSG::envelopeDivider;
-BYTE PSG::envelopeStage;
-BYTE PSG::envelopeLevel;
-EnvelopeDir PSG::envelopeDir;
-bool PSG::envelopeAttack;
-bool PSG::envelopeContinue;
-bool PSG::envelopeHold;
-bool PSG::envelopeAlternate;
-word PSG::envelopePeriod;
-word PSG::envelopeCounter;
-bool PSG::envelopeRunning;
-BYTE PSG::noiseDivider;
-bool PSG::noiseLevel;
-uint32_t PSG::noiseLFSR;
-bool PSG::bitA;
-bool PSG::bitB;
-bool PSG::bitC;
-word PSG::periodA;
-word PSG::periodB;
-word PSG::periodC;
-bool PSG::mixA;
-bool PSG::mixB;
-bool PSG::mixC;
-bool PSG::noiseA;
-bool PSG::noiseB;
-bool PSG::noiseC;
-BYTE PSG::tVolA;
-BYTE PSG::tVolB;
-BYTE PSG::tVolC;
-BYTE PSG::latch;
+#include <cstring>
 
 void PSG::Reset()
 {
     outputA = 0;
     outputB = 0;
     outputC = 0;
-    for (int i = 0; i < PSG_BUFFER_SIZE; i++)
-        buffer[i] = 128;
+    memset(buffer, 128, sizeof(buffer));
     bufferIndex = 0;
     inputRegister = 0;
     outputRegister = 0;
     selectedRegister = 0;
-    for (int i = 0; i < 16; i++)
-        registers[i] = 0;
+    memset(registers, 0, sizeof(registers));
     counterA = 0;
     counterB = 0;
     counterC = 0;
@@ -133,7 +85,7 @@ void PSG::Clock()
 
         if (bufferIndex < PSG_BUFFER_SIZE)
         {
-            buffer[bufferIndex] = 128 + outputA + outputB + outputC + (Tape::audioEnabled ? Tape::GetLevel() * 10 : 0);
+            buffer[bufferIndex] = 128 + outputA + outputB + outputC + (CPC::tape.audioEnabled ? CPC::tape.GetLevel() * 10 : 0);
             bufferIndex++;
         }
     }
@@ -157,7 +109,7 @@ void PSG::ApplyChangeFromControl()
         if (selectedRegister < 0x0E)
             outputRegister = registers[selectedRegister];
         else if (selectedRegister == 0x0E)
-            outputRegister = Keyboard::Read();
+            outputRegister = CPC::keyboard.Read();
     }
     else if (BC1 == false && BDIR == true)
     {

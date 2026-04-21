@@ -1,7 +1,6 @@
 #include "CPC.h"
 #include "GateArray.h"
 #include "Keyboard.h"
-#include "CRTC.h"
 #include "Z80.h"
 #include "PPI.h"
 #include "PSG.h"
@@ -11,7 +10,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <cstring>
 
+bool CPC::Breakpoint[65536];
+CRTC CPC::crtc;
+Keyboard CPC::keyboard;
+Tape CPC::tape;
+FDC CPC::fdc;
+PSG CPC::psg;
+PPI CPC::ppi;
+CRTScreen CPC::screen;
+GateArray CPC::gateArray;
+Z80 CPC::z80;
 BYTE *CPC::RAM[4];
 BYTE *CPC::memPage[4];
 BYTE CPC::zeroPage[0x4000] = {};
@@ -125,56 +135,89 @@ void CPC::Clock()
         switch(tick & 0x0F)
         {
         case 0:
-            Z80::WAIT = false;
-            Z80::Clock();
-            CRTC::Clock();
-            GateArray::ProcessSync();
-            GateArray::LoadVideoAddress();
-            GateArray::ReadByte(true);
-            Z80::Clock2();
-            FDC::Clock();
-            Tape::Clock();
-            PSG::Clock();
+            z80.WAIT = false;
+            z80.Clock();
+            crtc.Clock();
+            gateArray.ProcessSync();
+            gateArray.LoadVideoAddress();
+            gateArray.ReadByte(true);
+            z80.Clock2();
+            fdc.Clock();
+            tape.Clock();
+            psg.Clock();
             break;
         case 4:
-            GateArray::ReadByte(false);
-            Z80::WAIT = true;
-            Z80::Clock();
-            Z80::Clock2();
-            FDC::Clock();
+            gateArray.ReadByte(false);
+            z80.WAIT = true;
+            z80.Clock();
+            z80.Clock2();
+            fdc.Clock();
             break;
         case 8:
-            Z80::WAIT = false;
-            Z80::Clock();
-            Z80::Clock2();
-            FDC::Clock();
+            z80.WAIT = false;
+            z80.Clock();
+            z80.Clock2();
+            fdc.Clock();
             break;
         case 12:
-            Z80::WAIT = false;
-            Z80::Clock();
-            Z80::Clock2();
-            FDC::Clock();
+            z80.WAIT = false;
+            z80.Clock();
+            z80.Clock2();
+            fdc.Clock();
             break;
         }
     }
-    GateArray::SetPixel();
-    CRTScreen::Clock();
+    gateArray.SetPixel();
+    screen.Clock();
     tick++;
 }
 
 void CPC::Reset()
 {
     tick = 0;
-    Z80::Reset();
-    PPI::Reset();
-    CRTC::Reset();
-    GateArray::Reset();
-    Keyboard::Reset();
-    PSG::Reset();
-    FDC::Reset();
-    CRTScreen::Init();
+    z80.Reset();
+    ppi.Reset();
+    crtc.Reset();
+    gateArray.Reset();
+    keyboard.Reset();
+    psg.Reset();
+    fdc.Reset();
+    screen.Init();
     SelectRAM(0);
     SelectROM(0);
+    memset(Breakpoint, 0, sizeof(Breakpoint));
+}
+
+BYTE CPC::PortRead(word addr)
+{
+    BYTE data = 0;
+    if (!(addr & 0x4000))
+        data = crtc.RD((addr & 0x0300) >> 8);
+    else if (!(addr & 0x0800))
+        data = ppi.RD((addr & 0x0300) >> 8);
+    else if (!(addr & 0x0480))
+    {
+        if ((addr & 0x0100) != 0)
+            data = (addr & 0x0001) ? fdc.RD_Data() : fdc.RD_State();
+    }
+    return data;
+}
+
+void CPC::AckInt() { gateArray.AckInt(); }
+
+void CPC::PortWrite(word addr, BYTE value)
+{
+    if (!(addr & 0x8000)) gateArray.WR(value);
+    if (!(addr & 0x4000)) crtc.WR((addr & 0x0300) >> 8, value);
+    if (!(addr & 0x2000)) SelectROM(value);
+    if (!(addr & 0x0800)) ppi.WR((addr & 0x0300) >> 8, value);
+    if (!(addr & 0x0480))
+    {
+        if ((addr & 0x0100) == 0)
+            fdc.SetMotor(value);
+        else if ((addr & 0x0001) != 0)
+            fdc.WR(value);
+    }
 }
 
 BYTE CPC::GetRAMByteAt(word address)
@@ -186,7 +229,7 @@ BYTE CPC::GetRAMByteAt(word address)
 
 void CPC::UpdateMemoryMap()
 {
-    if (!GateArray::LoROMActive)
+    if (!gateArray.LoROMActive)
         memPage[0] = (cartridgeEnabled && Cartridge) ? Cartridge : LoROM;
     else
         memPage[0] = RAM[0];
@@ -194,7 +237,7 @@ void CPC::UpdateMemoryMap()
     memPage[1] = RAM[1];
     memPage[2] = RAM[2];
 
-    if (!GateArray::HiROMActive)
+    if (!gateArray.HiROMActive)
         memPage[3] = HiROM ? HiROM : zeroPage;
     else
         memPage[3] = RAM[3];

@@ -6,40 +6,41 @@
 class CRTC
 {
 public:
-    static void Reset();
-    static void Clock();
-    static BYTE RD(BYTE address);
-    static void WR(BYTE address, BYTE value);
-    static BYTE Index;
-    static BYTE RA;
-    static bool HSYNC, VSYNC, BORDER;
+    void Reset();
+    void Clock();
+    BYTE RD(BYTE address);
+    void WR(BYTE address, BYTE value);
+    BYTE Index;
+    BYTE RA;
+    bool HSYNC, VSYNC, BORDER;
 
-    static BYTE HCC;
-    static word VLC;
-    static BYTE VCC;
-    static BYTE VSC;
-    static BYTE HSC;
-    static word MA;
+    BYTE HCC;
+    word VLC;
+    BYTE VCC;
+    BYTE VSC;
+    BYTE HSC;
+    word MA;
 
-    static BYTE VTAC;
-    static BYTE verticalTotal;
-    static BYTE crtcType;
+    BYTE VTAC;
+    BYTE verticalTotal;
+    BYTE crtcType = 0;
 
-    static BYTE HT, HD, HSP, HSW, VSW, VT, VTA, VD, VSP, IS, MRA;
+    BYTE HT, HD, HSP, HSW, VSW, VT, VTA, VD, VSP, IS, MRA;
 
 
-    static bool HDISP;
-    static bool VDISP;
-    static word baseMA;
-    static bool adjustMode;
-    static word DSA;
-    static BYTE newVT;
-    static bool EndLine, EndChar, EndScreen;
+    bool HDISP;
+    bool VDISP;
+    word baseMA;
+    bool adjustMode;
+    word DSA;
+    BYTE newVT;
+    bool EndLine, EndChar, EndScreen;
 
 private:
-    static void RunHorizontalChar();
-    static void RunAdj();
-    static void EndOfLine();
+    bool willAdjust = false;
+    void RunHorizontalChar();
+    void RunAdj();
+    void EndOfLine();
 
 };
 

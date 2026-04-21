@@ -2,13 +2,13 @@
 #include "ui_mainwindow.h"
 #include "Debugger.h"
 #include "EmulatorThread.h"
-#include "Emulator.h"
 #include "CPC.h"
 #include "Tape.h"
 #include "FDC.h"
 #include "GateArray.h"
 #include "CRTScreen.h"
 #include "Keyboard.h"
+#include "AboutDialog.h"
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -23,16 +23,12 @@
 #include <QDialogButtonBox>
 #include <QActionGroup>
 #include <QMessageBox>
-#include <QVBoxLayout>
 #include <QLabel>
-#include <QPushButton>
 #include <QStatusBar>
 #include <QFileInfo>
 #include <QIcon>
 #include <QFontMetrics>
 #include <QTimer>
-#include <QSettings>
-#include <QDir>
 
 using namespace std;
 
@@ -49,14 +45,15 @@ MainWindow::MainWindow(QWidget *parent)
     enterBytesDialog = new EnterBytesDialog(this);
 
     Instance = this;
-    //setFixedSize(1024, 768);
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
+    media = new MediaController(this);
 
     connect(workerThread, &EmulatorThread::OnPause, this, &MainWindow::onEmulatorPaused);
     connect(workerThread, &EmulatorThread::OnResume, this, &MainWindow::onEmulatorResumed);
     connect(workerThread, &EmulatorThread::OnFinishedFrame, this, &MainWindow::onEmulatorFinishedFrame);
+    connect(media, &MediaController::mediaChanged, this, &MainWindow::onMediaChanged);
 
     connect(ui->actionPause, &QAction::triggered, workerThread, &EmulatorThread::Pause);
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
@@ -89,55 +86,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
     connect(ui->actionSFX_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::sfxEnabled = checked; });
-    connect(ui->actionTape_enabled, &QAction::toggled, this, [](bool checked){ Tape::audioEnabled = checked; });
+    connect(ui->actionTape_enabled, &QAction::toggled, this, [](bool checked){ CPC::tape.audioEnabled = checked; });
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
-    connect(ui->actionAbout, &QAction::triggered, this, [this]{
-        QDialog dialog(this);
-        dialog.setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-        dialog.setStyleSheet(
-            "QDialog { background-color: #0b1220; border: 1px solid #00e5ff; }"
-            "QLabel { color: #e0e8f0; background: transparent; }"
-            "QPushButton { background-color: #0b1220; color: #00e5ff; "
-            "border: 1px solid #00e5ff; padding: 6px 28px; border-radius: 4px; font-weight: bold; }"
-            "QPushButton:hover { background-color: #00e5ff; color: #0b1220; }"
-            "QPushButton:pressed { background-color: #00b8cc; color: #0b1220; }"
-        );
-
-        QVBoxLayout *layout = new QVBoxLayout(&dialog);
-        layout->setContentsMargins(40, 28, 40, 24);
-        layout->setSpacing(10);
-
-        QLabel *iconLabel = new QLabel(&dialog);
-        iconLabel->setPixmap(QIcon(":/images/cadence.svg").pixmap(80, 80));
-        iconLabel->setAlignment(Qt::AlignCenter);
-        layout->addWidget(iconLabel, 0, Qt::AlignHCenter);
-
-        QLabel *titleLabel = new QLabel(QString("%1 %2").arg(APP_NAME, APP_VERSION), &dialog);
-        QFont titleFont = titleLabel->font();
-        titleFont.setBold(true);
-        titleFont.setPointSize(titleFont.pointSize() + 5);
-        titleLabel->setFont(titleFont);
-        titleLabel->setAlignment(Qt::AlignCenter);
-        layout->addWidget(titleLabel);
-
-        QLabel *copyLabel = new QLabel("(c) Abalore 2026", &dialog);
-        QFont copyFont = copyLabel->font();
-        copyFont.setPointSize(copyFont.pointSize() - 1);
-        copyLabel->setFont(copyFont);
-        copyLabel->setAlignment(Qt::AlignCenter);
-        copyLabel->setStyleSheet("QLabel { color: #8a96a8; }");
-        layout->addWidget(copyLabel);
-
-        layout->addSpacing(12);
-
-        QPushButton *okButton = new QPushButton("OK", &dialog);
-        okButton->setDefault(true);
-        okButton->setFocusPolicy(Qt::StrongFocus);
-        connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
-        layout->addWidget(okButton, 0, Qt::AlignHCenter);
-
-        dialog.exec();
-    });
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
@@ -169,75 +120,74 @@ MainWindow::MainWindow(QWidget *parent)
     adjustSize();
     setFixedSize(size());
 
-    loadSettings();
+    settings.Load();
+    applySettingsToUi();
+    if (!settings.diskAPath.isEmpty() && QFileInfo::exists(settings.diskAPath))
+        media->LoadDiskA(settings.diskAPath);
+    if (!settings.diskBPath.isEmpty() && QFileInfo::exists(settings.diskBPath))
+        media->LoadDiskB(settings.diskBPath);
+    if (!settings.tapePath.isEmpty() && QFileInfo::exists(settings.tapePath))
+        media->LoadTape(settings.tapePath);
+    if (!settings.cartridgePath.isEmpty() && QFileInfo::exists(settings.cartridgePath))
+        media->LoadCartridge(settings.cartridgePath);
+
     StartThreads();
 }
 
 MainWindow::~MainWindow()
 {
-    saveSettings();
+    collectSettingsFromUi();
+    settings.diskAPath     = media->DiskAPath();
+    settings.diskBPath     = media->DiskBPath();
+    settings.tapePath      = media->TapePath();
+    settings.cartridgePath = media->CartridgePath();
+    settings.Save();
     StopThreads();
     delete graphicsInspector;
     delete debugger;
     delete ui;
 }
 
-void MainWindow::loadSettings()
+void MainWindow::applySettingsToUi()
 {
-    QString path = QDir::homePath() + "/.config/cadence/settings.cfg";
-    QSettings s(path, QSettings::IniFormat);
+    ui->actionSmooth->setChecked(settings.smooth);
+    ui->actionGreen_monitor->setChecked(settings.greenMonitor);
+    ui->actionAudio_enabled->setChecked(settings.audioEnabled);
+    ui->actionSFX_enabled->setChecked(settings.sfxEnabled);
+    ui->actionTape_enabled->setChecked(settings.tapeEnabled);
+    ui->actionRight_shift_as_backslash->setChecked(settings.rsBackslash);
 
-    bool smooth      = s.value("screen/smooth", true).toBool();
-    bool green       = s.value("screen/green_monitor", false).toBool();
-    bool fullScreen  = s.value("screen/full_screen", false).toBool();
-    bool audio       = s.value("audio/enabled", true).toBool();
-    bool sfx         = s.value("audio/sfx", true).toBool();
-    bool tape        = s.value("audio/tape", true).toBool();
-    bool rsBackslash = s.value("keyboard/right_shift_as_backslash", true).toBool();
-
-    ui->actionSmooth->setChecked(smooth);
-    ui->actionGreen_monitor->setChecked(green);
-    ui->actionAudio_enabled->setChecked(audio);
-    ui->actionSFX_enabled->setChecked(sfx);
-    ui->actionTape_enabled->setChecked(tape);
-    ui->actionRight_shift_as_backslash->setChecked(rsBackslash);
-
+    const bool smooth = settings.smooth;
     QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
-    GateArray::SetMonochrome(green);
-    SoundThread::enabled = audio;
-    SoundThread::sfxEnabled = sfx;
-    Tape::audioEnabled = tape;
-    Keyboard::translation[53] = rsBackslash ? 62 : 52;
+    CPC::gateArray.SetMonochrome(settings.greenMonitor);
+    SoundThread::enabled = settings.audioEnabled;
+    SoundThread::sfxEnabled = settings.sfxEnabled;
+    CPC::tape.audioEnabled = settings.tapeEnabled;
+    Keyboard::translation[53] = settings.rsBackslash ? 62 : 52;
 
-    if (fullScreen)
+    if (settings.fullScreen)
         QTimer::singleShot(0, this, [this]{ ui->actionFull_screen->setChecked(true); });
-
-    QString dA = s.value("media/disk_a").toString();
-    QString dB = s.value("media/disk_b").toString();
-    QString tp = s.value("media/tape").toString();
-    QString ct = s.value("media/cartridge").toString();
-    if (!dA.isEmpty() && QFileInfo::exists(dA)) loadDiskA(dA);
-    if (!dB.isEmpty() && QFileInfo::exists(dB)) loadDiskB(dB);
-    if (!tp.isEmpty() && QFileInfo::exists(tp)) loadTape(tp);
-    if (!ct.isEmpty() && QFileInfo::exists(ct)) loadCartridge(ct);
 }
 
-void MainWindow::saveSettings()
+void MainWindow::collectSettingsFromUi()
 {
-    QString dirPath = QDir::homePath() + "/.config/cadence";
-    QDir().mkpath(dirPath);
-    QSettings s(dirPath + "/settings.cfg", QSettings::IniFormat);
-    s.setValue("screen/smooth", ui->actionSmooth->isChecked());
-    s.setValue("screen/green_monitor", ui->actionGreen_monitor->isChecked());
-    s.setValue("screen/full_screen", ui->actionFull_screen->isChecked());
-    s.setValue("audio/enabled", ui->actionAudio_enabled->isChecked());
-    s.setValue("audio/sfx", ui->actionSFX_enabled->isChecked());
-    s.setValue("audio/tape", ui->actionTape_enabled->isChecked());
-    s.setValue("keyboard/right_shift_as_backslash", ui->actionRight_shift_as_backslash->isChecked());
-    s.setValue("media/disk_a", diskAPath);
-    s.setValue("media/disk_b", diskBPath);
-    s.setValue("media/tape", tapePath);
-    s.setValue("media/cartridge", cartridgePath);
+    settings.smooth       = ui->actionSmooth->isChecked();
+    settings.greenMonitor = ui->actionGreen_monitor->isChecked();
+    settings.fullScreen   = ui->actionFull_screen->isChecked();
+    settings.audioEnabled = ui->actionAudio_enabled->isChecked();
+    settings.sfxEnabled   = ui->actionSFX_enabled->isChecked();
+    settings.tapeEnabled  = ui->actionTape_enabled->isChecked();
+    settings.rsBackslash  = ui->actionRight_shift_as_backslash->isChecked();
+}
+
+void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)
+{
+    switch (slot) {
+    case MediaSlot::Tape:      setMediaText(tapeLabel, text);      break;
+    case MediaSlot::DiskA:     setMediaText(diskLabel, text);      break;
+    case MediaSlot::DiskB:     setMediaText(diskBLabel, text);     break;
+    case MediaSlot::Cartridge: setMediaText(cartridgeLabel, text); break;
+    }
 }
 
 void MainWindow::StartThreads()
@@ -272,9 +222,9 @@ void MainWindow::onEmulatorPaused()
 {
     ui->hLine->setVisible(true);
     ui->vLine->setVisible(true);
-    ui->hLine->move(0, CRTScreen::vPos * 2 - 56);
-    ui->vLine->move(CRTScreen::hPos + 240, 0);
-    ui->vLine->pos().setX(CRTScreen::vPos);
+    ui->hLine->move(0, CPC::screen.vPos * 2 - 56);
+    ui->vLine->move(CPC::screen.hPos + 240, 0);
+    ui->vLine->pos().setX(CPC::screen.vPos);
     if (debugger->isHidden())
         debugger->show();
     debugger->Update();
@@ -289,7 +239,7 @@ void MainWindow::onEmulatorResumed()
 void MainWindow::onEmulatorFinishedFrame()
 {
     ui->openGLWidget->updateTexture();
-    motorLabel->setPixmap(FDC::GetState() != FDC_StateCommand ? ledOnPixmap : ledOffPixmap);
+    motorLabel->setPixmap(CPC::fdc.GetState() != FDC_StateCommand ? ledOnPixmap : ledOffPixmap);
 }
 
 void MainWindow::onMenuMemoryLoadBinaryFile()
@@ -355,7 +305,7 @@ void MainWindow::onMenuMediaInsertTape()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
-        loadTape(fileName);
+        media->LoadTape(fileName);
 }
 
 void MainWindow::onMenuScreenSmooth()
@@ -367,79 +317,29 @@ void MainWindow::onMenuMediaInsertDiskA()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        loadDiskA(fileName);
+        media->LoadDiskA(fileName);
 }
 
 void MainWindow::onMenuMediaInsertDiskB()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
-        loadDiskB(fileName);
+        media->LoadDiskB(fileName);
 }
 
 void MainWindow::onMenuMediaRemoveTape()
 {
-    Tape::Eject();
-    tapePath.clear();
-    setMediaText(tapeLabel, "<Empty>");
+    media->EjectTape();
 }
 
 void MainWindow::onMenuMediaRemoveDiskA()
 {
-    if (FDC::GetDrive(0)->RemoveDSK()) {
-        diskAPath.clear();
-        setMediaText(diskLabel, "<Empty>");
-    }
+    media->EjectDiskA();
 }
 
 void MainWindow::onMenuMediaRemoveDiskB()
 {
-    if (FDC::GetDrive(1)->RemoveDSK()) {
-        diskBPath.clear();
-        setMediaText(diskBLabel, "<Empty>");
-    }
-}
-
-bool MainWindow::loadDiskA(const QString &path)
-{
-    if (!FDC::GetDrive(0)->InsertDSK((char *)path.toUtf8().data()))
-        return false;
-    diskAPath = path;
-    setMediaText(diskLabel, QFileInfo(path).fileName());
-    return true;
-}
-
-bool MainWindow::loadDiskB(const QString &path)
-{
-    if (!FDC::GetDrive(1)->InsertDSK((char *)path.toUtf8().data()))
-        return false;
-    diskBPath = path;
-    setMediaText(diskBLabel, QFileInfo(path).fileName());
-    return true;
-}
-
-bool MainWindow::loadTape(const QString &path)
-{
-    QString extension = path.last(3).toLower();
-    if (extension == "wav")
-        Tape::LoadWAV((char *)path.toUtf8().data());
-    else if (extension == "cdt")
-        Tape::LoadCDT((char *)path.toUtf8().data());
-    else
-        return false;
-    tapePath = path;
-    setMediaText(tapeLabel, QFileInfo(path).fileName());
-    return true;
-}
-
-bool MainWindow::loadCartridge(const QString &path)
-{
-    CPC::ReadCartridge((char *)path.toUtf8().data());
-    cartridgePath = path;
-    CPC::cartridgeEnabled = true;
-    setMediaText(cartridgeLabel, QFileInfo(path).fileName());
-    Emulator::Reset();
-    return true;
+    media->EjectDiskB();
 }
 
 void MainWindow::onMenuROMLoadFromFile()
@@ -451,22 +351,24 @@ void MainWindow::onMenuROMLoadFromFile()
 
 void MainWindow::onMenuMediaRemoveCartridge()
 {
-    CPC::cartridgeEnabled = false;
-    cartridgePath.clear();
-    setMediaText(cartridgeLabel, "<Empty>");
-    Emulator::Reset();
+    media->EjectCartridge();
 }
 
 void MainWindow::onMenuMediaInsertCartridge()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
-        loadCartridge(fileName);
+        media->LoadCartridge(fileName);
+}
+
+void MainWindow::onMenuAbout()
+{
+    AboutDialog(this).exec();
 }
 
 void MainWindow::onMenuScreenGreenMonitor()
 {
-    GateArray::SetMonochrome(ui->actionGreen_monitor->isChecked());
+    CPC::gateArray.SetMonochrome(ui->actionGreen_monitor->isChecked());
 }
 
 void MainWindow::onMenuViewFullScreen()
@@ -510,9 +412,9 @@ void MainWindow::setMediaText(QLabel *label, const QString &text)
 void MainWindow::SwitchMachine(CPCType type)
 {
     StopThreads();
-    Emulator::Finalize();
+    CPC::Finalize();
     CPC::cpcType = type;
-    Emulator::Init();
+    CPC::Init();
     StartThreads();
 }
 

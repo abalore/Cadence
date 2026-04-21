@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QMutex>
+#include <atomic>
 #include <string>
 
 using namespace std;
@@ -20,10 +21,10 @@ class EmulatorThread : public QThread
 public:
     explicit EmulatorThread(QObject *parent);
     ~EmulatorThread();
-    static volatile bool running;
-    static volatile ushort stopPoint;
-    static volatile bool end;
-    static volatile RunMode runMode;
+    static std::atomic<bool> running;
+    static std::atomic<ushort> stopPoint;
+    static std::atomic<bool> end;
+    static std::atomic<RunMode> runMode;
     static QMutex frameMutex;
 public slots:
     static void Run();

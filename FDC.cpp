@@ -1,56 +1,6 @@
 #include "FDC.h"
-#include "CPC.h"
 #include <stdio.h>
-
-FDCState FDC::state;
-FDCCommandState FDC::commandState;
-BYTE FDC::command;
-BYTE FDC::PCN;
-BYTE FDC::H;
-BYTE FDC::R;
-BYTE FDC::N;
-BYTE FDC::EOT;
-BYTE FDC::GPL;
-BYTE FDC::DTL;
-BYTE FDC::STP;
-BYTE FDC::NCN;
-BYTE FDC::SC;
-BYTE FDC::D;
-BYTE FDC::SRT;
-BYTE FDC::HUT;
-BYTE FDC::HLT;
-bool FDC::ND;
-bool FDC::MT;
-bool FDC::MF;
-bool FDC::SK;
-FloppyDrive FDC::drives[4];
-BYTE FDC::headSettlingTime;
-BYTE FDC::headUploadTimeInterval;
-bool FDC::HD;
-BYTE FDC::US;
-BYTE FDC::result[7];
-BYTE FDC::resultCount;
-BYTE FDC::resultIndex;
-bool FDC::bit7_RQM;
-bool FDC::bit6_DIO;
-bool FDC::bit5_NDMA;
-bool FDC::bit4_BUSY;
-bool FDC::bits03_FDDBUSY[4];
-SectorInfo FDC::sectorInfo;
-int FDC::dataIndex;
-int FDC::dataSize;
-BYTE FDC::sizeCode;
-BYTE FDC::sectorID;
-BYTE *FDC::data;
-BYTE FDC::weakSectorCycle;
-int FDC::seekCounter;
-volatile int FDC::stepPulses;
-BYTE FDC::INT;
-BYTE FDC::stIC, FDC::stSE, FDC::stEC, FDC::stNR;
-BYTE FDC::stEN, FDC::stDE, FDC::stOR, FDC::stND, FDC::stNW, FDC::stMA;
-BYTE FDC::stCM, FDC::stDD, FDC::stWC, FDC::stSH, FDC::stSN, FDC::stBC, FDC::stMD;
-bool FDC::MotorState;
-
+#include <cstring>
 
 void FDC::Reset()
 {
@@ -64,8 +14,7 @@ void FDC::Reset()
     ND = MT = MF = SK = false;
     headSettlingTime = 0;
     headUploadTimeInterval = 0;
-    for (int i = 0; i < 7; i++)
-        result[i] = 0;
+    memset(result, 0, sizeof(result));
     resultCount = 0;
     resultIndex = 0;
     bit7_RQM = 1;

@@ -51,7 +51,6 @@ SOURCES += \
     CPC.cpp \
     CRTC.cpp \
     Disassembler.cpp \
-    Emulator.cpp \
     GateArray.cpp \
     Reg16.cpp \
     Z80.cpp \
@@ -64,7 +63,10 @@ SOURCES += \
     Z80_misc.cpp \
     pboWidget.cpp \
     pboWidget.h \
-    speedcontroller.cpp
+    speedcontroller.cpp \
+    Settings.cpp \
+    MediaController.cpp \
+    AboutDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -74,7 +76,6 @@ HEADERS += \
     CRTScreen.h \
     DSK.h \
     Disassembler.h \
-    Emulator.h \
     FDC.h \
     FloppyDrive.h \
     GateArray.h \
@@ -91,7 +92,10 @@ HEADERS += \
     enterbytesdialog.h \
     graphicsinspector.h \
     mainwindow.h \
-    speedcontroller.h
+    speedcontroller.h \
+    Settings.h \
+    MediaController.h \
+    AboutDialog.h
 
 FORMS += \
     Debugger.ui \

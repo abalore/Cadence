@@ -1,50 +1,11 @@
 #include "GateArray.h"
 #include "CPC.h"
-#include "CRTC.h"
-#include "Z80.h"
-
-const BYTE *GateArray::Color = Palette;
-BYTE GateArray::INK[16];
-BYTE GateArray::BORDER = 0;
-BYTE GateArray::RMR;
-BYTE GateArray::MMR;
-BYTE GateArray::currentPen = 0;
-bool GateArray::borderSelected = false;
-word GateArray::videoAddress = 0;
-word GateArray::currentWord = 0;
-BYTE GateArray::pixelIndex = 0;
-const BYTE *GateArray::blankColor = nullptr;
-const BYTE *GateArray::currentPalette = GateArray::Palette;
-bool GateArray::CCLK = false;
-bool GateArray::VideoAccess = false;
-bool GateArray::lastHSYNC = false;
-bool GateArray::lastVSYNC = false;
-bool GateArray::lastHDISP = false;
-BYTE GateArray::R52 = 0;
-BYTE GateArray::hsyncDelay = 0;
-BYTE GateArray::vsyncDelay = 0;
-BYTE GateArray::mode;
-BYTE GateArray::pi;
-BYTE GateArray::decodedPen[4][8][256];
-bool GateArray::hsyncTrigger = false;
-bool GateArray::vsyncTrigger = false;
-bool GateArray::LoROMActive;
-bool GateArray::HiROMActive;
-bool GateArray::Monochrome;
-BYTE GateArray::intTimeout;
-BYTE GateArray::porch;
-BYTE GateArray::ready;
-BYTE GateArray::latchLo;
-BYTE GateArray::latchHi;
-bool GateArray::dispEnFF1;
-bool GateArray::dispEnFF2;
-BYTE GateArray::nextMode;
+#include <cstring>
 
 void GateArray::Reset()
 {
     Color = AbsoluteBlack;
-    for (int i = 0; i < 16; i++)
-        INK[i] = 0;
+    memset(INK, 0, sizeof(INK));
     Monochrome = false;
     BORDER = 0;
     currentPen = 0;
@@ -88,16 +49,16 @@ void GateArray::Reset()
 void GateArray::AckInt()
 {
     R52 &= 0x1F;
-    Z80::InterruptRequest = true;
+    CPC::z80.InterruptRequest = true;
 }
 
 void GateArray::ProcessSync()
 {
     dispEnFF2 = dispEnFF1;
-    dispEnFF1 = CRTC::BORDER;
-    bool hsyncFallingEdge = lastHSYNC && !CRTC::HSYNC;
-    bool hsyncRisingEdge = !lastHSYNC && CRTC::HSYNC;
-    bool hdispRisingEdge = !lastHDISP && CRTC::HDISP;
+    dispEnFF1 = CPC::crtc.BORDER;
+    bool hsyncFallingEdge = lastHSYNC && !CPC::crtc.HSYNC;
+    bool hsyncRisingEdge = !lastHSYNC && CPC::crtc.HSYNC;
+    bool hdispRisingEdge = !lastHDISP && CPC::crtc.HDISP;
     if (hdispRisingEdge)
     {
         mode = nextMode;
@@ -113,7 +74,7 @@ void GateArray::ProcessSync()
         if (R52 == 52)
         {
             R52 = 0;
-            Z80::IRQ();
+            CPC::z80.IRQ();
         }
         if (vsyncDelay > 0)
         {
@@ -121,22 +82,22 @@ void GateArray::ProcessSync()
             if (vsyncDelay == 0)
             {
                 vsyncTrigger = true;
-                if (R52 >= 32) Z80::IRQ();
+                if (R52 >= 32) CPC::z80.IRQ();
                 R52 = 0;
             }
         }
     }
-    if (!lastVSYNC && CRTC::VSYNC)
+    if (!lastVSYNC && CPC::crtc.VSYNC)
     {
         vsyncDelay = 2;
         porch = 26;
     }
 
-    lastVSYNC = CRTC::VSYNC;
-    lastHSYNC = CRTC::HSYNC;
-    lastHDISP = CRTC::HDISP;
+    lastVSYNC = CPC::crtc.VSYNC;
+    lastHSYNC = CPC::crtc.HSYNC;
+    lastHDISP = CPC::crtc.HDISP;
 
-    if (CRTC::HSYNC || CRTC::VSYNC)
+    if (CPC::crtc.HSYNC || CPC::crtc.VSYNC)
         blankColor = AbsoluteBlack;
     else if (porch)
         blankColor = NormalBlack;
@@ -161,6 +122,20 @@ void GateArray::SetMonochrome(bool m)
 {
     Monochrome = m;
     currentPalette = m ? GreenPalette : Palette;
+}
+
+GateArrayDebugState GateArray::GetDebugState() const
+{
+    GateArrayDebugState s;
+    s.currentPen = currentPen;
+    s.BORDER = BORDER;
+    s.mode = mode;
+    s.R52 = R52;
+    s.videoAddress = videoAddress;
+    memcpy(s.INK, INK, sizeof(INK));
+    s.LoROMActive = LoROMActive;
+    s.HiROMActive = HiROMActive;
+    return s;
 }
 
 const BYTE *GateArray::GetPaletteEntry(BYTE entry)
@@ -194,20 +169,19 @@ BYTE GateArray::GetPenForPixel(BYTE m, BYTE b, BYTE i)
 
 void GateArray::LoadVideoAddress()
 {
-    videoAddress = (CRTC::MA & 0x03FF) << 1;
-    videoAddress += (CRTC::RA & 0x07) << 11;
-    videoAddress += (CRTC::MA & 0x3000) << 2;
+    videoAddress = (CPC::crtc.MA & 0x03FF) << 1;
+    videoAddress += (CPC::crtc.RA & 0x07) << 11;
+    videoAddress += (CPC::crtc.MA & 0x3000) << 2;
 
     currentWord = latchHi * 256 + latchLo;
 }
 
 void GateArray::ReadByte(bool lo)
 {
-    int ramIndex = videoAddress >> 14;
     if (lo)
-        latchLo = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
+        latchLo = CPC::VRAMByte(videoAddress);
     else
-        latchHi = CPC::RAMs[ramIndex][videoAddress & 0x3FFF];
+        latchHi = CPC::VRAMByte(videoAddress);
     videoAddress++;
 }
 
@@ -235,7 +209,7 @@ void GateArray::WR(BYTE value)
         if ((value & 0x10) > 0)
         {
             R52 = 0;
-            Z80::InterruptRequest = true;
+            CPC::z80.InterruptRequest = true;
         }
         LoROMActive = (RMR & 0x04) != 0;
         HiROMActive = (RMR & 0x08) != 0;

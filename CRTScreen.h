@@ -6,19 +6,19 @@
 class CRTScreen
 {
 public:
-    static void Init();
-    static void Clock();
-    static const int PixelWidth = 1024;
-    static const int PixelHeight = 312;
-    static const int BytesPerPixel = 3;
-    static const int Stride = PixelWidth * BytesPerPixel;
-    static const int DataSize = PixelWidth * PixelHeight * BytesPerPixel;
-    static BYTE Pixels[DataSize];
-    static bool frameFinished;
-    static int hPos, vPos;
+    void Init();
+    void Clock();
+    static constexpr int PixelWidth = 1024;
+    static constexpr int PixelHeight = 312;
+    static constexpr int BytesPerPixel = 3;
+    static constexpr int Stride = PixelWidth * BytesPerPixel;
+    static constexpr int DataSize = PixelWidth * PixelHeight * BytesPerPixel;
+    BYTE Pixels[DataSize];
+    bool frameFinished;
+    int hPos, vPos;
 private:
-    static int hOffset;
-    static unsigned int writeOffset;
+    int hOffset;
+    unsigned int writeOffset;
 };
 
 #endif // CRTSCREEN_H

@@ -1,8 +1,5 @@
 #include "Keyboard.h"
-
-BYTE Keyboard::Row;
-BYTE Keyboard::matrix[10];
-mutex Keyboard::matrixLock;
+#include <cstring>
 
 BYTE Keyboard::translation[128] =
     { 28, 8, 18, 17, 7, 16, 6, 15, 5, 14, 4, 13, 3, 79,   // 0 - 13  ESC 1234567890 - CLR DEL
@@ -21,12 +18,9 @@ BYTE Keyboard::translation[128] =
         2, 255, 255, 255, 255, 255, 255, 255, 255, 255 // 110  CLR ?? ?? ?? ?? ??
     };
 
-bool pressed = false;
-
 void Keyboard::Reset()
 {
-    for (int i = 0; i < 10; i++)
-        matrix[i] = 0xFF;
+    memset(matrix, 0xFF, sizeof(matrix));
 }
 
 BYTE Keyboard::Read()

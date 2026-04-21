@@ -5,7 +5,7 @@
 
 using namespace std::chrono;
 
-volatile long SpeedController::lastElapsed;
+std::atomic<long> SpeedController::lastElapsed{0};
 
 long SpeedController::lastT = 0;
 long SpeedController::t = 0;

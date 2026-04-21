@@ -1,6 +1,8 @@
 #ifndef SPEEDCONTROLLER_H
 #define SPEEDCONTROLLER_H
 
+#include <atomic>
+
 enum SpeedMode
 {
     Keep,
@@ -12,7 +14,7 @@ class SpeedController
 {
 public:
     static void Run();
-    static volatile long lastElapsed;
+    static std::atomic<long> lastElapsed;
     static bool end;
     static bool overrun;
 private:

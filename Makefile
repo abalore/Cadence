@@ -77,8 +77,8 @@ SOURCES       = Debugger.cpp \
 		CDT.cpp \
 		CPC.cpp \
 		CRTC.cpp \
+		Machine.cpp \
 		Disassembler.cpp \
-		Emulator.cpp \
 		GateArray.cpp \
 		Reg16.cpp \
 		Z80.cpp \
@@ -122,8 +122,8 @@ OBJECTS       = Debugger.o \
 		CDT.o \
 		CPC.o \
 		CRTC.o \
+		Machine.o \
 		Disassembler.o \
-		Emulator.o \
 		GateArray.o \
 		Reg16.o \
 		Z80.o \
@@ -198,6 +198,7 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/toolchain.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/default_pre.prf \
@@ -224,11 +225,11 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		CRTScreen.h \
 		DSK.h \
 		Disassembler.h \
-		Emulator.h \
 		FDC.h \
 		FloppyDrive.h \
 		GateArray.h \
 		Keyboard.h \
+		Machine.h \
 		PPI.h \
 		PSG.h \
 		Reg16.h \
@@ -266,8 +267,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_pre.prf \
 		CDT.cpp \
 		CPC.cpp \
 		CRTC.cpp \
+		Machine.cpp \
 		Disassembler.cpp \
-		Emulator.cpp \
 		GateArray.cpp \
 		Reg16.cpp \
 		Z80.cpp \
@@ -346,6 +347,7 @@ Makefile: AAE.pro /usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf /us
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/qt_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/exclusive_builds.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/toolchain.prf \
 		/usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/default_pre.prf \
@@ -429,6 +431,7 @@ Makefile: AAE.pro /usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf /us
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/qt_config.prf:
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++/qmake.conf:
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/exclusive_builds.prf:
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/toolchain.prf:
 /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/default_pre.prf:
@@ -472,8 +475,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents screen_frame.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt6/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents Debugger.h CDT.h CPC.h CRTC.h CRTScreen.h DSK.h Disassembler.h Emulator.h FDC.h FloppyDrive.h GateArray.h Keyboard.h PPI.h PSG.h Reg16.h Tape.h Z80.h defs.h EmulatorThread.h KeyPressFilter.h SoundThread.h enterbytesdialog.h graphicsinspector.h mainwindow.h speedcontroller.h $(DISTDIR)/
-	$(COPY_FILE) --parents Debugger.cpp CRTScreen.cpp DSK.cpp FDC.cpp FloppyDrive.cpp Keyboard.cpp PPI.cpp PSG.cpp Tape.cpp Z80_16bitAL.cpp Z80_8bitAL.cpp Z80_8bitShift.cpp Z80_IDX_3.cpp Z80_Jump.cpp Z80_Load.cpp Z80_intexec.cpp EmulatorThread.cpp SoundThread.cpp enterbytesdialog.cpp graphicsinspector.cpp main.cpp mainwindow.cpp CDT.cpp CPC.cpp CRTC.cpp Disassembler.cpp Emulator.cpp GateArray.cpp Reg16.cpp Z80.cpp Z80_CB.cpp Z80_IDX.cpp Z80_IDX_2.cpp Z80_IDX_CB.cpp Z80_Instr.cpp Z80_basic.cpp Z80_misc.cpp pboWidget.cpp pboWidget.h speedcontroller.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents Debugger.h CDT.h CPC.h CRTC.h CRTScreen.h DSK.h Disassembler.h FDC.h FloppyDrive.h GateArray.h Keyboard.h Machine.h PPI.h PSG.h Reg16.h Tape.h Z80.h defs.h EmulatorThread.h KeyPressFilter.h SoundThread.h enterbytesdialog.h graphicsinspector.h mainwindow.h speedcontroller.h $(DISTDIR)/
+	$(COPY_FILE) --parents Debugger.cpp CRTScreen.cpp DSK.cpp FDC.cpp FloppyDrive.cpp Keyboard.cpp PPI.cpp PSG.cpp Tape.cpp Z80_16bitAL.cpp Z80_8bitAL.cpp Z80_8bitShift.cpp Z80_IDX_3.cpp Z80_Jump.cpp Z80_Load.cpp Z80_intexec.cpp EmulatorThread.cpp SoundThread.cpp enterbytesdialog.cpp graphicsinspector.cpp main.cpp mainwindow.cpp CDT.cpp CPC.cpp CRTC.cpp Machine.cpp Disassembler.cpp GateArray.cpp Reg16.cpp Z80.cpp Z80_CB.cpp Z80_IDX.cpp Z80_IDX_2.cpp Z80_IDX_CB.cpp Z80_Instr.cpp Z80_basic.cpp Z80_misc.cpp pboWidget.cpp pboWidget.h speedcontroller.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents Debugger.ui enterbytesdialog.ui graphicsinspector.ui mainwindow.ui $(DISTDIR)/
 
 
@@ -503,7 +506,14 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_screen_frame.cpp
 qrc_screen_frame.cpp: screen_frame.qrc \
 		/usr/lib/qt6/libexec/rcc \
+		spin.wav \
+		tape.svg \
+		step.wav \
+		cartridge.svg \
+		disk.svg \
+		led_on.svg \
 		monitor_frame.png \
+		led_off.svg \
 		cadence.svg
 	/usr/lib/qt6/libexec/rcc -name screen_frame screen_frame.qrc -o qrc_screen_frame.cpp
 
@@ -527,6 +537,7 @@ moc_EmulatorThread.cpp: EmulatorThread.h \
 	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/abalore/hdd/Work/AAE/AAE/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/abalore/hdd/Work/AAE/AAE -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGLWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include EmulatorThread.h -o moc_EmulatorThread.cpp
 
 moc_SoundThread.cpp: SoundThread.h \
+		defs.h \
 		moc_predefs.h \
 		/usr/lib/qt6/libexec/moc
 	/usr/lib/qt6/libexec/moc $(DEFINES) --include /home/abalore/hdd/Work/AAE/AAE/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++ -I/home/abalore/hdd/Work/AAE/AAE -I/usr/include/x86_64-linux-gnu/qt6 -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGLWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt6/QtWidgets -I/usr/include/x86_64-linux-gnu/qt6/QtSvg -I/usr/include/x86_64-linux-gnu/qt6/QtGui -I/usr/include/x86_64-linux-gnu/qt6/QtCore -I/usr/include/c++/13 -I/usr/include/x86_64-linux-gnu/c++/13 -I/usr/include/c++/13/backward -I/usr/lib/gcc/x86_64-linux-gnu/13/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include SoundThread.h -o moc_SoundThread.cpp
@@ -545,9 +556,9 @@ moc_graphicsinspector.cpp: graphicsinspector.h \
 moc_mainwindow.cpp: mainwindow.h \
 		EmulatorThread.h \
 		SoundThread.h \
+		defs.h \
 		Debugger.h \
 		graphicsinspector.h \
-		defs.h \
 		enterbytesdialog.h \
 		CPC.h \
 		moc_predefs.h \
@@ -590,7 +601,6 @@ compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_heade
 
 Debugger.o: Debugger.cpp Debugger.h \
 		ui_Debugger.h \
-		Emulator.h \
 		EmulatorThread.h \
 		Disassembler.h \
 		defs.h \
@@ -598,6 +608,7 @@ Debugger.o: Debugger.cpp Debugger.h \
 		Reg16.h \
 		PPI.h \
 		CPC.h \
+		Machine.h \
 		CRTC.h \
 		CRTScreen.h \
 		GateArray.h
@@ -606,6 +617,7 @@ Debugger.o: Debugger.cpp Debugger.h \
 CRTScreen.o: CRTScreen.cpp CRTScreen.h \
 		defs.h \
 		GateArray.h \
+		Machine.h \
 		CRTC.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CRTScreen.o CRTScreen.cpp
 
@@ -616,8 +628,7 @@ DSK.o: DSK.cpp DSK.h \
 FDC.o: FDC.cpp FDC.h \
 		defs.h \
 		FloppyDrive.h \
-		DSK.h \
-		CPC.h
+		DSK.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o FDC.o FDC.cpp
 
 FloppyDrive.o: FloppyDrive.cpp FloppyDrive.h \
@@ -634,6 +645,7 @@ PPI.o: PPI.cpp PPI.h \
 		Z80.h \
 		Reg16.h \
 		CPC.h \
+		Machine.h \
 		CRTC.h \
 		PSG.h \
 		Keyboard.h \
@@ -689,19 +701,22 @@ Z80_intexec.o: Z80_intexec.cpp Z80.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Z80_intexec.o Z80_intexec.cpp
 
 EmulatorThread.o: EmulatorThread.cpp EmulatorThread.h \
-		Emulator.h \
 		CPC.h \
 		defs.h \
 		Z80.h \
 		Reg16.h \
 		CRTScreen.h \
+		Disassembler.h \
 		SoundThread.h \
 		speedcontroller.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o EmulatorThread.o EmulatorThread.cpp
 
 SoundThread.o: SoundThread.cpp SoundThread.h \
+		defs.h \
 		PSG.h \
-		defs.h
+		FDC.h \
+		FloppyDrive.h \
+		DSK.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o SoundThread.o SoundThread.cpp
 
 enterbytesdialog.o: enterbytesdialog.cpp enterbytesdialog.h \
@@ -715,15 +730,16 @@ graphicsinspector.o: graphicsinspector.cpp graphicsinspector.h \
 		ui_graphicsinspector.h \
 		GateArray.h \
 		CPC.h \
+		Machine.h \
 		CRTC.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o graphicsinspector.o graphicsinspector.cpp
 
 main.o: main.cpp mainwindow.h \
 		EmulatorThread.h \
 		SoundThread.h \
+		defs.h \
 		Debugger.h \
 		graphicsinspector.h \
-		defs.h \
 		enterbytesdialog.h \
 		CPC.h \
 		KeyPressFilter.h \
@@ -733,14 +749,13 @@ main.o: main.cpp mainwindow.h \
 mainwindow.o: mainwindow.cpp mainwindow.h \
 		EmulatorThread.h \
 		SoundThread.h \
+		defs.h \
 		Debugger.h \
 		graphicsinspector.h \
-		defs.h \
 		enterbytesdialog.h \
 		CPC.h \
 		ui_mainwindow.h \
 		pboWidget.h \
-		Emulator.h \
 		Tape.h \
 		CDT.h \
 		FDC.h \
@@ -757,9 +772,10 @@ CDT.o: CDT.cpp CDT.h \
 
 CPC.o: CPC.cpp CPC.h \
 		defs.h \
+		Machine.h \
+		CRTC.h \
 		GateArray.h \
 		Keyboard.h \
-		CRTC.h \
 		Z80.h \
 		Reg16.h \
 		PPI.h \
@@ -776,6 +792,11 @@ CRTC.o: CRTC.cpp CRTC.h \
 		defs.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CRTC.o CRTC.cpp
 
+Machine.o: Machine.cpp Machine.h \
+		CRTC.h \
+		defs.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Machine.o Machine.cpp
+
 Disassembler.o: Disassembler.cpp Disassembler.h \
 		defs.h \
 		CPC.h \
@@ -784,15 +805,10 @@ Disassembler.o: Disassembler.cpp Disassembler.h \
 		GateArray.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Disassembler.o Disassembler.cpp
 
-Emulator.o: Emulator.cpp Emulator.h \
-		CPC.h \
-		defs.h \
-		Disassembler.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Emulator.o Emulator.cpp
-
 GateArray.o: GateArray.cpp GateArray.h \
 		defs.h \
 		CPC.h \
+		Machine.h \
 		CRTC.h \
 		Z80.h \
 		Reg16.h
@@ -805,13 +821,7 @@ Reg16.o: Reg16.cpp Reg16.h \
 Z80.o: Z80.cpp Z80.h \
 		defs.h \
 		Reg16.h \
-		CPC.h \
-		GateArray.h \
-		CRTC.h \
-		PPI.h \
-		FDC.h \
-		FloppyDrive.h \
-		DSK.h
+		CPC.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Z80.o Z80.cpp
 
 Z80_CB.o: Z80_CB.cpp Z80.h \
@@ -855,7 +865,8 @@ pboWidget.o: pboWidget.cpp pboWidget.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o pboWidget.o pboWidget.cpp
 
 speedcontroller.o: speedcontroller.cpp speedcontroller.h \
-		SoundThread.h
+		SoundThread.h \
+		defs.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o speedcontroller.o speedcontroller.cpp
 
 qrc_screen_frame.o: qrc_screen_frame.cpp 

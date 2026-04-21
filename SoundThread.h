@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QWaitCondition>
 #include <alsa/asoundlib.h>
+#include <atomic>
 #include "defs.h"
 
 class SoundThread : public QThread
@@ -12,11 +13,11 @@ class SoundThread : public QThread
 public:
     explicit SoundThread(QObject *parent);
     ~SoundThread();
-    volatile bool end;
-    static volatile bool enabled;
-    static volatile bool sfxEnabled;
+    std::atomic<bool> end{false};
+    static std::atomic<bool> enabled;
+    static std::atomic<bool> sfxEnabled;
     static QWaitCondition waitCondition;
-    volatile static snd_pcm_sframes_t frames;
+    static std::atomic<snd_pcm_sframes_t> frames;
 protected:
     void run() override;
 private:

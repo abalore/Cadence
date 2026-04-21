@@ -1,5 +1,5 @@
 #include "pboWidget.h"
-#include "CRTScreen.h"
+#include "CPC.h"
 
 BYTE *pixels;
 
@@ -54,7 +54,7 @@ void PboWidget::paintGL()
 void PboWidget::updateTexture()
 {
     glBindTexture(GL_TEXTURE_2D, ID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, CRTScreen::Pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, CPC::screen.Pixels);
     update();
 }
 

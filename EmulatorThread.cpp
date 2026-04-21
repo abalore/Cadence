@@ -1,25 +1,26 @@
 #include "EmulatorThread.h"
-#include "Emulator.h"
 #include "CPC.h"
 #include "Z80.h"
 #include "CRTScreen.h"
+#include "Disassembler.h"
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-volatile ushort EmulatorThread::stopPoint = 0x1CB3; //0x4921;
-volatile bool EmulatorThread::running = true;
-volatile RunMode EmulatorThread::runMode = RunMode::StopPoint;
-volatile bool EmulatorThread::end = false;
+std::atomic<ushort> EmulatorThread::stopPoint{0x1CB3}; //0x4921;
+std::atomic<bool> EmulatorThread::running{true};
+std::atomic<RunMode> EmulatorThread::runMode{RunMode::StopPoint};
+std::atomic<bool> EmulatorThread::end{false};
 QMutex EmulatorThread::frameMutex;
 
 EmulatorThread::EmulatorThread(QObject *parent) : QThread(parent)
 {
-    Emulator::Init();
+    CPC::Init();
+    Disassembler::Init();
 }
 
 EmulatorThread::~EmulatorThread()
 {
-    Emulator::Finalize();
+    CPC::Finalize();
 }
 
 void EmulatorThread::Pause()
@@ -58,7 +59,7 @@ void EmulatorThread::RunTo(ushort address)
 
 void EmulatorThread::Stop ()
 {
-    Z80::stopPoint = false;
+    CPC::z80.stopPoint = false;
     running = false;
     paused = true;
     emit OnPause();
@@ -68,33 +69,32 @@ void EmulatorThread::run()
 {
     paused = false;
     running = true;
-    Emulator::Reset();
-    //Emulator::Breakpoint[0x0100] = true;
+    CPC::Reset();
     while (!end)
     {
         if (!paused)
         {
             frameMutex.lock();
-            while (!CRTScreen::frameFinished && running)
+            while (!CPC::screen.frameFinished && running)
             {
-                Emulator::Clock();
-                if (Z80::stopPoint && CPC::tick % 4 == 0)
+                CPC::Clock();
+                if (CPC::z80.stopPoint && CPC::tick % 4 == 0)
                     switch(runMode)
                     {
                     case RunMode::StepByStep:
                         Stop();
                         break;
                     case RunMode::StopPoint:
-                        if (Z80::PC == stopPoint)
+                        if (CPC::z80.GetPC() == stopPoint)
                             Stop();
                         break;
                     case RunMode::Run:
-                        if (Emulator::Breakpoint[Z80::PC])
+                        if (CPC::Breakpoint[CPC::z80.GetPC()])
                             Stop();
                         break;
                     }
             }
-            CRTScreen::frameFinished = false;
+            CPC::screen.frameFinished = false;
             frameMutex.unlock();
             SoundThread::waitCondition.wakeOne();
             emit OnFinishedFrame();

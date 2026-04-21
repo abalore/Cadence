@@ -6,6 +6,8 @@
 #include "Debugger.h"
 #include "graphicsinspector.h"
 #include "enterbytesdialog.h"
+#include "MediaController.h"
+#include "Settings.h"
 #include "CPC.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
@@ -47,6 +49,8 @@ private slots:
     void onMenuMediaInsertCartridge();
     void onMenuScreenGreenMonitor();
     void onMenuViewFullScreen();
+    void onMenuAbout();
+    void onMediaChanged(MediaSlot slot, const QString &text);
     void StartThreads();
     void StopThreads();
     void ResetEmulation();
@@ -57,14 +61,16 @@ private slots:
 private:
     void SwitchMachine(CPCType type);
     void setMediaText(QLabel *label, const QString &text);
-    void loadSettings();
-    void saveSettings();
+    void applySettingsToUi();
+    void collectSettingsFromUi();
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
     EnterBytesDialog *enterBytesDialog;
     EmulatorThread *workerThread;
     SoundThread *soundThread;
+    MediaController *media;
+    Settings settings;
     QLabel *motorLabel;
     QPixmap ledOnPixmap;
     QPixmap ledOffPixmap;
@@ -72,13 +78,5 @@ private:
     QLabel *diskBLabel;
     QLabel *tapeLabel;
     QLabel *cartridgeLabel;
-    QString diskAPath;
-    QString diskBPath;
-    QString tapePath;
-    QString cartridgePath;
-    bool loadDiskA(const QString &path);
-    bool loadDiskB(const QString &path);
-    bool loadTape(const QString &path);
-    bool loadCartridge(const QString &path);
 };
 #endif // MAINWINDOW_H

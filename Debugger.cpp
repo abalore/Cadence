@@ -1,12 +1,10 @@
 #include "Debugger.h"
 #include "ui_Debugger.h"
-#include "Emulator.h"
 #include "EmulatorThread.h"
 #include "Disassembler.h"
 #include "Z80.h"
 #include "PPI.h"
 #include "CPC.h"
-#include "CRTC.h"
 #include "CRTScreen.h"
 #include "GateArray.h"
 #include <QCloseEvent>
@@ -69,9 +67,9 @@ void Debugger::Update()
         string label, address, bytes, instruction;
         ushort position = Disassembler::addr;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction);
-        sprintf(buff, "%s %14s  %4s  %12s  %s", Emulator::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
+        sprintf(buff, "%s %14s  %4s  %12s  %s", CPC::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
-        if (!pcFound && position >= Z80::PC)
+        if (!pcFound && position >= CPC::z80.GetPC())
         {
             pcPosition = instrCount;
             pcFound = true;
@@ -147,13 +145,13 @@ void Debugger::onStepOverClicked()
         || nextInstructionOpCode == 0xE9)
         EmulatorThread::RunStep();
     else
-        EmulatorThread::RunTo(Z80::PC + nextInstructionLength);
+        EmulatorThread::RunTo(CPC::z80.GetPC() + nextInstructionLength);
 }
 
 void Debugger::onStepOutClicked()
 {
     setEnabled(false);
-    word address = Z80::SP;
+    word address = CPC::z80.GetSP();
     BYTE L = CPC::GetByteAt(address);
     BYTE H = CPC::GetByteAt(address + 1);
     EmulatorThread::RunTo(L + H * 256);
@@ -161,7 +159,7 @@ void Debugger::onStepOutClicked()
 
 void Debugger::onResetNopsClicked()
 {
-    Z80::nops = 0;
+    CPC::z80.ResetNopCounter();
     Update();
 }
 
@@ -178,7 +176,7 @@ void Debugger::onToggleBreakpointClicked()
     int index = ui->listDisassembly->currentIndex().row();
     if (index < 0) return;
     word address = listDisassembly.at(index).mid(19, 4).toInt(nullptr, 16);
-    Emulator::Breakpoint[address] = !Emulator::Breakpoint[address];
+    CPC::Breakpoint[address] = !CPC::Breakpoint[address];
     Update();
     QModelIndex restored = modelDisassembly->index(index);
     ui->listDisassembly->setCurrentIndex(restored);
@@ -189,13 +187,13 @@ string Debugger::GetZ80RegsDebugLine()
 {
     string d;
     char buff[200];
-    Z80::EncodeF();
+    Z80DebugState s = CPC::z80.GetDebugState();
     sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
-            Z80::AF.Get(), Z80::BC.Get(), Z80::DE.Get(), Z80::HL.Get(),
-            Z80::PC, Z80::SP, Z80::IX.Get(), Z80::IY.Get(),
-            Z80::fS, Z80::fZ, Z80::f5, Z80::fH, Z80::f3, Z80::fP, Z80::fN, Z80::fC, Z80::InterruptRequest, Z80::IFF1, Z80::IFF2);
+            s.AF, s.BC, s.DE, s.HL,
+            s.PC, s.SP, s.IX, s.IY,
+            s.fS, s.fZ, s.f5, s.fH, s.f3, s.fP, s.fN, s.fC, s.InterruptRequest, s.IFF1, s.IFF2);
     d.append(buff);
-    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", Z80::R, Z80::I, Z80::im, Z80::IFF1, Z80::nops);
+    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", s.R, s.I, s.im, s.IFF1, s.nops);
     d.append(buff);
     return d;
 }
@@ -204,7 +202,7 @@ string Debugger::GetZ80StackDebugLine()
 {
     string d;
     char buff[100];
-    word sp = Z80::SP;
+    word sp = CPC::z80.GetSP();
     for (int i = 0; i < 8; i++)
     {
         BYTE L = CPC::GetByteAt(sp);
@@ -220,18 +218,19 @@ string Debugger::GetCRTCDebugLine()
 {
     string crtc;
     char buff[100];
-    sprintf(buff, "HT  %3d  HCC %3d\n", CRTC::HT, CRTC::HCC); crtc += buff;
-    sprintf(buff, "HD  %3d  HDISP %1d\n", CRTC::HD, CRTC::HDISP); crtc += buff;
-    sprintf(buff, "HSP %3d  HSYNC %1d\n", CRTC::HSP, CRTC::HSYNC); crtc += buff;
-    sprintf(buff, "HSW %3d  HSC %3d\n", CRTC::HSW, CRTC::HSC); crtc += (string) buff;
-    sprintf(buff, "VSW %3d  VSC %3d\n", CRTC::VSW, CRTC::VSC); crtc += (string) buff;
-    sprintf(buff, "VT  %3d  VCC %3d\n", CRTC::VT, CRTC::VCC); crtc += buff;
-    sprintf(buff, "VD  %3d  VDISP %1d\n", CRTC::VD, CRTC::VDISP); crtc += buff;
-    sprintf(buff, "VSP %3d  VSYNC %1d\n", CRTC::VSP, CRTC::VSYNC); crtc += buff;
-    sprintf(buff, "MRA %3d  RA  %3d\n", CRTC::MRA, CRTC::RA); crtc += buff;
-    sprintf(buff, "VTA %3d  VTAC %2d\n", CRTC::VTA, CRTC::VTAC); crtc += buff;
-    sprintf(buff, "SA %04X  MA %04X\n", CRTC::DSA, CRTC::MA); crtc += (string) buff;
-    sprintf(buff, "sX %4d sY %4d\n", CRTScreen::hPos, CRTScreen::vPos); crtc += (string) buff;
+    CRTC &c = CPC::crtc;
+    sprintf(buff, "HT  %3d  HCC %3d\n", c.HT, c.HCC); crtc += buff;
+    sprintf(buff, "HD  %3d  HDISP %1d\n", c.HD, c.HDISP); crtc += buff;
+    sprintf(buff, "HSP %3d  HSYNC %1d\n", c.HSP, c.HSYNC); crtc += buff;
+    sprintf(buff, "HSW %3d  HSC %3d\n", c.HSW, c.HSC); crtc += (string) buff;
+    sprintf(buff, "VSW %3d  VSC %3d\n", c.VSW, c.VSC); crtc += (string) buff;
+    sprintf(buff, "VT  %3d  VCC %3d\n", c.VT, c.VCC); crtc += buff;
+    sprintf(buff, "VD  %3d  VDISP %1d\n", c.VD, c.VDISP); crtc += buff;
+    sprintf(buff, "VSP %3d  VSYNC %1d\n", c.VSP, c.VSYNC); crtc += buff;
+    sprintf(buff, "MRA %3d  RA  %3d\n", c.MRA, c.RA); crtc += buff;
+    sprintf(buff, "VTA %3d  VTAC %2d\n", c.VTA, c.VTAC); crtc += buff;
+    sprintf(buff, "SA %04X  MA %04X\n", c.DSA, c.MA); crtc += (string) buff;
+    sprintf(buff, "sX %4d sY %4d\n", CPC::screen.hPos, CPC::screen.vPos); crtc += (string) buff;
     return crtc;
 }
 
@@ -239,14 +238,15 @@ string Debugger::GetGateArrayDebugLine()
 {
     string d;
     char buff[100];
-    sprintf(buff, "Pen: %d   Border: %d  Mode: %d  Video address: %04X\nInks: ", GateArray::currentPen, GateArray::BORDER, GateArray::mode, GateArray::videoAddress);
+    GateArrayDebugState g = CPC::gateArray.GetDebugState();
+    sprintf(buff, "Pen: %d   Border: %d  Mode: %d  Video address: %04X\nInks: ", g.currentPen, g.BORDER, g.mode, g.videoAddress);
     d.append(buff);
     for (int i = 0; i < 16; i++)
     {
-        sprintf(buff, "%02X ", GateArray::INK[i] + 0x40);
+        sprintf(buff, "%02X ", g.INK[i] + 0x40);
         d.append(buff);
     }
-    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b  Window: %d", GateArray::LoROMActive, GateArray::HiROMActive, GateArray::R52, PPI::controlWord, (CPC::tick % 16) >> 2);
+    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b  Window: %d", g.LoROMActive, g.HiROMActive, g.R52, CPC::ppi.controlWord, (CPC::tick % 16) >> 2);
     d += buff;
     return d;
 }

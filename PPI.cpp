@@ -1,22 +1,5 @@
 #include "PPI.h"
-#include "Z80.h"
 #include "CPC.h"
-#include "CRTC.h"
-#include "PSG.h"
-#include "Keyboard.h"
-#include "Tape.h"
-
-BYTE PPI::controlWord;
-BYTE PPI::aMode;
-BYTE PPI::bMode;
-BYTE PPI::aHandshake;
-BYTE PPI::bHandshake;
-bool PPI::lCIO;
-bool PPI::hCIO;
-bool PPI::aIO;
-bool PPI::bIO;
-BYTE PPI::lC;
-BYTE PPI::hC;
 
 void PPI::Reset()
 {
@@ -39,9 +22,9 @@ BYTE PPI::RD(BYTE reg)
     switch(reg)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
-        return aIO  || aMode == 2 ? PSG::ReadData() : 0x00;
+        return aIO  || aMode == 2 ? CPC::psg.ReadData() : 0x00;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
-        return bIO ? (Tape::GetLevel() << 7) + CRTC::VSYNC + 0x3E : 0x00;
+        return bIO ? (CPC::tape.GetLevel() << 7) + CPC::crtc.VSYNC + 0x3E : 0x00;
     case 2: // 8255 PPI Port C (KeybRow,Tape Out,PSG Control) (W)
         if (!lCIO)
         {
@@ -87,7 +70,7 @@ void PPI::WR(BYTE reg, BYTE value)
     {
     case 0: // 8255 PPI Port A (PSG Data)   (R/W)
         if (!aIO || aMode == 2)
-            PSG::WriteData(value);
+            CPC::psg.WriteData(value);
         break;
     case 1: // 8255 PPI Port B (Vsync,PrnBusy,Tape In,etc.) (R)
         if (!bIO)
@@ -130,7 +113,7 @@ void PPI::WR(BYTE reg, BYTE value)
             }
             if (!aIO || aMode == 2)
             {
-                PSG::WriteData(0);
+                CPC::psg.WriteData(0);
             }
         }
         else
@@ -166,7 +149,7 @@ void PPI::UpdatePortC_Low()
         aHandshake |= lC & 0x08;
     }
     if (bMode == 0)
-        Keyboard::SetRow(lC);
+        CPC::keyboard.SetRow(lC);
     else
         bHandshake = lC & 0x07;
 }
@@ -176,8 +159,8 @@ void PPI::UpdatePortC_High()
     switch(aMode)
     {
     case 0:
-        PSG::SelectFunction(hC & 0x80, hC & 0x40);
-        Tape::SetMotorState(hC & 0x10);
+        CPC::psg.SelectFunction(hC & 0x80, hC & 0x40);
+        CPC::tape.SetMotorState(hC & 0x10);
         break;
     case 1:
     case 2:

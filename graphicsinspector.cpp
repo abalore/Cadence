@@ -1,9 +1,7 @@
 #include "graphicsinspector.h"
 #include "ui_graphicsinspector.h"
 #include "defs.h"
-#include "GateArray.h"
 #include "CPC.h"
-#include "CRTC.h"
 
 GraphicsInspector::GraphicsInspector(QWidget *parent)
     : QDialog(parent)
@@ -30,8 +28,8 @@ GraphicsInspector::~GraphicsInspector()
 
 void GraphicsInspector::showEvent(QShowEvent *event)
 {
-    ui->inputWidth->setText(QString::number(CRTC::HD));
-    ui->inputHeight->setText(QString::number(CRTC::VD));
+    ui->inputWidth->setText(QString::number(CPC::crtc.HD));
+    ui->inputHeight->setText(QString::number(CPC::crtc.VD));
     QDialog::showEvent(event);
 }
 
@@ -44,7 +42,7 @@ void GraphicsInspector::UpdateGraphics()
     if (ui->radioButton->isChecked()) baseAddress = 0x0000;
     if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
     if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
-    int mode = GateArray::mode;
+    int mode = CPC::gateArray.GetMode();
     pixels.resize(byteSize);
     for (int i = 0; i < xSize * 2; i++)
         for  (int j = 0; j < ySize; j++)
@@ -56,8 +54,8 @@ void GraphicsInspector::UpdateGraphics()
                 int line = j * 8 + k;
                 for (int l = 0; l < 8; l++)
                 {
-                    BYTE pen = GateArray::GetPenForPixel(mode, b, l);
-                    const BYTE *color = GateArray::GetPaletteEntry(pen);
+                    BYTE pen = CPC::gateArray.GetPenForPixel(mode, b, l);
+                    const BYTE *color = CPC::gateArray.GetPaletteEntry(pen);
                     long pixelBase = (line * xSize * 16 * 2 + i * 8 + l) * 3;
                     if (pixelBase < byteSize - 2)
                         for (int m = 0; m < 3; m++)

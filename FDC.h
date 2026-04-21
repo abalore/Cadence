@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "FloppyDrive.h"
+#include <atomic>
 
 enum FDCState
 {
@@ -53,65 +54,65 @@ enum FDCCommandState
 class FDC
 {
 public:
-    static void Reset();
-    static void Clock();
-    static BYTE RD_State();
-    static BYTE RD_Data();
-    static void WR(BYTE value);
-    static void SetMotor(BYTE value);
-    static bool GetMotor() { return MotorState; }
-    static FDCState GetState() { return state; }
-    static FloppyDrive *GetDrive(int number);
+    void Reset();
+    void Clock();
+    BYTE RD_State();
+    BYTE RD_Data();
+    void WR(BYTE value);
+    void SetMotor(BYTE value);
+    bool GetMotor() { return MotorState; }
+    FDCState GetState() { return state; }
+    FloppyDrive *GetDrive(int number);
 private:
-    static void ProcessCommand(BYTE data);
-    static void ProcessExecution();
-    static BYTE ProcessResult();
-    static void GoToCommandState();
-    static void GoToExecutionState();
-    static void GoToTransferState();
-    static void GoToResultState();
-    static BYTE GetStatusReg0();
-    static BYTE GetStatusReg1();
-    static BYTE GetStatusReg2();
-    static BYTE GetStatusReg3();
-    static FDCState state;
-    static FDCCommandState commandState;
-    static BYTE command;
-    static bool HD;
-    static BYTE US;
-    static BYTE PCN, H, R, N, EOT, GPL, DTL, STP, NCN, SC, D;
-    static BYTE SRT, HUT, HLT;
-    static bool ND;
-    static bool MT;
-    static bool MF;
-    static bool SK;
-    static FloppyDrive drives[4];
-    static BYTE headSettlingTime;
-    static BYTE headUploadTimeInterval;
-    static BYTE result[7];
-    static BYTE resultCount;
-    static BYTE resultIndex;
-    static bool bit7_RQM;
-    static bool bit6_DIO;
-    static bool bit5_NDMA;
-    static bool bit4_BUSY;
-    static bool bits03_FDDBUSY[4];
-    static SectorInfo sectorInfo;
-    static int dataIndex;
-    static int dataSize;
-    static BYTE sizeCode;
-    static BYTE sectorID;
-    static BYTE *data;
-    static BYTE weakSectorCycle;
-    static int seekCounter;
+    void ProcessCommand(BYTE data);
+    void ProcessExecution();
+    BYTE ProcessResult();
+    void GoToCommandState();
+    void GoToExecutionState();
+    void GoToTransferState();
+    void GoToResultState();
+    BYTE GetStatusReg0();
+    BYTE GetStatusReg1();
+    BYTE GetStatusReg2();
+    BYTE GetStatusReg3();
+    FDCState state;
+    FDCCommandState commandState;
+    BYTE command;
+    bool HD;
+    BYTE US;
+    BYTE PCN, H, R, N, EOT, GPL, DTL, STP, NCN, SC, D;
+    BYTE SRT, HUT, HLT;
+    bool ND;
+    bool MT;
+    bool MF;
+    bool SK;
+    FloppyDrive drives[4];
+    BYTE headSettlingTime;
+    BYTE headUploadTimeInterval;
+    BYTE result[7];
+    BYTE resultCount;
+    BYTE resultIndex;
+    bool bit7_RQM;
+    bool bit6_DIO;
+    bool bit5_NDMA;
+    bool bit4_BUSY;
+    bool bits03_FDDBUSY[4];
+    SectorInfo sectorInfo;
+    int dataIndex;
+    int dataSize;
+    BYTE sizeCode;
+    BYTE sectorID;
+    BYTE *data;
+    BYTE weakSectorCycle;
+    int seekCounter;
 public:
-    static volatile int stepPulses;
+    std::atomic<int> stepPulses{0};
 private:
-    static BYTE INT;
-    static BYTE stIC, stSE, stEC, stNR; // For Reg0
-    static BYTE stEN, stDE, stOR, stND, stNW, stMA; // For Reg1
-    static BYTE stCM, stDD, stWC, stSH, stSN, stBC, stMD; // For Reg2
-    static bool MotorState;
+    BYTE INT;
+    BYTE stIC, stSE, stEC, stNR; // For Reg0
+    BYTE stEN, stDE, stOR, stND, stNW, stMA; // For Reg1
+    BYTE stCM, stDD, stWC, stSH, stSN, stBC, stMD; // For Reg2
+    bool MotorState;
 };
 
 #endif // FDC_H

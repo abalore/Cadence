@@ -1,6 +1,6 @@
 #include "SoundThread.h"
 #include "PSG.h"
-#include "FDC.h"
+#include "CPC.h"
 #include <QMutex>
 #include <QFile>
 #include <QByteArray>
@@ -9,10 +9,10 @@
 #include <algorithm>
 
 QWaitCondition SoundThread::waitCondition;
-volatile snd_pcm_sframes_t SoundThread::frames;
+std::atomic<snd_pcm_sframes_t> SoundThread::frames{0};
 snd_pcm_sframes_t SoundThread::frames_internal;
-volatile bool SoundThread::enabled = true;
-volatile bool SoundThread::sfxEnabled = true;
+std::atomic<bool> SoundThread::enabled{true};
+std::atomic<bool> SoundThread::sfxEnabled{true};
 
 static void loadWavU8(const char *path, BYTE *&buffer, int &length)
 {
@@ -82,38 +82,38 @@ void SoundThread::run()
     {
         waitCondition.wait(&mutex);
         if (!enabled)
-            memset(PSG::buffer, 0x80, PSG::bufferIndex);
-        if (FDC::stepPulses > 0) {
-            FDC::stepPulses = 0;
+            memset(CPC::psg.buffer, 0x80, CPC::psg.bufferIndex);
+        if (CPC::fdc.stepPulses > 0) {
+            CPC::fdc.stepPulses = 0;
             if (sfxEnabled)
                 stepPos = 0;
         }
         if (sfxEnabled && stepBuffer && stepPos < stepBufferLen) {
-            int len = std::min(PSG::bufferIndex, stepBufferLen - stepPos);
+            int len = std::min(CPC::psg.bufferIndex, stepBufferLen - stepPos);
             for (int i = 0; i < len; i++) {
-                int mixed = (int)PSG::buffer[i] + (int)stepBuffer[stepPos + i] - 128;
+                int mixed = (int)CPC::psg.buffer[i] + (int)stepBuffer[stepPos + i] - 128;
                 if (mixed < 0) mixed = 0;
                 else if (mixed > 255) mixed = 255;
-                PSG::buffer[i] = (BYTE)mixed;
+                CPC::psg.buffer[i] = (BYTE)mixed;
             }
             stepPos += len;
         }
-        if (sfxEnabled && spinBuffer && FDC::GetMotor()) {
+        if (sfxEnabled && spinBuffer && CPC::fdc.GetMotor()) {
             constexpr float spinGain = 0.2f;
-            for (int i = 0; i < PSG::bufferIndex; i++) {
+            for (int i = 0; i < CPC::psg.bufferIndex; i++) {
                 int delta = (int)spinBuffer[spinPos] - 128;
-                int mixed = (int)PSG::buffer[i] + (int)(delta * spinGain);
+                int mixed = (int)CPC::psg.buffer[i] + (int)(delta * spinGain);
                 if (mixed < 0) mixed = 0;
                 else if (mixed > 255) mixed = 255;
-                PSG::buffer[i] = (BYTE)mixed;
+                CPC::psg.buffer[i] = (BYTE)mixed;
                 spinPos++;
                 if (spinPos >= spinBufferLen) spinPos = 0;
             }
         } else {
             spinPos = 0;
         }
-        BYTE *p = PSG::buffer;
-        int remaining = PSG::bufferIndex;
+        BYTE *p = CPC::psg.buffer;
+        int remaining = CPC::psg.bufferIndex;
         while (remaining > 0) {
             snd_pcm_sframes_t wr = snd_pcm_writei(pcm_handle, p, remaining);
             if (wr == -EPIPE) {
@@ -125,7 +125,7 @@ void SoundThread::run()
             p += wr;
             remaining -= wr;
         }
-        PSG::bufferIndex = 0;
+        CPC::psg.bufferIndex = 0;
         snd_pcm_delay(pcm_handle, &frames_internal);
         frames = frames_internal;
     }

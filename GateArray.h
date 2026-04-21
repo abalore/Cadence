@@ -3,48 +3,48 @@
 
 #include "defs.h"
 
+struct GateArrayDebugState
+{
+    BYTE currentPen, BORDER, mode, R52;
+    word videoAddress;
+    BYTE INK[16];
+    bool LoROMActive, HiROMActive;
+};
+
 class GateArray
 {
 public:
-    static void Reset();
-    static void ProcessSync();
-    static BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
-    static const BYTE *GetPaletteEntry(BYTE entry);
-    static void WR(BYTE value);
-    static void AckInt();
-    static void SetPixel();
-    static void ReadByte(bool lo);
-    static void LoadVideoAddress();
-    static void SetMonochrome(bool m);
-    static const BYTE *Color;
-    static BYTE INK[16];
-    static BYTE BORDER;
-    static BYTE currentPen;
-    static const BYTE cL = 5;
-    static const BYTE cMR = 127;
-    static const BYTE cMG = 127;
-    static const BYTE cMB = 127;
-    static const BYTE cHR = 254;
-    static const BYTE cHG = 254;
-    static const BYTE cHB = 254;
-    static BYTE R52;
-    static BYTE mode;
-    static BYTE pi;
-    static BYTE decodedPen[4][8][256];
-    static bool hsyncTrigger;
-    static bool vsyncTrigger;
-    static bool LoROMActive;
-    static bool HiROMActive;
-    static bool Monochrome;
-    static bool CCLK;
-    static bool VideoAccess;
-    static BYTE porch;
-    static word videoAddress;
-    static BYTE ready;
+    void Reset();
+    void ProcessSync();
+    BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
+    const BYTE *GetPaletteEntry(BYTE entry);
+    void WR(BYTE value);
+    void AckInt();
+    void SetPixel();
+    void ReadByte(bool lo);
+    void LoadVideoAddress();
+    void SetMonochrome(bool m);
+    inline BYTE GetMode() const { return mode; }
+    GateArrayDebugState GetDebugState() const;
 
-    constexpr static const BYTE AbsoluteBlack[3] = {0, 100, 0};
-    constexpr static const BYTE NormalBlack[3] = {cL, cL, cL};
-    constexpr static const BYTE Palette[3 * 32] =
+    // Bus/memory-map signals consumed by CRTScreen and CPC::UpdateMemoryMap
+    const BYTE *Color;
+    bool hsyncTrigger;
+    bool vsyncTrigger;
+    bool LoROMActive;
+    bool HiROMActive;
+
+    static constexpr BYTE cL = 5;
+    static constexpr BYTE cMR = 127;
+    static constexpr BYTE cMG = 127;
+    static constexpr BYTE cMB = 127;
+    static constexpr BYTE cHR = 254;
+    static constexpr BYTE cHG = 254;
+    static constexpr BYTE cHB = 254;
+
+    static constexpr BYTE AbsoluteBlack[3] = {0, 100, 0};
+    static constexpr BYTE NormalBlack[3] = {cL, cL, cL};
+    static constexpr BYTE Palette[3 * 32] =
         {
             cMR, cMG, cMB, // White
             cMR, cMG, cMB, // White
@@ -89,25 +89,37 @@ public:
         };
 
 private:
-    static BYTE RMR;
-    static BYTE MMR;
-    static bool borderSelected;
-    static word currentWord;
-    static BYTE pixelIndex;
-    static const BYTE *blankColor;
-    static const BYTE *currentPalette;
-    static bool lastHSYNC;
-    static bool lastVSYNC;
-    static bool lastHDISP;
-    static BYTE hsyncDelay;
-    static BYTE vsyncDelay;
-    static BYTE intTimeout;
-    static BYTE latchLo;
-    static BYTE latchHi;
-    static bool dispEnFF1;
-    static bool dispEnFF2;
-    static BYTE nextMode;
+    BYTE INK[16];
+    BYTE BORDER;
+    BYTE currentPen;
+    BYTE R52;
+    BYTE mode;
+    BYTE pi;
+    BYTE decodedPen[4][8][256];
+    bool Monochrome;
+    bool CCLK;
+    bool VideoAccess;
+    BYTE porch;
+    word videoAddress;
+    BYTE ready;
+    BYTE RMR;
+    BYTE MMR;
+    bool borderSelected;
+    word currentWord;
+    BYTE pixelIndex;
+    const BYTE *blankColor;
+    const BYTE *currentPalette;
+    bool lastHSYNC;
+    bool lastVSYNC;
+    bool lastHDISP;
+    BYTE hsyncDelay;
+    BYTE vsyncDelay;
+    BYTE intTimeout;
+    BYTE latchLo;
+    BYTE latchHi;
+    bool dispEnFF1;
+    bool dispEnFF2;
+    BYTE nextMode;
 };
 
 #endif // GATEARRAY_H
-

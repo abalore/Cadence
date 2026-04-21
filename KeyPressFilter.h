@@ -1,7 +1,7 @@
 #ifndef KEYPRESSFILTER_H
 #define KEYPRESSFILTER_H
 
-#include "Keyboard.h"
+#include "CPC.h"
 #include "mainwindow.h"
 #include <QObject>
 #include <QKeyEvent>
@@ -17,14 +17,14 @@ public:
         {
             QKeyEvent *ke = static_cast<QKeyEvent*>(aEvent);
             if (!ke->isAutoRepeat())
-                Keyboard::KeyEvent(ke->nativeScanCode(), false);
+                CPC::keyboard.KeyEvent(ke->nativeScanCode(), false);
             return true;
         }
         else if (aEvent->type() == QEvent::KeyRelease)
         {
             QKeyEvent *ke = static_cast<QKeyEvent*>(aEvent);
             if (!ke->isAutoRepeat())
-                Keyboard::KeyEvent(ke->nativeScanCode(), true);
+                CPC::keyboard.KeyEvent(ke->nativeScanCode(), true);
             return true;
         }
         return QObject::eventFilter(aObject, aEvent);

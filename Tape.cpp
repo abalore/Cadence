@@ -3,24 +3,10 @@
 #include <stdlib.h>
 #include <filesystem>
 
-using namespace std;
-
-BYTE Tape::level = 0;
-BYTE *Tape::buffer = 0;
-unsigned long Tape::bufferReadIndex;
-unsigned long Tape::bufferWriteIndex;
-unsigned long Tape::bufferSize;
-volatile bool Tape::motorState = false;
-volatile bool Tape::audioEnabled = true;
-bool Tape::lastLevel = false;
-TapeSource Tape::tapeSource = TapeSource::None;
-class CDT Tape::cdt;
-word Tape::tapeTick = 0;
-
 void Tape::LoadWAV(char *filename)
 {
     FreeBuffer();
-    bufferSize = filesystem::file_size(filename);
+    bufferSize = std::filesystem::file_size(filename);
     buffer = (BYTE *)malloc(bufferSize);
     FILE *f = fopen(filename, "r");
     size_t n = fread(buffer, 1, bufferSize, f);
@@ -33,7 +19,7 @@ void Tape::LoadWAV(char *filename)
 void Tape::LoadCDT(char *filename)
 {
     FreeBuffer();
-    bufferSize = filesystem::file_size(filename);
+    bufferSize = std::filesystem::file_size(filename);
     buffer = (BYTE *)malloc(bufferSize);
     FILE *f = fopen(filename, "r");
     size_t n = fread(buffer, 1, bufferSize, f);

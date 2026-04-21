@@ -1,45 +1,5 @@
 #include "CRTC.h"
 
-BYTE CRTC::Index;
-BYTE CRTC::RA;
-bool CRTC::HSYNC;
-bool CRTC::VSYNC;
-bool CRTC::BORDER;
-
-BYTE CRTC::HCC;
-word CRTC::VLC;
-BYTE CRTC::VCC;
-BYTE CRTC::VSC;
-BYTE CRTC::HSC;
-word CRTC::MA;
-
-BYTE CRTC::HT;
-BYTE CRTC::HD;
-BYTE CRTC::HSP;
-BYTE CRTC::HSW;
-BYTE CRTC::VSW;
-BYTE CRTC::VT;
-BYTE CRTC::VTA;
-BYTE CRTC::VD;
-BYTE CRTC::VSP;
-BYTE CRTC::IS;
-BYTE CRTC::MRA;
-
-
-BYTE CRTC::VTAC;
-BYTE CRTC::verticalTotal;
-bool CRTC::HDISP;
-bool CRTC::VDISP;
-word CRTC::baseMA;
-bool CRTC::adjustMode;
-
-BYTE CRTC::crtcType = 0;
-
-word CRTC::DSA;
-
-bool CRTC::EndScreen;
-bool CRTC::EndChar;
-
 void CRTC::Reset()
 {
     Index = 0;
@@ -170,8 +130,6 @@ void CRTC::WR(BYTE address, BYTE value)
         break;
     }
 }
-
-bool willAdjust = false;
 
 void CRTC::RunHorizontalChar()
 {
