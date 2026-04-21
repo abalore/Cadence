@@ -75,30 +75,35 @@ void CPC::Init()
 {
     tick = 0;
 
+    auto allocRAM = [](int count) {
+        for (int i = 0; i < 8; i++) if (RAMs[i] != nullptr)
+        {
+            free(RAMs[i]);
+            RAMs[i] = nullptr;
+        }
+        for (int i = 0; i < count; i++)
+            RAMs[i] = (BYTE *) malloc(0x4000);
+    };
+
     switch(cpcType)
     {
     case CPCType::CPC464:
         ReadROM((char *)"ROM/ROM_BIOS_464.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_464.bin", 0);
-        for (int i = 0; i < 4; i++)
-        {
-            RAMs[i] = (BYTE *) malloc(0x4000);
-        }
+        allocRAM(4);
         break;
     case CPCType::CPC664:
         ReadROM((char *)"ROM/ROM_BIOS_664.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_664.bin", 0);
         ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
-        for (int i = 0; i < 4; i++)
-            RAMs[i] = (BYTE *) malloc(0x4000);
+        allocRAM(4);
         break;
     case CPCType::CPC6128:
         ReadROM((char *)"ROM/ROM_BIOS_6128.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_6128.bin", 0);
         ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
         //ReadROM((char *)"ROM/PARADOS.ROM", 7);
-        for (int i = 0; i < 8; i++)
-            RAMs[i] = (BYTE *) malloc(0x4000);
+        allocRAM(8);
         break;
     }
 }

@@ -16,6 +16,7 @@ enum TapeSource
 class Tape
 {
 public:
+    ~Tape() { FreeBuffer(); }
     void LoadWAV(char *filename);
     void LoadCDT(char *filename);
     void Eject();

@@ -7,6 +7,7 @@
 class FloppyDrive
 {
 public:
+    ~FloppyDrive() { FreeBuffer(); }
     bool InsertDSK(char *filename);
     bool RemoveDSK();
     SectorInfo GetSectorInfo(BYTE track, BYTE side, BYTE sector);

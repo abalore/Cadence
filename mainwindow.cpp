@@ -93,6 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
 
+    statusBar()->setSizeGripEnabled(false);
+
     const int iconSize = 24;
     const int sectionWidth = 771 / 5;
     const int textWidth = sectionWidth - iconSize - 6;
@@ -119,6 +121,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->centralwidget->setFixedSize(771, 547);
     adjustSize();
     setFixedSize(size());
+    setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowTitleHint
+                   | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint
+                   | Qt::WindowMinimizeButtonHint);
 
     settings.Load();
     applySettingsToUi();
