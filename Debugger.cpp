@@ -8,6 +8,8 @@
 #include "CRTScreen.h"
 #include "GateArray.h"
 #include <QCloseEvent>
+#include <QCheckBox>
+#include <QLineEdit>
 #include <QStringListModel>
 #include <QModelIndex>
 #include <QScrollBar>
@@ -107,20 +109,10 @@ void Debugger::Update()
     ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
     ui->listMemory->setCurrentIndex(modelMemoryIndex);
 
-    string debugStringZ80;
-    string debugStringStack;
-    string debugStringCRTC;
-    string debugStringGateArray;
-
-    debugStringZ80 = GetZ80RegsDebugLine();
-    debugStringStack = GetZ80StackDebugLine();
-    debugStringCRTC = GetCRTCDebugLine();
-    debugStringGateArray = GetGateArrayDebugLine();
-
-    ui->lblZ80->setText(debugStringZ80.data());
-    ui->lblStack->setText(debugStringStack.data());
-    ui->lblCRTC->setText(debugStringCRTC.data());
-    ui->lblGateArray->setText(debugStringGateArray.data());
+    UpdateZ80Panel();
+    UpdateCRTCPanel();
+    UpdateGateArrayPanel();
+    ui->lblStack->setText(GetZ80StackDebugLine().data());
 
     setEnabled(true);
 }
@@ -183,19 +175,43 @@ void Debugger::onToggleBreakpointClicked()
     ui->listDisassembly->scrollTo(restored, QAbstractItemView::PositionAtCenter);
 }
 
-string Debugger::GetZ80RegsDebugLine()
+void Debugger::UpdateZ80Panel()
 {
-    string d;
-    char buff[200];
     Z80DebugState s = CPC::z80.GetDebugState();
-    sprintf(buff, "AF %04X\nBC %04X\nDE %04X\nHL %04X\nPC %04X\nSP %04X\nIX %04X\nIY %04X\nSZ-H-PNC\n%1b%1b%1b%1b%1b%1b%1b%1b\nIRQ: %1d\nIFF1: %1d\nIFF2: %1d\n",
-            s.AF, s.BC, s.DE, s.HL,
-            s.PC, s.SP, s.IX, s.IY,
-            s.fS, s.fZ, s.f5, s.fH, s.f3, s.fP, s.fN, s.fC, s.InterruptRequest, s.IFF1, s.IFF2);
-    d.append(buff);
-    sprintf(buff, "R:%02X I:%02X\nIM:%1d\nInts:%1d\nNOPS:%d", s.R, s.I, s.im, s.IFF1, s.nops);
-    d.append(buff);
-    return d;
+    char buf[16];
+    auto setHex = [&](QLineEdit *field, unsigned value, int width) {
+        snprintf(buf, sizeof(buf), "%0*X", width, value);
+        field->setText(buf);
+    };
+    setHex(ui->txtAF, s.AF, 4);
+    setHex(ui->txtBC, s.BC, 4);
+    setHex(ui->txtDE, s.DE, 4);
+    setHex(ui->txtHL, s.HL, 4);
+    setHex(ui->txtAF_, s.AF_, 4);
+    setHex(ui->txtBC_, s.BC_, 4);
+    setHex(ui->txtDE_, s.DE_, 4);
+    setHex(ui->txtHL_, s.HL_, 4);
+    setHex(ui->txtIX, s.IX, 4);
+    setHex(ui->txtIY, s.IY, 4);
+    setHex(ui->txtPC, s.PC, 4);
+    setHex(ui->txtSP, s.SP, 4);
+    setHex(ui->txtI,  s.I,  2);
+    setHex(ui->txtR,  s.R,  2);
+
+    ui->chkFlagS->setChecked(s.fS);
+    ui->chkFlagZ->setChecked(s.fZ);
+    ui->chkFlag5->setChecked(s.f5);
+    ui->chkFlagH->setChecked(s.fH);
+    ui->chkFlag3->setChecked(s.f3);
+    ui->chkFlagP->setChecked(s.fP);
+    ui->chkFlagN->setChecked(s.fN);
+    ui->chkFlagC->setChecked(s.fC);
+
+    ui->txtIM->setText(QString::number(s.im));
+    ui->txtIRQ->setText(s.InterruptRequest ? "1" : "0");
+    ui->txtIFF1->setText(s.IFF1 ? "1" : "0");
+    ui->txtIFF2->setText(s.IFF2 ? "1" : "0");
+    ui->txtNOPS->setText(QString::number(s.nops));
 }
 
 string Debugger::GetZ80StackDebugLine()
@@ -207,46 +223,90 @@ string Debugger::GetZ80StackDebugLine()
     {
         BYTE L = CPC::GetByteAt(sp);
         BYTE H = CPC::GetByteAt(sp + 1);
-        sprintf(buff, "%04X : %04X\n", sp, L + H * 256);
+        sprintf(buff, "%04X:%04X\n", sp, L + H * 256);
         d.append(buff);
         sp += 2;
     }
     return d;
 }
 
-string Debugger::GetCRTCDebugLine()
+void Debugger::UpdateCRTCPanel()
 {
-    string crtc;
-    char buff[100];
     CRTC &c = CPC::crtc;
-    sprintf(buff, "HT  %3d  HCC %3d\n", c.HT, c.HCC); crtc += buff;
-    sprintf(buff, "HD  %3d  HDISP %1d\n", c.HD, c.HDISP); crtc += buff;
-    sprintf(buff, "HSP %3d  HSYNC %1d\n", c.HSP, c.HSYNC); crtc += buff;
-    sprintf(buff, "HSW %3d  HSC %3d\n", c.HSW, c.HSC); crtc += (string) buff;
-    sprintf(buff, "VSW %3d  VSC %3d\n", c.VSW, c.VSC); crtc += (string) buff;
-    sprintf(buff, "VT  %3d  VCC %3d\n", c.VT, c.VCC); crtc += buff;
-    sprintf(buff, "VD  %3d  VDISP %1d\n", c.VD, c.VDISP); crtc += buff;
-    sprintf(buff, "VSP %3d  VSYNC %1d\n", c.VSP, c.VSYNC); crtc += buff;
-    sprintf(buff, "MRA %3d  RA  %3d\n", c.MRA, c.RA); crtc += buff;
-    sprintf(buff, "VTA %3d  VTAC %2d\n", c.VTA, c.VTAC); crtc += buff;
-    sprintf(buff, "SA %04X  MA %04X\n", c.DSA, c.MA); crtc += (string) buff;
-    sprintf(buff, "sX %4d sY %4d\n", CPC::screen.hPos, CPC::screen.vPos); crtc += (string) buff;
-    return crtc;
+    char buf[8];
+    auto setDec = [&](QLineEdit *field, int value) {
+        snprintf(buf, sizeof(buf), "%d", value);
+        field->setText(buf);
+    };
+    auto setHex4 = [&](QLineEdit *field, unsigned value) {
+        snprintf(buf, sizeof(buf), "%04X", value);
+        field->setText(buf);
+    };
+    setDec(ui->txtHT, c.HT);
+    setDec(ui->txtHCC, c.HCC);
+    setDec(ui->txtHD, c.HD);
+    ui->chkHDISP->setChecked(c.HDISP);
+    setDec(ui->txtHSP, c.HSP);
+    ui->chkHSYNC->setChecked(c.HSYNC);
+    setDec(ui->txtHSW, c.HSW);
+    setDec(ui->txtHSC, c.HSC);
+    setDec(ui->txtVSW, c.VSW);
+    setDec(ui->txtVSC, c.VSC);
+    setDec(ui->txtVT, c.VT);
+    setDec(ui->txtVCC, c.VCC);
+    setDec(ui->txtVD, c.VD);
+    ui->chkVDISP->setChecked(c.VDISP);
+    setDec(ui->txtVSP, c.VSP);
+    ui->chkVSYNC->setChecked(c.VSYNC);
+    setDec(ui->txtMRA, c.MRA);
+    setDec(ui->txtRA, c.RA);
+    setDec(ui->txtVTA, c.VTA);
+    setDec(ui->txtVTAC, c.VTAC);
+    setHex4(ui->txtDSA, c.DSA);
+    setHex4(ui->txtMA, c.MA);
+    setDec(ui->txtHPos, CPC::screen.hPos);
+    setDec(ui->txtVPos, CPC::screen.vPos);
 }
 
-string Debugger::GetGateArrayDebugLine()
+void Debugger::UpdateGateArrayPanel()
 {
-    string d;
-    char buff[100];
     GateArrayDebugState g = CPC::gateArray.GetDebugState();
-    sprintf(buff, "Pen: %d   Border: %d  Mode: %d  Video address: %04X\nInks: ", g.currentPen, g.BORDER, g.mode, g.videoAddress);
-    d.append(buff);
-    for (int i = 0; i < 16; i++)
-    {
-        sprintf(buff, "%02X ", g.INK[i] + 0x40);
-        d.append(buff);
+    char buf[16];
+    auto setDec = [&](QLineEdit *field, int value) {
+        snprintf(buf, sizeof(buf), "%d", value);
+        field->setText(buf);
+    };
+    auto setHex2 = [&](QLineEdit *field, unsigned value) {
+        snprintf(buf, sizeof(buf), "%02X", value);
+        field->setText(buf);
+    };
+    auto setHex4 = [&](QLineEdit *field, unsigned value) {
+        snprintf(buf, sizeof(buf), "%04X", value);
+        field->setText(buf);
+    };
+    setDec(ui->txtPen, g.currentPen);
+    setDec(ui->txtBorder, g.BORDER);
+    setDec(ui->txtMode, g.mode);
+    setHex4(ui->txtVideoAddr, g.videoAddress);
+    QLineEdit *inks[16] = {
+        ui->txtInk0, ui->txtInk1, ui->txtInk2, ui->txtInk3,
+        ui->txtInk4, ui->txtInk5, ui->txtInk6, ui->txtInk7,
+        ui->txtInk8, ui->txtInk9, ui->txtInk10, ui->txtInk11,
+        ui->txtInk12, ui->txtInk13, ui->txtInk14, ui->txtInk15
+    };
+    for (int i = 0; i < 16; i++) {
+        setHex2(inks[i], g.INK[i] + 0x40);
+        const BYTE *rgb = CPC::gateArray.GetPaletteEntry(i);
+        const char *fg = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) < 128000 ? "white" : "black";
+        inks[i]->setStyleSheet(QString("background-color: rgb(%1, %2, %3); color: %4; font-family: \"Ubuntu Sans Mono\"; font-size: 9pt;")
+                               .arg(rgb[0]).arg(rgb[1]).arg(rgb[2]).arg(fg));
     }
-    sprintf(buff, "\nLoR: %1b  HiR: %1b  R52: %d  PPI Control: %08b  Window: %d", g.LoROMActive, g.HiROMActive, g.R52, CPC::ppi.controlWord, (CPC::tick % 16) >> 2);
-    d += buff;
-    return d;
+    ui->chkLoR->setChecked(g.LoROMActive);
+    ui->chkHiR->setChecked(g.HiROMActive);
+    setDec(ui->txtR52, g.R52);
+    BYTE cw = CPC::ppi.controlWord;
+    char binBuf[9];
+    for (int i = 0; i < 8; i++) binBuf[i] = (cw & (0x80 >> i)) ? '1' : '0';
+    binBuf[8] = 0;
+    ui->txtPPI->setText(binBuf);
 }

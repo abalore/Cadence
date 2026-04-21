@@ -37,6 +37,7 @@ enum IDMode
 struct Z80DebugState
 {
     word AF, BC, DE, HL, IX, IY, PC, SP;
+    word AF_, BC_, DE_, HL_;
     bool fS, fZ, f5, fH, f3, fP, fN, fC;
     bool InterruptRequest, IFF1, IFF2;
     BYTE R, I, im;

@@ -31,10 +31,10 @@ private slots:
     void onToggleBreakpointClicked();
 private:
 
-    string GetZ80RegsDebugLine();
+    void UpdateZ80Panel();
+    void UpdateCRTCPanel();
+    void UpdateGateArrayPanel();
     string GetZ80StackDebugLine();
-    string GetCRTCDebugLine();
-    string GetGateArrayDebugLine();
 
     Ui::Debugger *ui;
     QStringList listDisassembly;

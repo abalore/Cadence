@@ -486,6 +486,7 @@ Z80DebugState Z80::GetDebugState()
     EncodeF();
     Z80DebugState s;
     s.AF = AF.Get(); s.BC = BC.Get(); s.DE = DE.Get(); s.HL = HL.Get();
+    s.AF_ = AF_.Get(); s.BC_ = BC_.Get(); s.DE_ = DE_.Get(); s.HL_ = HL_.Get();
     s.IX = IX.Get(); s.IY = IY.Get();
     s.PC = PC; s.SP = SP;
     s.fS = fS; s.fZ = fZ; s.f5 = f5; s.fH = fH;
