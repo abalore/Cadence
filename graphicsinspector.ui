@@ -236,6 +236,45 @@
     </property>
    </widget>
   </widget>
+  <widget class="QGroupBox" name="groupBoxPalette">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>10</y>
+     <width>101</width>
+     <height>80</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Palette</string>
+   </property>
+   <widget class="QRadioButton" name="rbPaletteOriginal">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>81</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Original</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="rbPaletteFalseColor">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>81</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Debug</string>
+    </property>
+   </widget>
+  </widget>
  </widget>
  <resources/>
  <connections/>

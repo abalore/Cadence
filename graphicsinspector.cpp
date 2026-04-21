@@ -24,6 +24,8 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
     connect(ui->rbMode1, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->rbMode2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->rbMode3, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbPaletteOriginal, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->rbPaletteFalseColor, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
 }
 
 GraphicsInspector::~GraphicsInspector()
@@ -42,6 +44,7 @@ void GraphicsInspector::showEvent(QShowEvent *event)
     case 2: ui->rbMode2->setChecked(true); break;
     case 3: ui->rbMode3->setChecked(true); break;
     }
+    ui->rbPaletteOriginal->setChecked(true);
     QDialog::showEvent(event);
 }
 
@@ -59,6 +62,22 @@ void GraphicsInspector::UpdateGraphics()
     else if (ui->rbMode1->isChecked()) mode = 1;
     else if (ui->rbMode2->isChecked()) mode = 2;
     else if (ui->rbMode3->isChecked()) mode = 3;
+    static const BYTE debugPaletteTable[16][3] = {
+        {0x00, 0x00, 0x00}, {0x00, 0x00, 0x40}, {0x00, 0x40, 0x00}, {0x40, 0x00, 0x00},
+        {0x40, 0x40, 0x40}, {0x00, 0x00, 0x80}, {0x00, 0x80, 0x00}, {0x80, 0x00, 0x00},
+        {0x80, 0x80, 0x80}, {0x00, 0x00, 0xFF}, {0x00, 0xFF, 0x00}, {0xFF, 0x00, 0x00},
+        {0xFF, 0xFF, 0xFF}, {0x00, 0xFF, 0xFF}, {0xFF, 0xFF, 0x00}, {0xFF, 0xFF, 0xFF},
+    };
+    BYTE paletteTable[16][3];
+    bool debugPalette = ui->rbPaletteFalseColor->isChecked();
+    for (int p = 0; p < 16; p++)
+    {
+        const BYTE *c = debugPalette ? debugPaletteTable[p]
+                                     : CPC::gateArray.GetPaletteEntry(p);
+        paletteTable[p][0] = c[0];
+        paletteTable[p][1] = c[1];
+        paletteTable[p][2] = c[2];
+    }
     pixels.resize(byteSize);
     for (int i = 0; i < xSize * 2; i++)
         for  (int j = 0; j < ySize; j++)
@@ -71,7 +90,7 @@ void GraphicsInspector::UpdateGraphics()
                 for (int l = 0; l < 8; l++)
                 {
                     BYTE pen = CPC::gateArray.GetPenForPixel(mode, b, l);
-                    const BYTE *color = CPC::gateArray.GetPaletteEntry(pen);
+                    const BYTE *color = paletteTable[pen & 0x0F];
                     long pixelBase = (line * xSize * 16 * 2 + i * 8 + l) * 3;
                     if (pixelBase < byteSize - 2)
                         for (int m = 0; m < 3; m++)
