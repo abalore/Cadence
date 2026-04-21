@@ -154,6 +154,7 @@
     <addaction name="menuScreen"/>
     <addaction name="menuAudio"/>
     <addaction name="menuKeyboard"/>
+    <addaction name="actionROM_Box"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
     <property name="title">
@@ -190,7 +191,6 @@
     <addaction name="menuDisk_A"/>
     <addaction name="menuDisk_B"/>
     <addaction name="menuTape"/>
-    <addaction name="actionROM_Box"/>
     <addaction name="menuCartridge"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -434,7 +434,7 @@
   </action>
   <action name="actionROM_Box">
    <property name="text">
-    <string>Load ROM...</string>
+    <string>ROM...</string>
    </property>
    <property name="shortcut">
     <string>F4</string>
