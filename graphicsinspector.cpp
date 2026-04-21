@@ -11,6 +11,7 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
     scene = new QGraphicsScene(this);
     scene->setSceneRect(0, 0, 640, 400);
     ui->graphicsView->setScene(scene);
+    ui->graphicsView->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     pixItem = 0;
 
     connect(ui->inputWidth, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
@@ -70,5 +71,14 @@ void GraphicsInspector::UpdateGraphics()
     QPixmap pixmap = QPixmap::fromImage(image, Qt::NoFormatConversion | Qt::NoOpaqueDetection);
     pixItem = scene->addPixmap(pixmap);
     pixItem->setPos(0, 0);
+    scene->setSceneRect(0, 0, pixmap.width(), pixmap.height());
+    const int fw = 2 * ui->graphicsView->frameWidth();
+    ui->graphicsView->setFixedSize(pixmap.width() + fw, pixmap.height() + fw);
+
+    QRect content = ui->graphicsView->geometry()
+                        .united(ui->groupBox->geometry())
+                        .united(ui->groupBoxSize->geometry());
+    const int margin = 10;
+    setFixedSize(content.right() + margin, content.bottom() + margin);
 }
 
