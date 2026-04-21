@@ -54,6 +54,7 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent)
     }
     snd_pcm_hw_params_alloca(&params);
     snd_pcm_hw_params_any(pcm_handle, params);
+    snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_U8);
     snd_pcm_hw_params_set_channels(pcm_handle, params, 1);
     snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0);
