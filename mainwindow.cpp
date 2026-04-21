@@ -46,6 +46,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     Instance = this;
 
+    settings.Load();
+    if (settings.system == "CPC464")       CPC::cpcType = CPCType::CPC464;
+    else if (settings.system == "CPC664")  CPC::cpcType = CPCType::CPC664;
+    else                                   CPC::cpcType = CPCType::CPC6128;
+
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
     media = new MediaController(this);
@@ -125,7 +130,6 @@ MainWindow::MainWindow(QWidget *parent)
                    | Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint
                    | Qt::WindowMinimizeButtonHint);
 
-    settings.Load();
     applySettingsToUi();
     if (!settings.diskAPath.isEmpty() && QFileInfo::exists(settings.diskAPath))
         media->LoadDiskA(settings.diskAPath);
@@ -161,6 +165,11 @@ void MainWindow::applySettingsToUi()
     ui->actionSFX_enabled->setChecked(settings.sfxEnabled);
     ui->actionTape_enabled->setChecked(settings.tapeEnabled);
     ui->actionRight_shift_as_backslash->setChecked(settings.rsBackslash);
+    switch (CPC::cpcType) {
+    case CPCType::CPC464:  ui->actionAmstrad_CPC464->setChecked(true);  break;
+    case CPCType::CPC664:  ui->actionAmstrad_CPC664->setChecked(true);  break;
+    case CPCType::CPC6128: ui->actionAmstrad_CPC6128->setChecked(true); break;
+    }
 
     const bool smooth = settings.smooth;
     QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
@@ -421,6 +430,11 @@ void MainWindow::SwitchMachine(CPCType type)
     CPC::cpcType = type;
     CPC::Init();
     StartThreads();
+    switch (type) {
+    case CPCType::CPC464:  settings.system = "CPC464";  break;
+    case CPCType::CPC664:  settings.system = "CPC664";  break;
+    case CPCType::CPC6128: settings.system = "CPC6128"; break;
+    }
 }
 
 void MainWindow::SetCPC464()
