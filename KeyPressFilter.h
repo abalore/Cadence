@@ -17,14 +17,22 @@ public:
         {
             QKeyEvent *ke = static_cast<QKeyEvent*>(aEvent);
             if (!ke->isAutoRepeat())
+#ifdef __APPLE__
+                CPC::keyboard.KeyEvent(ke->nativeVirtualKey(), false);
+#else
                 CPC::keyboard.KeyEvent(ke->nativeScanCode(), false);
+#endif
             return true;
         }
         else if (aEvent->type() == QEvent::KeyRelease)
         {
             QKeyEvent *ke = static_cast<QKeyEvent*>(aEvent);
             if (!ke->isAutoRepeat())
+#ifdef __APPLE__
+                CPC::keyboard.KeyEvent(ke->nativeVirtualKey(), true);
+#else
                 CPC::keyboard.KeyEvent(ke->nativeScanCode(), true);
+#endif
             return true;
         }
         return QObject::eventFilter(aObject, aEvent);

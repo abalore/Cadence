@@ -3,7 +3,7 @@
 
 #include <QThread>
 #include <QWaitCondition>
-#include <alsa/asoundlib.h>
+#include <portaudio.h>
 #include <atomic>
 #include "defs.h"
 
@@ -17,12 +17,24 @@ public:
     static std::atomic<bool> enabled;
     static std::atomic<bool> sfxEnabled;
     static QWaitCondition waitCondition;
-    static std::atomic<snd_pcm_sframes_t> frames;
+    static std::atomic<long> frames;
 protected:
     void run() override;
 private:
-    snd_pcm_t *pcm_handle;
-    static snd_pcm_sframes_t frames_internal;
+    PaStream *stream;
+    bool paInitialized;
+
+    static constexpr int RING_SIZE = 8192;
+    static BYTE ringBuffer[RING_SIZE];
+    static std::atomic<int> ringHead;
+    static std::atomic<int> ringTail;
+
+    static int paCallback(const void *input, void *output,
+                          unsigned long frameCount,
+                          const PaStreamCallbackTimeInfo *timeInfo,
+                          PaStreamCallbackFlags statusFlags,
+                          void *userData);
+
     BYTE *stepBuffer;
     int stepBufferLen;
     int stepPos;

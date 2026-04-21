@@ -9,10 +9,13 @@
 #include <algorithm>
 
 QWaitCondition SoundThread::waitCondition;
-std::atomic<snd_pcm_sframes_t> SoundThread::frames{0};
-snd_pcm_sframes_t SoundThread::frames_internal;
+std::atomic<long> SoundThread::frames{0};
 std::atomic<bool> SoundThread::enabled{true};
 std::atomic<bool> SoundThread::sfxEnabled{true};
+
+BYTE SoundThread::ringBuffer[RING_SIZE];
+std::atomic<int> SoundThread::ringHead{0};
+std::atomic<int> SoundThread::ringTail{0};
 
 static void loadWavU8(const char *path, BYTE *&buffer, int &length)
 {
@@ -31,52 +34,90 @@ static void loadWavU8(const char *path, BYTE *&buffer, int &length)
     length = dataSize;
 }
 
-SoundThread::SoundThread(QObject *parent) : QThread(parent)
+SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), paInitialized(false)
 {
     loadWavU8(":/images/step.wav", stepBuffer, stepBufferLen);
     stepPos = stepBufferLen;
     loadWavU8(":/images/spin.wav", spinBuffer, spinBufferLen);
     spinPos = 0;
 
-    unsigned int rate = 62500;
-    snd_pcm_uframes_t period_size = 64;
-    snd_pcm_uframes_t buffer_size = 64 * 64;
-    snd_pcm_hw_params_t *params;
-    pcm_handle = nullptr;
-    int err = snd_pcm_open(&pcm_handle, "plughw:0,0", SND_PCM_STREAM_PLAYBACK, 0);
-    if (err < 0)
-        err = snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
-    if (err < 0) {
-        fprintf(stderr, "[SND] snd_pcm_open failed: %s — sound disabled\n", snd_strerror(err));
-        pcm_handle = nullptr;
+    PaError err = Pa_Initialize();
+    if (err != paNoError) {
+        fprintf(stderr, "[SND] Pa_Initialize failed: %s — sound disabled\n", Pa_GetErrorText(err));
         end = true;
         return;
     }
-    snd_pcm_hw_params_alloca(&params);
-    snd_pcm_hw_params_any(pcm_handle, params);
-    snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
-    snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_U8);
-    snd_pcm_hw_params_set_channels(pcm_handle, params, 1);
-    snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0);
-    snd_pcm_hw_params_set_buffer_size_near(pcm_handle, params, &buffer_size);
-    snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &period_size, 0);
-    snd_pcm_hw_params(pcm_handle, params);
+    paInitialized = true;
+
+    PaStreamParameters outputParams;
+    outputParams.device = Pa_GetDefaultOutputDevice();
+    if (outputParams.device == paNoDevice) {
+        fprintf(stderr, "[SND] No default output device — sound disabled\n");
+        end = true;
+        return;
+    }
+    outputParams.channelCount = 1;
+    outputParams.sampleFormat = paUInt8;
+    outputParams.suggestedLatency = Pa_GetDeviceInfo(outputParams.device)->defaultLowOutputLatency;
+    outputParams.hostApiSpecificStreamInfo = nullptr;
+
+    err = Pa_OpenStream(&stream, nullptr, &outputParams,
+                        62500, 64, paNoFlag,
+                        paCallback, nullptr);
+    if (err != paNoError) {
+        fprintf(stderr, "[SND] Pa_OpenStream failed: %s — sound disabled\n", Pa_GetErrorText(err));
+        stream = nullptr;
+        end = true;
+        return;
+    }
     end = false;
 }
 
 SoundThread::~SoundThread()
 {
-    if (pcm_handle) {
-        snd_pcm_drain(pcm_handle);
-        snd_pcm_close(pcm_handle);
+    if (stream) {
+        Pa_StopStream(stream);
+        Pa_CloseStream(stream);
     }
+    if (paInitialized)
+        Pa_Terminate();
     delete[] stepBuffer;
     delete[] spinBuffer;
 }
 
+int SoundThread::paCallback(const void *input, void *output,
+                            unsigned long frameCount,
+                            const PaStreamCallbackTimeInfo *timeInfo,
+                            PaStreamCallbackFlags statusFlags,
+                            void *userData)
+{
+    (void)input;
+    (void)timeInfo;
+    (void)statusFlags;
+    (void)userData;
+
+    BYTE *out = static_cast<BYTE *>(output);
+    int tail = ringTail.load(std::memory_order_relaxed);
+    int head = ringHead.load(std::memory_order_acquire);
+
+    for (unsigned long i = 0; i < frameCount; i++) {
+        if (tail != head) {
+            out[i] = ringBuffer[tail];
+            tail = (tail + 1) & (RING_SIZE - 1);
+        } else {
+            out[i] = 128;
+        }
+    }
+    ringTail.store(tail, std::memory_order_release);
+    return paContinue;
+}
+
 void SoundThread::run()
 {
-    if (!pcm_handle) return;
+    if (!stream) return;
+
+    Pa_StartStream(stream);
+
     QMutex mutex;
     mutex.lock();
     while (!end)
@@ -113,22 +154,21 @@ void SoundThread::run()
         } else {
             spinPos = 0;
         }
-        BYTE *p = CPC::psg.buffer;
-        int remaining = CPC::psg.bufferIndex;
-        while (remaining > 0) {
-            snd_pcm_sframes_t wr = snd_pcm_writei(pcm_handle, p, remaining);
-            if (wr == -EPIPE) {
-                snd_pcm_prepare(pcm_handle);
-                continue;
-            }
-            if (wr == -EAGAIN || wr == -EINTR) continue;
-            if (wr < 0) break;
-            p += wr;
-            remaining -= wr;
+
+        int head = ringHead.load(std::memory_order_relaxed);
+        int tail = ringTail.load(std::memory_order_acquire);
+        int space = (RING_SIZE - 1) - ((head - tail) & (RING_SIZE - 1));
+        int count = std::min(CPC::psg.bufferIndex, space);
+        for (int i = 0; i < count; i++) {
+            ringBuffer[head] = CPC::psg.buffer[i];
+            head = (head + 1) & (RING_SIZE - 1);
         }
+        ringHead.store(head, std::memory_order_release);
+
         CPC::psg.bufferIndex = 0;
-        snd_pcm_delay(pcm_handle, &frames_internal);
-        frames = frames_internal;
+        frames = (head - ringTail.load(std::memory_order_acquire)) & (RING_SIZE - 1);
     }
+
+    Pa_StopStream(stream);
     mutex.unlock();
 }

@@ -11,9 +11,11 @@ DEFINES += APP_VERSION=\\\"0.1a\\\" APP_NAME=\\\"Cadence\\\"
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror
 QMAKE_CXXFLAGS+=-flto -fno-strict-aliasing
+QMAKE_CXXFLAGS_WARN_ON+=-Wno-implicit-function-declaration -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-result
 QMAKE_LFLAGS+=-flto
 
-LIBS += -lasound
+CONFIG += link_pkgconfig
+PKGCONFIG += portaudio-2.0
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

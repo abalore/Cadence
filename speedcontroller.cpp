@@ -16,7 +16,7 @@ SpeedMode SpeedController::speedMode = SpeedMode::Keep;
 
 void SpeedController::Run()
 {
-    snd_pcm_sframes_t frames = SoundThread::frames;
+    long frames = SoundThread::frames;
     switch(speedMode)
     {
     case SpeedMode::Keep:
