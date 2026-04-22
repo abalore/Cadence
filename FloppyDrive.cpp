@@ -5,12 +5,14 @@
 
 using namespace std;
 
-bool FloppyDrive::InsertDSK(char *filename)
+bool FloppyDrive::InsertDSK(char *fn)
 {
+    SaveIfDirty();
     FreeBuffer();
     DiskInserted = false;
-    bufferSize = filesystem::file_size(filename);
-    FILE *f = fopen(filename, "rb");
+    filename.clear();
+    bufferSize = filesystem::file_size(fn);
+    FILE *f = fopen(fn, "rb");
     if (f)
     {
         buffer = (BYTE *)malloc(bufferSize);
@@ -18,7 +20,10 @@ bool FloppyDrive::InsertDSK(char *filename)
         (void)n;
         fclose(f);
         if (dsk.Init(buffer, bufferSize))
+        {
             DiskInserted = true;
+            filename = fn;
+        }
         else
             FreeBuffer();
     }
@@ -29,7 +34,9 @@ bool FloppyDrive::RemoveDSK()
 {
     if (DiskInserted)
     {
+        SaveIfDirty();
         DiskInserted = false;
+        filename.clear();
         FreeBuffer();
         return true;
     }
@@ -43,6 +50,19 @@ void FloppyDrive::FreeBuffer()
         free(buffer);
         buffer = 0;
     }
+}
+
+void FloppyDrive::SaveIfDirty()
+{
+    if (!dirty || buffer == nullptr || filename.empty()) return;
+    FILE *f = fopen(filename.c_str(), "wb");
+    if (f)
+    {
+        size_t n = fwrite(buffer, 1, bufferSize, f);
+        (void)n;
+        fclose(f);
+    }
+    dirty = false;
 }
 
 SectorInfo FloppyDrive::GetSectorInfo(BYTE track, BYTE side, BYTE sector)
@@ -66,4 +86,15 @@ BYTE FloppyDrive::GetSectorID(BYTE track, BYTE side)
 BYTE FloppyDrive::GetSides()
 {
     return DiskInserted ? dsk.sides : 1;
+}
+
+bool FloppyDrive::FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *sectorHeaders)
+{
+    if (!DiskInserted) return false;
+    if (dsk.FormatTrack(track, side, sizeCode, sectorCount, filler, sectorHeaders))
+    {
+        dirty = true;
+        return true;
+    }
+    return false;
 }

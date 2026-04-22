@@ -43,6 +43,7 @@ private slots:
     void onMenuScreenSmooth();
     void onMenuScreenInspectGraphics();
     void onMenuMediaInsertDiskA();
+    void onMenuMediaNewBlankDiskA();
     void onMenuROMLoadFromFile();
     void onMenuMemoryEnterBytes();
     void onMenuMediaRemoveCartridge();

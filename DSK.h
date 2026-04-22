@@ -34,6 +34,7 @@ public:
     TrackInfo GetTrackInfo(int track, int side);
     SectorInfo GetSectorInfo(BYTE track, BYTE side, BYTE sector);
     BYTE GetSectorID(BYTE track, BYTE side);
+    bool FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *sectorHeaders);
     BYTE *data;
     size_t dataSize;
     BYTE tracks;

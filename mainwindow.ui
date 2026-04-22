@@ -164,6 +164,7 @@
      <property name="title">
       <string>Disk A:</string>
      </property>
+     <addaction name="actionNew_blank_disk"/>
      <addaction name="actionInsert_disk"/>
      <addaction name="actionRemove_disk"/>
     </widget>
@@ -388,6 +389,11 @@
    </property>
    <property name="shortcut">
     <string>Shift+F11</string>
+   </property>
+  </action>
+  <action name="actionNew_blank_disk">
+   <property name="text">
+    <string>New blank disc...</string>
    </property>
   </action>
   <action name="actionInsert_disk">

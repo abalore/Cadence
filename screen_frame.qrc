@@ -4,10 +4,15 @@
         <file>cadence.svg</file>
         <file>cadence.png</file>
         <file>disk.svg</file>
+        <file>disk.png</file>
         <file>tape.svg</file>
+        <file>tape.png</file>
         <file>cartridge.svg</file>
+        <file>cartridge.png</file>
         <file>led_off.svg</file>
+        <file>led_off.png</file>
         <file>led_on.svg</file>
+        <file>led_on.png</file>
         <file>step.wav</file>
         <file>spin.wav</file>
     </qresource>

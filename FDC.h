@@ -105,6 +105,8 @@ private:
     BYTE *data;
     BYTE weakSectorCycle;
     int seekCounter;
+    BYTE formatBuffer[256];
+    int formatByteCount;
 public:
     std::atomic<int> stepPulses{0};
 private:

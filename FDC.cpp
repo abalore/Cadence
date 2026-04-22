@@ -37,6 +37,7 @@ void FDC::Reset()
     stCM = stDD = stWC = stSH = stSN = stBC = stMD = 0;
     seekCounter = 0;
     stepPulses = 0;
+    formatByteCount = 0;
 }
 
 void FDC::Clock()
@@ -103,17 +104,58 @@ void FDC::SetMotor(BYTE value)
 
 void FDC::WR(BYTE value)
 {
-    BYTE data = value;
     switch(state)
     {
     case FDCState::FDC_StateCommand:
-        ProcessCommand(data);
+        ProcessCommand(value);
         break;
     case FDCState::FDC_StateExecution:
         break;
     case FDCState::FDC_StateResult:
         break;
     case FDCState::FDC_StateTransfer:
+        if (bit6_DIO == 0)
+        {
+            if (command == FDC_CommandFormatTrack)
+            {
+                int total = 4 * (int)SC;
+                if (formatByteCount < (int)sizeof(formatBuffer) && formatByteCount < total)
+                    formatBuffer[formatByteCount++] = value;
+                if (SC > 0 && formatByteCount == total)
+                {
+                    drives[US].FormatTrack(PCN, HD ? 1 : 0, N, SC, D, formatBuffer);
+                    stIC = 0b00000000;
+                    resultCount = 7;
+                    result[0] = GetStatusReg0();
+                    result[1] = GetStatusReg1();
+                    result[2] = GetStatusReg2();
+                    result[3] = PCN;
+                    result[4] = HD ? 1 : 0;
+                    result[5] = 0;
+                    result[6] = N;
+                    GoToResultState();
+                }
+            }
+            else if (data != nullptr)
+            {
+                data[dataIndex] = value;
+                dataIndex++;
+                if (dataIndex == dataSize)
+                {
+                    drives[US].MarkDirty();
+                    if (R == EOT)
+                    {
+                        R = 1;
+                        GoToResultState();
+                    }
+                    else
+                    {
+                        R++;
+                        GoToExecutionState();
+                    }
+                }
+            }
+        }
         break;
     }
 }
@@ -313,13 +355,78 @@ void FDC::ProcessExecution()
             break;
         }
         break;
-    case FDC_CommandReadTrack:
     case FDC_CommandWriteData:
     case FDC_CommandWriteDeletedData:
+        stSE = 0b00000000;
+        sectorInfo = drives[US].GetSectorInfo(PCN, HD ? 1 : 0, R);
+        resultCount = 7;
+        result[3] = PCN;
+        result[4] = H;
+        result[5] = R;
+        result[6] = N;
+        switch(sectorInfo.SI_ID)
+        {
+        case 0xFE:
+            stIC = 0b01000000;
+            stEC = 0b00000000;
+            stMA = 0b00000001;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        case 0xFF:
+            stIC = 0b01000000;
+            stEC = 0b00010000;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        default:
+            stIC = 0b00000000;
+            stEC = 0b00000000;
+            dataSize = (1 << sectorInfo.SI_size) * 128;
+            data = sectorInfo.SectorData[0];
+            dataIndex = 0;
+            PCN = sectorInfo.SI_C;
+            H = sectorInfo.SI_H;
+            N = sectorInfo.SI_size;
+            result[0] = GetStatusReg0();
+            result[1] = sectorInfo.SI_reg1;
+            result[2] = sectorInfo.SI_reg2;
+            GoToTransferState();
+            break;
+        }
+        break;
+    case FDC_CommandFormatTrack:
+        if (stNR)
+        {
+            stIC = 0b01000000;
+            resultCount = 7;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            result[3] = PCN;
+            result[4] = HD ? 1 : 0;
+            result[5] = 0;
+            result[6] = N;
+            GoToResultState();
+        }
+        else
+        {
+            stIC = 0b00000000;
+            formatByteCount = 0;
+            data = nullptr;
+            dataIndex = 0;
+            dataSize = 0;
+            GoToTransferState();
+        }
+        break;
+    case FDC_CommandReadTrack:
     case FDC_CommandScanEqual:
     case FDC_CommandScanLowOrEqual:
     case FDC_CommandScanHighOrEqual:
-    case FDC_CommandFormatTrack:
         if (stNR)
             stIC = 0b01000000;
         else
@@ -503,7 +610,9 @@ void FDC::GoToExecutionState()
 void FDC::GoToTransferState()
 {
     bit7_RQM = 1;
-    bit6_DIO = 1;
+    bit6_DIO = (command == FDC_CommandWriteData
+             || command == FDC_CommandWriteDeletedData
+             || command == FDC_CommandFormatTrack) ? 0 : 1;
     state = FDCState::FDC_StateTransfer;
 }
 

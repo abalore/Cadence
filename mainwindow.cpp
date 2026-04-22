@@ -23,6 +23,10 @@
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QDialogButtonBox>
+#include <QGroupBox>
+#include <QRadioButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QActionGroup>
 #include <QMessageBox>
 #include <QLabel>
@@ -73,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionInspect_video_memory, &QAction::triggered, this, &MainWindow::onMenuScreenInspectGraphics);
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
+    connect(ui->actionNew_blank_disk, &QAction::triggered, this, &MainWindow::onMenuMediaNewBlankDiskA);
     connect(ui->actionROM_Box, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
     connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
     connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
@@ -106,25 +111,31 @@ MainWindow::MainWindow(QWidget *parent)
     const int iconSize = 24;
     const int sectionWidth = 771 / 5;
     const int textWidth = sectionWidth - iconSize - 6;
+    auto leftStretch = new QWidget(this);
+    leftStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    statusBar()->addWidget(leftStretch, 1);
     auto addMediaLabel = [this](const QString &iconPath, QLabel *&textLabel) {
         QLabel *icon = new QLabel(this);
         icon->setPixmap(QIcon(iconPath).pixmap(iconSize, iconSize));
         textLabel = new QLabel(this);
         textLabel->setFixedWidth(textWidth);
         textLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        statusBar()->addPermanentWidget(icon);
-        statusBar()->addPermanentWidget(textLabel);
+        statusBar()->addWidget(icon);
+        statusBar()->addWidget(textLabel);
         setMediaText(textLabel, "<Empty>");
     };
-    addMediaLabel(":/images/cartridge.svg", cartridgeLabel);
-    addMediaLabel(":/images/tape.svg", tapeLabel);
-    addMediaLabel(":/images/disk.svg", diskLabel);
-    addMediaLabel(":/images/disk.svg", diskBLabel);
-    ledOnPixmap = QIcon(":/images/led_on.svg").pixmap(iconSize, iconSize / 2);
-    ledOffPixmap = QIcon(":/images/led_off.svg").pixmap(iconSize, iconSize / 2);
+    addMediaLabel(":/images/cartridge.png", cartridgeLabel);
+    addMediaLabel(":/images/tape.png", tapeLabel);
+    addMediaLabel(":/images/disk.png", diskLabel);
+    addMediaLabel(":/images/disk.png", diskBLabel);
+    ledOnPixmap = QIcon(":/images/led_on.png").pixmap(iconSize, iconSize / 2);
+    ledOffPixmap = QIcon(":/images/led_off.png").pixmap(iconSize, iconSize / 2);
     motorLabel = new QLabel(this);
     motorLabel->setPixmap(ledOffPixmap);
-    statusBar()->addPermanentWidget(motorLabel);
+    statusBar()->addWidget(motorLabel);
+    auto rightStretch = new QWidget(this);
+    rightStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    statusBar()->addWidget(rightStretch, 1);
 
     ui->centralwidget->setFixedSize(771, 547);
     adjustSize();
@@ -335,6 +346,103 @@ void MainWindow::onMenuMediaInsertDiskA()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
         media->LoadDiskA(fileName);
+}
+
+void MainWindow::onMenuMediaNewBlankDiskA()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("New blank disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
+    if (fileName.isEmpty())
+        return;
+    if (!fileName.endsWith(".dsk", Qt::CaseInsensitive))
+        fileName += ".dsk";
+
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("New blank disc"));
+
+    auto makeGroup = [&](const QString &title, const QStringList &labels, int def) {
+        QGroupBox *g = new QGroupBox(title, &dlg);
+        QHBoxLayout *gl = new QHBoxLayout(g);
+        QList<QRadioButton *> btns;
+        for (int i = 0; i < labels.size(); i++)
+        {
+            QRadioButton *b = new QRadioButton(labels[i], g);
+            if (i == def) b->setChecked(true);
+            gl->addWidget(b);
+            btns.append(b);
+        }
+        return QPair<QGroupBox *, QList<QRadioButton *>>(g, btns);
+    };
+
+    auto tracksSel = makeGroup(tr("Tracks"), {"40", "80"}, 0);
+    auto sidesSel  = makeGroup(tr("Sides"), {tr("Single"), tr("Double")}, 0);
+    auto formatSel = makeGroup(tr("Format"), {"DATA", "SYSTEM", "VENDOR"}, 0);
+
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dlg);
+    layout->addWidget(tracksSel.first);
+    layout->addWidget(sidesSel.first);
+    layout->addWidget(formatSel.first);
+    layout->addWidget(buttons);
+
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    const int numTracks = tracksSel.second[0]->isChecked() ? 40 : 80;
+    const int numSides  = sidesSel.second[0]->isChecked() ? 1 : 2;
+    const BYTE idBase   = formatSel.second[0]->isChecked() ? 0xC1
+                        : formatSel.second[1]->isChecked() ? 0x41
+                        : 0x01;
+
+    const int sectorsPerTrack = 9;
+    const int sectorSize = 512;
+    const int trackSize = 0x100 + sectorsPerTrack * sectorSize;
+
+    QByteArray dsk(0x100 + numTracks * numSides * trackSize, '\0');
+    char *p = dsk.data();
+
+    memcpy(p, "MV - CPCEMU Disk-File\r\nDisk-Info\r\n", 34);
+    memcpy(p + 0x22, "Cadence       ", 14);
+    p[0x30] = numTracks;
+    p[0x31] = numSides;
+    p[0x32] = trackSize & 0xFF;
+    p[0x33] = (trackSize >> 8) & 0xFF;
+
+    for (int t = 0; t < numTracks; t++)
+    {
+        for (int s = 0; s < numSides; s++)
+        {
+            char *tp = p + 0x100 + (t * numSides + s) * trackSize;
+            memcpy(tp, "Track-Info\r\n", 12);
+            tp[0x10] = t;
+            tp[0x11] = s;
+            tp[0x14] = 2;
+            tp[0x15] = sectorsPerTrack;
+            tp[0x16] = 0x4E;
+            tp[0x17] = 0xE5;
+            for (int i = 0; i < sectorsPerTrack; i++)
+            {
+                char *si = tp + 0x18 + i * 8;
+                si[0] = t;
+                si[1] = s;
+                si[2] = idBase + i;
+                si[3] = 2;
+            }
+            memset(tp + 0x100, 0xE5, sectorsPerTrack * sectorSize);
+        }
+    }
+
+    QFile f(fileName);
+    if (!f.open(QIODevice::WriteOnly) || f.write(dsk) != dsk.size())
+    {
+        QMessageBox::warning(this, tr("New blank disc"), tr("Could not write %1").arg(fileName));
+        return;
+    }
+    f.close();
+
+    media->LoadDiskA(fileName);
 }
 
 void MainWindow::onMenuMediaInsertDiskB()
