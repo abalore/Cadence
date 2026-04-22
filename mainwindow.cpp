@@ -14,6 +14,7 @@
 #include <QKeyEvent>
 #include <QThread>
 #include <QFileDialog>
+#include <QDir>
 #include <QFile>
 #include <QByteArray>
 #include <QWindow>
@@ -260,7 +261,7 @@ void MainWindow::onEmulatorFinishedFrame()
 
 void MainWindow::onMenuMemoryLoadBinaryFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), ".", tr("Binary Files (*.bin)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"));
     QFile file = QFile(fileName);
     file.open(QIODevice::ReadOnly);
     if (file.isOpen())
@@ -296,7 +297,7 @@ void MainWindow::onMenuMemorySaveBinaryFile()
     int length = lengthEdit->text().toInt(nullptr, 16);
     if (length <= 0) return;
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), ".", tr("Binary Files (*.bin)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"));
     QFile file = QFile(fileName);
     file.open(QIODevice::WriteOnly);
     if (file.isOpen())
@@ -319,7 +320,7 @@ void MainWindow::onMenuScreenInspectGraphics()
 
 void MainWindow::onMenuMediaInsertTape()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), ".", tr("Tape Files (*.cdt *.wav)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), QDir::homePath() + "/.cadence/CDT", tr("Tape Files (*.cdt *.wav)"));
     if (fileName != nullptr)
         media->LoadTape(fileName);
 }
@@ -331,14 +332,14 @@ void MainWindow::onMenuScreenSmooth()
 
 void MainWindow::onMenuMediaInsertDiskA()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
         media->LoadDiskA(fileName);
 }
 
 void MainWindow::onMenuMediaInsertDiskB()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), ".", tr("DSK Files (*.dsk)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
         media->LoadDiskB(fileName);
 }
@@ -381,7 +382,7 @@ void MainWindow::onMenuMediaRemoveCartridge()
 
 void MainWindow::onMenuMediaInsertCartridge()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), ".", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), QDir::homePath() + "/.cadence/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
         media->LoadCartridge(fileName);
 }

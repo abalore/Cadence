@@ -49,7 +49,13 @@ void CPC::ReadROM(char *filename, int number)
         HiROMs[number] = (BYTE *) malloc(0x4000);
         dest = HiROMs[number];
     }
-    FILE *file = fopen(filename, "r");
+    char fullpath[1024];
+    const char *home = getenv("HOME");
+    if (filename[0] != '/' && home)
+        snprintf(fullpath, sizeof(fullpath), "%s/.cadence/%s", home, filename);
+    else
+        snprintf(fullpath, sizeof(fullpath), "%s", filename);
+    FILE *file = fopen(fullpath, "r");
     if (file)
     {
         size_t n = fread(dest, 1, 16384, file);

@@ -14,6 +14,7 @@ ui_*.h
 
 # Qt Creator / IDE
 .qtcreator/
+.qtc_clangd/
 *.pro.user
 *.pro.user.*
 
