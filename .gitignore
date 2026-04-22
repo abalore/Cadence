@@ -1,2 +1,22 @@
+# Build output
 build/
 
+# qmake / make generated
+Makefile
+Makefile.*
+.qmake.stash
+*.o
+moc_*.cpp
+moc_*.h
+moc_predefs.h
+qrc_*.cpp
+ui_*.h
+
+# Qt Creator / IDE
+.qtcreator/
+*.pro.user
+*.pro.user.*
+
+# macOS
+.DS_Store
+*.app/
