@@ -1119,6 +1119,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </property>
         <item row="0" column="0">
          <widget class="QLabel" name="lblInk0">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>0</string>
           </property>
@@ -1129,6 +1135,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="1">
          <widget class="QLabel" name="lblInk1">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>1</string>
           </property>
@@ -1139,6 +1151,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="2">
          <widget class="QLabel" name="lblInk2">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>2</string>
           </property>
@@ -1149,6 +1167,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="3">
          <widget class="QLabel" name="lblInk3">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>3</string>
           </property>
@@ -1159,6 +1183,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="4">
          <widget class="QLabel" name="lblInk4">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>4</string>
           </property>
@@ -1169,6 +1199,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="5">
          <widget class="QLabel" name="lblInk5">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>5</string>
           </property>
@@ -1179,6 +1215,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="6">
          <widget class="QLabel" name="lblInk6">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>6</string>
           </property>
@@ -1189,6 +1231,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="0" column="7">
          <widget class="QLabel" name="lblInk7">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>7</string>
           </property>
@@ -1198,7 +1246,7 @@ QLabel#lblStack { background-color: white; color: black; }</string>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLineEdit" name="txtInk0">
+         <widget class="QLabel" name="txtInk0">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1211,19 +1259,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="txtInk1">
+         <widget class="QLabel" name="txtInk1">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1236,19 +1278,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="2">
-         <widget class="QLineEdit" name="txtInk2">
+         <widget class="QLabel" name="txtInk2">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1261,19 +1297,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="3">
-         <widget class="QLineEdit" name="txtInk3">
+         <widget class="QLabel" name="txtInk3">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1286,19 +1316,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="4">
-         <widget class="QLineEdit" name="txtInk4">
+         <widget class="QLabel" name="txtInk4">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1311,19 +1335,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="5">
-         <widget class="QLineEdit" name="txtInk5">
+         <widget class="QLabel" name="txtInk5">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1336,19 +1354,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="6">
-         <widget class="QLineEdit" name="txtInk6">
+         <widget class="QLabel" name="txtInk6">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1361,19 +1373,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="1" column="7">
-         <widget class="QLineEdit" name="txtInk7">
+         <widget class="QLabel" name="txtInk7">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1386,19 +1392,19 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="lblInk8">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>8</string>
           </property>
@@ -1409,6 +1415,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="1">
          <widget class="QLabel" name="lblInk9">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>9</string>
           </property>
@@ -1419,6 +1431,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="2">
          <widget class="QLabel" name="lblInk10">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>10</string>
           </property>
@@ -1429,6 +1447,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="3">
          <widget class="QLabel" name="lblInk11">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>11</string>
           </property>
@@ -1439,6 +1463,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="4">
          <widget class="QLabel" name="lblInk12">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>12</string>
           </property>
@@ -1449,6 +1479,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="5">
          <widget class="QLabel" name="lblInk13">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>13</string>
           </property>
@@ -1459,6 +1495,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="6">
          <widget class="QLabel" name="lblInk14">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>14</string>
           </property>
@@ -1469,6 +1511,12 @@ QLabel#lblStack { background-color: white; color: black; }</string>
         </item>
         <item row="2" column="7">
          <widget class="QLabel" name="lblInk15">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>13</height>
+           </size>
+          </property>
           <property name="text">
            <string>15</string>
           </property>
@@ -1478,7 +1526,7 @@ QLabel#lblStack { background-color: white; color: black; }</string>
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="QLineEdit" name="txtInk8">
+         <widget class="QLabel" name="txtInk8">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1491,19 +1539,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QLineEdit" name="txtInk9">
+         <widget class="QLabel" name="txtInk9">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1516,19 +1558,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="2">
-         <widget class="QLineEdit" name="txtInk10">
+         <widget class="QLabel" name="txtInk10">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1541,19 +1577,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="3">
-         <widget class="QLineEdit" name="txtInk11">
+         <widget class="QLabel" name="txtInk11">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1566,19 +1596,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="4">
-         <widget class="QLineEdit" name="txtInk12">
+         <widget class="QLabel" name="txtInk12">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1591,19 +1615,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="5">
-         <widget class="QLineEdit" name="txtInk13">
+         <widget class="QLabel" name="txtInk13">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1616,19 +1634,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="6">
-         <widget class="QLineEdit" name="txtInk14">
+         <widget class="QLabel" name="txtInk14">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1641,19 +1653,13 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
         <item row="3" column="7">
-         <widget class="QLineEdit" name="txtInk15">
+         <widget class="QLabel" name="txtInk15">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -1666,14 +1672,8 @@ QLabel#lblStack { background-color: white; color: black; }</string>
             <height>17</height>
            </size>
           </property>
-          <property name="maxLength">
-           <number>2</number>
-          </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -3082,6 +3082,28 @@ QLabel#lblStack { background-color: white; color: black; }</string>
    </property>
    <property name="text">
     <string>Reset nops</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnGoTo">
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>470</y>
+     <width>100</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Ubuntu</family>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="focusPolicy">
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="text">
+    <string>Go to...</string>
    </property>
   </widget>
  </widget>

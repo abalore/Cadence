@@ -393,12 +393,14 @@ void Disassembler::SetPoint(word address)
 
 void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode,
                                       string *label, string *addressOut,
-                                      string *bytesOut, string *instrOut)
+                                      string *bytesOut, string *instrOut,
+                                      int boundary)
 {
     auto pos = labels.find((word)addr);
     *label = (pos != labels.end()) ? pos->second : string();
 
-    char buf[8];
+    char buf[16];
+    int start = addr;
     snprintf(buf, sizeof(buf), "%04X", addr);
     *addressOut = buf;
 
@@ -406,6 +408,18 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode,
     s.op = readNext(s);
     opCode = s.op;
     decodeMain(s);
+
+    if (addr > boundary)
+    {
+        // Instruction would cross an anchor — emit the first byte as data instead.
+        addr = start + 1;
+        BYTE b = CPC::GetByteAt((word)start);
+        s.length = 1;
+        snprintf(buf, sizeof(buf), "%02hhX ", (unsigned char)b);
+        s.bytes = buf;
+        snprintf(buf, sizeof(buf), "DB &%02hhX", (unsigned char)b);
+        s.instr = buf;
+    }
 
     *instrOut = s.instr;
     *bytesOut = s.bytes;

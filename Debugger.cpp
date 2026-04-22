@@ -9,11 +9,14 @@
 #include "GateArray.h"
 #include <QCloseEvent>
 #include <QCheckBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QStringListModel>
 #include <QModelIndex>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QInputDialog>
+#include <algorithm>
 
 Debugger::Debugger(QWidget *parent)
     : QDialog(parent)
@@ -27,6 +30,7 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
     connect(ui->btnResetNops, &QPushButton::clicked, this, &Debugger::onResetNopsClicked);
     connect(ui->btnToggleBreakpoint, &QPushButton::clicked, this, &Debugger::onToggleBreakpointClicked);
+    connect(ui->btnGoTo, &QPushButton::clicked, this, &Debugger::onGoToClicked);
 
     modelDisassembly = new QStringListModel();
     ui->listDisassembly->setModel(modelDisassembly);
@@ -59,6 +63,17 @@ void Debugger::Update()
     int pcPosition = 0;
     int instrCount = 0;
     listDisassembly.clear();
+    disassemblyAddresses.clear();
+
+    // Build the sorted anchor list: manual anchors + current PC + breakpoints.
+    std::vector<int> anchors(manualAnchors.begin(), manualAnchors.end());
+    anchors.push_back(CPC::z80.GetPC());
+    for (int i = 0; i < 65536; i++)
+        if (CPC::Breakpoint[i]) anchors.push_back(i);
+    anchors.push_back(0x10000);
+    std::sort(anchors.begin(), anchors.end());
+    anchors.erase(std::unique(anchors.begin(), anchors.end()), anchors.end());
+
     char buff[200];
     bool pcFound = false;
     Disassembler::SetPoint(0x0000);
@@ -68,9 +83,12 @@ void Debugger::Update()
         BYTE instrLength;
         string label, address, bytes, instruction;
         ushort position = Disassembler::addr;
-        Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction);
+        auto it = std::upper_bound(anchors.begin(), anchors.end(), (int)position);
+        int boundary = *it;
+        Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction, boundary);
         sprintf(buff, "%s %14s  %4s  %12s  %s", CPC::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
+        disassemblyAddresses.append(position);
         if (!pcFound && position >= CPC::z80.GetPC())
         {
             pcPosition = instrCount;
@@ -159,21 +177,48 @@ void Debugger::onRunToClicked()
 {
     setEnabled(false);
     int index = ui->listDisassembly->currentIndex().row();
-    QString string = listDisassembly.at(index).mid(19, 4);
-    EmulatorThread::RunTo(string.toInt(nullptr, 16));
+    EmulatorThread::RunTo(disassemblyAddresses.at(index));
 }
 
 void Debugger::onToggleBreakpointClicked()
 {
     int index = ui->listDisassembly->currentIndex().row();
     if (index < 0) return;
-    word address = listDisassembly.at(index).mid(19, 4).toInt(nullptr, 16);
+    word address = disassemblyAddresses.at(index);
     CPC::Breakpoint[address] = !CPC::Breakpoint[address];
     Update();
     QModelIndex restored = modelDisassembly->index(index);
     ui->listDisassembly->setCurrentIndex(restored);
     ui->listDisassembly->scrollTo(restored, QAbstractItemView::PositionAtCenter);
 }
+
+void Debugger::onGoToClicked()
+{
+    bool ok = false;
+    QString input = QInputDialog::getText(this, "Go to address",
+                                          "Address (hex):",
+                                          QLineEdit::Normal, QString(), &ok);
+    if (!ok) return;
+    QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) return;
+    unsigned target = trimmed.toUInt(&ok, 16);
+    if (!ok || target > 0xFFFF) return;
+
+    manualAnchors.insert((word)target);
+    Update();
+
+    for (int i = 0; i < disassemblyAddresses.size(); i++)
+    {
+        if (disassemblyAddresses.at(i) == (word)target)
+        {
+            QModelIndex mi = modelDisassembly->index(i);
+            ui->listDisassembly->setCurrentIndex(mi);
+            ui->listDisassembly->scrollTo(mi, QAbstractItemView::PositionAtCenter);
+            break;
+        }
+    }
+}
+
 
 void Debugger::UpdateZ80Panel()
 {
@@ -276,10 +321,6 @@ void Debugger::UpdateGateArrayPanel()
         snprintf(buf, sizeof(buf), "%d", value);
         field->setText(buf);
     };
-    auto setHex2 = [&](QLineEdit *field, unsigned value) {
-        snprintf(buf, sizeof(buf), "%02X", value);
-        field->setText(buf);
-    };
     auto setHex4 = [&](QLineEdit *field, unsigned value) {
         snprintf(buf, sizeof(buf), "%04X", value);
         field->setText(buf);
@@ -288,17 +329,18 @@ void Debugger::UpdateGateArrayPanel()
     setDec(ui->txtBorder, g.BORDER);
     setDec(ui->txtMode, g.mode);
     setHex4(ui->txtVideoAddr, g.videoAddress);
-    QLineEdit *inks[16] = {
+    QLabel *inks[16] = {
         ui->txtInk0, ui->txtInk1, ui->txtInk2, ui->txtInk3,
         ui->txtInk4, ui->txtInk5, ui->txtInk6, ui->txtInk7,
         ui->txtInk8, ui->txtInk9, ui->txtInk10, ui->txtInk11,
         ui->txtInk12, ui->txtInk13, ui->txtInk14, ui->txtInk15
     };
     for (int i = 0; i < 16; i++) {
-        setHex2(inks[i], g.INK[i] + 0x40);
+        snprintf(buf, sizeof(buf), "%02X", g.INK[i] + 0x40);
+        inks[i]->setText(buf);
         const BYTE *rgb = CPC::gateArray.GetPaletteEntry(i);
         const char *fg = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) < 128000 ? "white" : "black";
-        inks[i]->setStyleSheet(QString("background-color: rgb(%1, %2, %3); color: %4; font-family: \"Ubuntu Sans Mono\"; font-size: 9pt;")
+        inks[i]->setStyleSheet(QString("background-color: rgb(%1, %2, %3); color: %4; border: 1px solid #808080; font-family: \"Ubuntu Sans Mono\"; font-size: 9pt;")
                                .arg(rgb[0]).arg(rgb[1]).arg(rgb[2]).arg(fg));
     }
     ui->chkLoR->setChecked(g.LoROMActive);

@@ -11,7 +11,8 @@ public:
     static void SetPoint(word address);
     static void GetNextInstruction(BYTE &instrLength, BYTE &opCode,
                                    std::string *label, std::string *address,
-                                   std::string *bytes, std::string *instruction);
+                                   std::string *bytes, std::string *instruction,
+                                   int boundary = 0x10000);
     static int addr;
 };
 

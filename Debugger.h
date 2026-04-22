@@ -4,7 +4,10 @@
 #include <QDialog>
 #include <QStringListModel>
 #include <QEvent>
+#include <QVector>
+#include <set>
 #include <string.h>
+#include "defs.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,6 +32,7 @@ private slots:
     void onRunToClicked();
     void onResetNopsClicked();
     void onToggleBreakpointClicked();
+    void onGoToClicked();
 private:
 
     void UpdateZ80Panel();
@@ -38,6 +42,8 @@ private:
 
     Ui::Debugger *ui;
     QStringList listDisassembly;
+    QVector<word> disassemblyAddresses;
+    std::set<word> manualAnchors;
     QStringListModel *modelDisassembly;
     QModelIndex modelDisassemblyIndex;
     QStringList listMemory;
