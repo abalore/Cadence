@@ -107,6 +107,13 @@ private:
     int seekCounter;
     BYTE formatBuffer[256];
     int formatByteCount;
+    bool scanSectorMatch;
+    bool readTerminateAfterSector;
+    BYTE physTrack;
+    BYTE physSide;
+    BYTE trackReadPosition;
+    BYTE trackReadSectorsDone;
+    bool trackReadNoDataFlag;
 public:
     std::atomic<int> stepPulses{0};
 private:

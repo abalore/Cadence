@@ -15,7 +15,11 @@ public:
     BYTE GetSectorID(BYTE track, BYTE side);
     BYTE GetSides();
     void MarkDirty() { dirty = true; }
+    void SetWriteProtect(bool wp) { writeProtect = wp; }
+    bool IsWriteProtected() const { return writeProtect; }
     bool FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *sectorHeaders);
+    bool SetSectorMark(BYTE track, BYTE side, BYTE sectorId, bool deleted);
+    SectorInfo GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE position);
     bool DiskInserted;
 private:
     void FreeBuffer();
@@ -24,6 +28,7 @@ private:
     unsigned long bufferSize;
     std::string filename;
     bool dirty = false;
+    bool writeProtect = false;
     class DSK dsk;
 };
 

@@ -38,6 +38,13 @@ void FDC::Reset()
     seekCounter = 0;
     stepPulses = 0;
     formatByteCount = 0;
+    scanSectorMatch = false;
+    readTerminateAfterSector = false;
+    physTrack = 0;
+    physSide = 0;
+    trackReadPosition = 0;
+    trackReadSectorsDone = 0;
+    trackReadNoDataFlag = false;
 }
 
 void FDC::Clock()
@@ -72,7 +79,35 @@ BYTE FDC::RD_Data()
         dataIndex++;
         if (dataIndex == dataSize)
         {
-            if (R == EOT)
+            if (command == FDC_CommandReadTrack)
+            {
+                trackReadPosition++;
+                trackReadSectorsDone++;
+                if (trackReadSectorsDone >= EOT)
+                {
+                    stIC = trackReadNoDataFlag ? 0b01000000 : 0b00000000;
+                    if (trackReadNoDataFlag) stND = 0b00000100;
+                    result[0] = GetStatusReg0();
+                    result[1] = GetStatusReg1();
+                    result[2] = GetStatusReg2();
+                    result[3] = PCN;
+                    result[4] = H;
+                    result[5] = (BYTE)(R + trackReadSectorsDone);
+                    result[6] = N;
+                    GoToResultState();
+                }
+                else
+                {
+                    GoToExecutionState();
+                }
+            }
+            else if (readTerminateAfterSector)
+            {
+                readTerminateAfterSector = false;
+                result[5] = R;
+                GoToResultState();
+            }
+            else if (R == EOT)
             {
                 R = 1;
                 GoToResultState();
@@ -136,12 +171,68 @@ void FDC::WR(BYTE value)
                     GoToResultState();
                 }
             }
+            else if (command == FDC_CommandScanEqual
+                  || command == FDC_CommandScanLowOrEqual
+                  || command == FDC_CommandScanHighOrEqual)
+            {
+                if (data != nullptr && dataIndex < dataSize)
+                {
+                    if (value != 0xFF)
+                    {
+                        BYTE disc = data[dataIndex];
+                        bool ok = false;
+                        if (command == FDC_CommandScanEqual)       ok = (value == disc);
+                        else if (command == FDC_CommandScanLowOrEqual)  ok = (value <= disc);
+                        else                                       ok = (value >= disc);
+                        if (!ok) scanSectorMatch = false;
+                    }
+                    dataIndex++;
+                    if (dataIndex == dataSize)
+                    {
+                        if (scanSectorMatch)
+                        {
+                            stSH = 0b00001000;
+                            stSN = 0;
+                            resultCount = 7;
+                            result[0] = GetStatusReg0();
+                            result[1] = GetStatusReg1();
+                            result[2] = GetStatusReg2();
+                            result[3] = PCN;
+                            result[4] = H;
+                            result[5] = R;
+                            result[6] = N;
+                            GoToResultState();
+                        }
+                        else if (R >= EOT)
+                        {
+                            stSH = 0;
+                            stSN = 0b00000100;
+                            resultCount = 7;
+                            result[0] = GetStatusReg0();
+                            result[1] = GetStatusReg1();
+                            result[2] = GetStatusReg2();
+                            result[3] = PCN;
+                            result[4] = H;
+                            result[5] = R;
+                            result[6] = N;
+                            GoToResultState();
+                        }
+                        else
+                        {
+                            R += (STP == 0) ? 1 : STP;
+                            GoToExecutionState();
+                        }
+                    }
+                }
+            }
             else if (data != nullptr)
             {
                 data[dataIndex] = value;
                 dataIndex++;
                 if (dataIndex == dataSize)
                 {
+                    drives[US].SetSectorMark(physTrack, physSide, R,
+                                             command == FDC_CommandWriteDeletedData);
                     drives[US].MarkDirty();
                     if (R == EOT)
                     {
@@ -265,6 +356,12 @@ void FDC::ProcessCommand(BYTE data)
         break;
     case FDCCommandState::FDC_StateDTL:
         DTL = data;
+        if (command == FDC_CommandReadTrack)
+        {
+            trackReadPosition = 0;
+            trackReadSectorsDone = 0;
+            trackReadNoDataFlag = false;
+        }
         GoToExecutionState();
         break;
     case FDCCommandState::FDC_StateSTP:
@@ -314,7 +411,9 @@ void FDC::ProcessExecution()
         // load head
         // wait head settle time
         stSE = 0b00000000; // Seek End
-        sectorInfo = drives[US].GetSectorInfo(PCN, HD ? 1 : 0, R);
+        physTrack = PCN;
+        physSide = HD ? 1 : 0;
+        sectorInfo = drives[US].GetSectorInfo(physTrack, physSide, R);
         resultCount = 7;
         result[3] = PCN;
         result[4] = H;
@@ -340,8 +439,32 @@ void FDC::ProcessExecution()
             GoToResultState();
             break;
         default:
-            stIC = 0b00000000; // Interrupt
-            stEC = 0b00000000; // Equipment Check
+        {
+            bool isDeleted   = (sectorInfo.SI_reg2 & 0x40) != 0;
+            bool wantDeleted = (command == FDC_CommandReadDeletedData);
+            if (isDeleted != wantDeleted && SK)
+            {
+                // Skip mismatched sector and continue scanning the track
+                if (R >= EOT)
+                {
+                    stIC = 0b01000000;
+                    stND = 0b00000100;
+                    result[0] = GetStatusReg0();
+                    result[1] = GetStatusReg1();
+                    result[2] = GetStatusReg2();
+                    GoToResultState();
+                }
+                else
+                {
+                    R++;
+                    // Stay in Execution; next Clock() re-enters ProcessExecution
+                }
+                break;
+            }
+            readTerminateAfterSector = (isDeleted != wantDeleted); // SK=0 mismatch: read then stop
+            stIC = readTerminateAfterSector ? 0b01000000 : 0b00000000;
+            stEC = 0b00000000;
+            if (readTerminateAfterSector) stCM = 0b01000000;
             dataSize = (1 << sectorInfo.SI_size) * 128;
             data = sectorInfo.SectorData[weakSectorCycle++ % sectorInfo.copies];
             dataIndex = 0;
@@ -350,15 +473,33 @@ void FDC::ProcessExecution()
             N = sectorInfo.SI_size;
             result[0] = GetStatusReg0();
             result[1] = sectorInfo.SI_reg1;
-            result[2] = sectorInfo.SI_reg2;
+            result[2] = sectorInfo.SI_reg2 | (readTerminateAfterSector ? 0b01000000 : 0);
             GoToTransferState();
             break;
+        }
         }
         break;
     case FDC_CommandWriteData:
     case FDC_CommandWriteDeletedData:
         stSE = 0b00000000;
-        sectorInfo = drives[US].GetSectorInfo(PCN, HD ? 1 : 0, R);
+        if (drives[US].IsWriteProtected())
+        {
+            stIC = 0b01000000;
+            stNW = 0b00000010;
+            resultCount = 7;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            result[3] = PCN;
+            result[4] = H;
+            result[5] = R;
+            result[6] = N;
+            GoToResultState();
+            break;
+        }
+        physTrack = PCN;
+        physSide = HD ? 1 : 0;
+        sectorInfo = drives[US].GetSectorInfo(physTrack, physSide, R);
         resultCount = 7;
         result[3] = PCN;
         result[4] = H;
@@ -400,9 +541,10 @@ void FDC::ProcessExecution()
         }
         break;
     case FDC_CommandFormatTrack:
-        if (stNR)
+        if (stNR || drives[US].IsWriteProtected())
         {
             stIC = 0b01000000;
+            if (drives[US].IsWriteProtected()) stNW = 0b00000010;
             resultCount = 7;
             result[0] = GetStatusReg0();
             result[1] = GetStatusReg1();
@@ -423,26 +565,98 @@ void FDC::ProcessExecution()
             GoToTransferState();
         }
         break;
-    case FDC_CommandReadTrack:
     case FDC_CommandScanEqual:
     case FDC_CommandScanLowOrEqual:
     case FDC_CommandScanHighOrEqual:
-        if (stNR)
-            stIC = 0b01000000;
-        else
-            stIC = 0b00000000;
-        if (command == FDC_CommandReadTrack)
-            stEN = 0b10000000;
+        stSE = 0b00000000;
+        sectorInfo = drives[US].GetSectorInfo(PCN, HD ? 1 : 0, R);
         resultCount = 7;
-        result[0] = GetStatusReg0();
-        result[1] = GetStatusReg1();
-        result[2] = GetStatusReg2();
         result[3] = PCN;
         result[4] = H;
         result[5] = R;
         result[6] = N;
-        GoToResultState();
+        switch(sectorInfo.SI_ID)
+        {
+        case 0xFE:
+            stIC = 0b01000000;
+            stMA = 0b00000001;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        case 0xFF:
+            stIC = 0b01000000;
+            stEC = 0b00010000;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            GoToResultState();
+            break;
+        default:
+            stIC = 0b00000000;
+            dataSize = (1 << sectorInfo.SI_size) * 128;
+            data = sectorInfo.SectorData[weakSectorCycle++ % sectorInfo.copies];
+            dataIndex = 0;
+            scanSectorMatch = true;
+            PCN = sectorInfo.SI_C;
+            H = sectorInfo.SI_H;
+            N = sectorInfo.SI_size;
+            result[0] = GetStatusReg0();
+            result[1] = sectorInfo.SI_reg1;
+            result[2] = sectorInfo.SI_reg2;
+            GoToTransferState();
+            break;
+        }
         break;
+    case FDC_CommandReadTrack:
+    {
+        stSE = 0b00000000;
+        physTrack = PCN;
+        physSide = HD ? 1 : 0;
+        resultCount = 7;
+        if (stNR)
+        {
+            stIC = 0b01000000;
+            stEC = 0b00010000;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            result[3] = PCN;
+            result[4] = H;
+            result[5] = R;
+            result[6] = N;
+            GoToResultState();
+            break;
+        }
+        sectorInfo = drives[US].GetPhysicalSectorInfo(physTrack, physSide, trackReadPosition);
+        if (sectorInfo.SI_ID == 0xFE || sectorInfo.SI_ID == 0xFF)
+        {
+            // Ran off end of track or invalid: MA + abnormal termination
+            stIC = 0b01000000;
+            stMA = 0b00000001;
+            result[0] = GetStatusReg0();
+            result[1] = GetStatusReg1();
+            result[2] = GetStatusReg2();
+            result[3] = PCN;
+            result[4] = H;
+            result[5] = R;
+            result[6] = N;
+            GoToResultState();
+            break;
+        }
+        // ID mismatch vs commanded C/H/R/N raises ND (but we still read)
+        if (sectorInfo.SI_C != PCN || sectorInfo.SI_H != H
+         || sectorInfo.SI_ID != (BYTE)(R + trackReadSectorsDone) || sectorInfo.SI_size != N)
+            trackReadNoDataFlag = true;
+        stIC = 0b00000000;
+        stEC = 0b00000000;
+        dataSize = (1 << sectorInfo.SI_size) * 128;
+        data = sectorInfo.SectorData[0];
+        dataIndex = 0;
+        GoToTransferState();
+        break;
+    }
     case FDC_CommandRecalibrate:
     case FDC_CommandSeek:
     {
@@ -612,7 +826,10 @@ void FDC::GoToTransferState()
     bit7_RQM = 1;
     bit6_DIO = (command == FDC_CommandWriteData
              || command == FDC_CommandWriteDeletedData
-             || command == FDC_CommandFormatTrack) ? 0 : 1;
+             || command == FDC_CommandFormatTrack
+             || command == FDC_CommandScanEqual
+             || command == FDC_CommandScanLowOrEqual
+             || command == FDC_CommandScanHighOrEqual) ? 0 : 1;
     state = FDCState::FDC_StateTransfer;
 }
 
@@ -646,5 +863,6 @@ BYTE FDC::GetStatusReg2()
 BYTE FDC::GetStatusReg3()
 {
     BYTE ts = (drives[US].GetSides() > 1) ? 0b00001000 : 0;
-    return (stNR ? 0 : 0b00100000) + (PCN ? 0 : 0b00010000) + ts + ((H & 1) << 2) + US;
+    BYTE wp = drives[US].IsWriteProtected() ? 0b01000000 : 0;
+    return (stNR ? 0 : 0b00100000) + (PCN ? 0 : 0b00010000) + ts + wp + ((H & 1) << 2) + US;
 }

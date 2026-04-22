@@ -98,3 +98,24 @@ bool FloppyDrive::FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCou
     }
     return false;
 }
+
+bool FloppyDrive::SetSectorMark(BYTE track, BYTE side, BYTE sectorId, bool deleted)
+{
+    if (!DiskInserted) return false;
+    if (dsk.SetSectorMark(track, side, sectorId, deleted))
+    {
+        dirty = true;
+        return true;
+    }
+    return false;
+}
+
+SectorInfo FloppyDrive::GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE position)
+{
+    SectorInfo si;
+    if (DiskInserted)
+        si = dsk.GetPhysicalSectorInfo(track, side, position);
+    else
+        si.SI_ID = 0xFF;
+    return si;
+}

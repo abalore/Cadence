@@ -25,6 +25,7 @@ public:
     BYTE SI_reg2;
     BYTE copies;
     BYTE *SectorData[3];
+    BYTE *SectorInfoBytes;
 };
 
 class DSK
@@ -35,6 +36,8 @@ public:
     SectorInfo GetSectorInfo(BYTE track, BYTE side, BYTE sector);
     BYTE GetSectorID(BYTE track, BYTE side);
     bool FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *sectorHeaders);
+    bool SetSectorMark(BYTE track, BYTE side, BYTE sectorId, bool deleted);
+    SectorInfo GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE position);
     BYTE *data;
     size_t dataSize;
     BYTE tracks;

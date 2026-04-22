@@ -78,6 +78,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSmooth, &QAction::changed, this, &MainWindow::onMenuScreenSmooth);
     connect(ui->actionInsert_disk, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskA);
     connect(ui->actionNew_blank_disk, &QAction::triggered, this, &MainWindow::onMenuMediaNewBlankDiskA);
+    connect(ui->actionWrite_protect_A, &QAction::changed, this, &MainWindow::onMenuMediaWriteProtectA);
+    connect(ui->actionWrite_protect_B, &QAction::changed, this, &MainWindow::onMenuMediaWriteProtectB);
     connect(ui->actionROM_Box, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
     connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
     connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
@@ -346,6 +348,16 @@ void MainWindow::onMenuMediaInsertDiskA()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
     if (fileName != nullptr)
         media->LoadDiskA(fileName);
+}
+
+void MainWindow::onMenuMediaWriteProtectA()
+{
+    CPC::fdc.GetDrive(0)->SetWriteProtect(ui->actionWrite_protect_A->isChecked());
+}
+
+void MainWindow::onMenuMediaWriteProtectB()
+{
+    CPC::fdc.GetDrive(1)->SetWriteProtect(ui->actionWrite_protect_B->isChecked());
 }
 
 void MainWindow::onMenuMediaNewBlankDiskA()

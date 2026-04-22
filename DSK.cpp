@@ -44,7 +44,8 @@ void DSK::AddSector(int track, int side, int sector, BYTE *info, BYTE *address)
                 info[4],
                 info[5],
                 1,
-                {address, NULL, NULL}
+                {address, NULL, NULL},
+                info
             });
     }
     else
@@ -91,8 +92,28 @@ SectorInfo DSK::GetSectorInfo(BYTE track, BYTE side, BYTE sector)
     BYTE idx = (sector & 0x3F) - 1;
     if (track >= sectors.size() || side >= sectors[track].size()
         || idx >= sectors[track][side].size() || !sectors[track][side][idx].has_value())
-        return SectorInfo { track, side, 0xFF, 0, 0, 0, 0, {NULL, NULL, NULL}};
+        return SectorInfo { track, side, 0xFF, 0, 0, 0, 0, {NULL, NULL, NULL}, NULL };
     return sectors[track][side][idx].value();
+}
+
+bool DSK::SetSectorMark(BYTE track, BYTE side, BYTE sectorId, bool deleted)
+{
+    BYTE idx = (sectorId & 0x3F) - 1;
+    if (track >= sectors.size() || side >= sectors[track].size()
+        || idx >= sectors[track][side].size() || !sectors[track][side][idx].has_value())
+        return false;
+    SectorInfo &si = sectors[track][side][idx].value();
+    if (deleted)
+    {
+        si.SI_reg2 |= 0x40;
+        if (si.SectorInfoBytes) si.SectorInfoBytes[5] |= 0x40;
+    }
+    else
+    {
+        si.SI_reg2 &= ~0x40;
+        if (si.SectorInfoBytes) si.SectorInfoBytes[5] &= ~0x40;
+    }
+    return true;
 }
 
 BYTE DSK::GetSectorID(BYTE track, BYTE side)
@@ -101,6 +122,56 @@ BYTE DSK::GetSectorID(BYTE track, BYTE side)
         || sectors[track][side].empty() || !sectors[track][side][0].has_value())
         return 0xFF;
     return sectors[track][side][0].value().SI_ID;
+}
+
+SectorInfo DSK::GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE position)
+{
+    SectorInfo none { track, side, 0xFE, 0, 0, 0, 0, {NULL, NULL, NULL}, NULL };
+    if (track >= tracks || side >= sides) { none.SI_ID = 0xFF; return none; }
+
+    int blockIdx = track * sides + side;
+    BYTE *trackInfo;
+    int currentTrackSize;
+    if (isExtended)
+    {
+        int off = 0x100;
+        for (int i = 0; i < blockIdx; i++) off += data[0x34 + i] * 0x100;
+        trackInfo = data + off;
+        currentTrackSize = data[0x34 + blockIdx] * 0x100;
+    }
+    else
+    {
+        trackInfo = data + 0x100 + blockIdx * trackSize;
+        currentTrackSize = trackSize;
+    }
+    if (currentTrackSize == 0 || trackInfo < data || trackInfo + 0x100 > data + dataSize) return none;
+    if (trackInfo[0] != 'T') return none;
+
+    BYTE ns = trackInfo[0x15];
+    if (position >= ns) return none;
+
+    int sz = 0;
+    for (int s = 0; s < position; s++)
+    {
+        BYTE *si = trackInfo + 0x18 + s * 0x08;
+        int realSize = isExtended ? si[6] + si[7] * 0x100 : (1 << trackInfo[0x14]) * 0x80;
+        sz += realSize;
+    }
+
+    BYTE *sectorInfo = trackInfo + 0x18 + position * 0x08;
+    SectorInfo out;
+    out.SI_C = sectorInfo[0];
+    out.SI_H = sectorInfo[1];
+    out.SI_ID = sectorInfo[2];
+    out.SI_size = sectorInfo[3];
+    out.SI_reg1 = sectorInfo[4];
+    out.SI_reg2 = sectorInfo[5];
+    out.copies = 1;
+    out.SectorData[0] = trackInfo + 0x100 + sz;
+    out.SectorData[1] = NULL;
+    out.SectorData[2] = NULL;
+    out.SectorInfoBytes = sectorInfo;
+    return out;
 }
 
 bool DSK::FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *hdrs)

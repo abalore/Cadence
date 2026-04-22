@@ -167,6 +167,7 @@
      <addaction name="actionNew_blank_disk"/>
      <addaction name="actionInsert_disk"/>
      <addaction name="actionRemove_disk"/>
+     <addaction name="actionWrite_protect_A"/>
     </widget>
     <widget class="QMenu" name="menuDisk_B">
      <property name="title">
@@ -174,6 +175,7 @@
      </property>
      <addaction name="actionInsert_disk_2"/>
      <addaction name="actionRemove_disk_2"/>
+     <addaction name="actionWrite_protect_B"/>
     </widget>
     <widget class="QMenu" name="menuTape">
      <property name="title">
@@ -415,6 +417,22 @@
   <action name="actionInsert_disk_2">
    <property name="text">
     <string>Insert disk...</string>
+   </property>
+  </action>
+  <action name="actionWrite_protect_A">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Write protected</string>
+   </property>
+  </action>
+  <action name="actionWrite_protect_B">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Write protected</string>
    </property>
   </action>
   <action name="actionRemove_disk_2">
