@@ -18,7 +18,12 @@ public:
     int hPos, vPos;
 private:
     int hOffset;
-    unsigned int writeOffset;
+    int hPhaseFP;
+    static constexpr int FPShift = 8;
+    static constexpr int FPOne = 1 << FPShift;
+    static constexpr int NominalLineLen = PixelWidth;
+    static constexpr int NominalLineLenFP = NominalLineLen << FPShift;
+    static constexpr int PLLGainDenom = 16;
 };
 
 #endif // CRTSCREEN_H
