@@ -62,7 +62,7 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     outputParams.hostApiSpecificStreamInfo = nullptr;
 
     err = Pa_OpenStream(&stream, nullptr, &outputParams,
-                        62500, 64, paNoFlag,
+                        62500, 128, paNoFlag,
                         paCallback, nullptr);
     if (err != paNoError) {
         fprintf(stderr, "[SND] Pa_OpenStream failed: %s — sound disabled\n", Pa_GetErrorText(err));

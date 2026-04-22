@@ -451,7 +451,7 @@ void FDC::GoToCommandState()
     commandState = FDCCommandState::FDC_StateCommandCode;
 }
 
-static const char* FDC_CommandName(BYTE cmd)
+[[maybe_unused]] static const char* FDC_CommandName(BYTE cmd)
 {
     switch(cmd & 0x1F) {
     case 0x06: return "ReadData";
@@ -496,8 +496,8 @@ void FDC::GoToExecutionState()
     if (command == FDC_CommandSeek || command == FDC_CommandRecalibrate)
         seekCounter = 0;
     state = FDCState::FDC_StateExecution;
-    printf("[FDC] CMD=%s(0x%02X) US=%d HD=%d PCN=%d H=%d R=%d N=%d EOT=%d NCN=%d\n",
-           FDC_CommandName(command), command, US, (int)HD, PCN, H, R, N, EOT, NCN);
+    //printf("[FDC] CMD=%s(0x%02X) US=%d HD=%d PCN=%d H=%d R=%d N=%d EOT=%d NCN=%d\n",
+    //       FDC_CommandName(command), command, US, (int)HD, PCN, H, R, N, EOT, NCN);
 }
 
 void FDC::GoToTransferState()
@@ -514,9 +514,9 @@ void FDC::GoToResultState()
     bit5_NDMA = 0;
     bits03_FDDBUSY[US] = 0;
     state = FDCState::FDC_StateResult;
-    printf("[FDC] RESULT(%s):", FDC_CommandName(command));
-    for (int i = 0; i < resultCount; i++) printf(" %02X", result[i]);
-    printf("\n");
+    //printf("[FDC] RESULT(%s):", FDC_CommandName(command));
+    //for (int i = 0; i < resultCount; i++) printf(" %02X", result[i]);
+    //printf("\n");
 }
 
 BYTE FDC::GetStatusReg0()

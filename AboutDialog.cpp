@@ -21,7 +21,7 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
     layout->setSpacing(10);
 
     QLabel *iconLabel = new QLabel(this);
-    iconLabel->setPixmap(QIcon(":/images/cadence.svg").pixmap(80, 80));
+    iconLabel->setPixmap(QIcon(":/images/cadence.png").pixmap(80, 80));
     iconLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(iconLabel, 0, Qt::AlignHCenter);
 

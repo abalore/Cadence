@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);
-    a.setWindowIcon(QIcon(":/images/cadence.svg"));
+    a.setWindowIcon(QIcon(":/images/cadence.png"));
     MainWindow w;
     w.show();
     KeyPressFilter myKeyFilter;

@@ -1,45 +1,41 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#7B2CBF" /> <stop offset="100%" stop-color="#3C096C" /> </radialGradient>
-
-    <pattern id="scanlines" width="100%" height="8" patternUnits="userSpaceOnUse">
-      <rect width="100%" height="4" fill="black" fill-opacity="0.1" />
-    </pattern>
-    
-    <clipPath id="iconBoundary">
-      <circle cx="256" cy="256" r="256" />
-    </clipPath>
+    <radialGradient id="screenBg" cx="50%" cy="50%" r="50%" fx="50%" fy="29%">
+      <stop offset="0%"   stop-color="#E0FFE0" />
+      <stop offset="40%"  stop-color="#78D878" />
+      <stop offset="88%"  stop-color="#3C803C" />
+      <stop offset="100%" stop-color="#0C300C" />
+    </radialGradient>
+    <radialGradient id="ballGrad" cx="38%" cy="30%" r="68%">
+      <stop offset="0%"   stop-color="#FFC8C8" />
+      <stop offset="12%"  stop-color="#E05858" />
+      <stop offset="45%"  stop-color="#8C1818" />
+      <stop offset="80%"  stop-color="#400808" />
+      <stop offset="100%" stop-color="#1A0202" />
+    </radialGradient>
+    <radialGradient id="baseGrad" cx="50%" cy="0%" r="75%" fx="50%" fy="0%">
+      <stop offset="0%"   stop-color="#717171" />
+      <stop offset="40%"  stop-color="#444444" />
+      <stop offset="80%"  stop-color="#212121" />
+      <stop offset="100%" stop-color="#090909" />
+    </radialGradient>
+    <linearGradient id="shaftGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%"   stop-color="#2A0404" />
+      <stop offset="18%"  stop-color="#6A1010" />
+      <stop offset="38%"  stop-color="#C84040" />
+      <stop offset="55%"  stop-color="#901818" />
+      <stop offset="80%"  stop-color="#3A0606" />
+      <stop offset="100%" stop-color="#1A0202" />
+    </linearGradient>
   </defs>
 
-  <g clip-path="url(#iconBoundary)">
-    
-    <circle cx="256" cy="256" r="256" fill="url(#bgGradient)" />
-    
-    <rect width="512" height="512" fill="url(#scanlines)" />
+  <circle cx="256" cy="256" r="256" fill="url(#screenBg)" />
 
-    <path d="M 96,96 L 416,96 L 416,176 L 176,176 L 176,336 L 416,336 L 416,416 L 96,416 Z"
-          stroke="#00FFFF" stroke-width="20" fill="none" opacity="0.3" stroke-linejoin="miter"/>
-
-    <path d="M 106,106 L 406,106 L 406,166 L 166,166 L 166,346 L 406,346 L 406,406 L 106,406 Z"
-          fill="#00FFFF" />
-    
-    <g transform="translate(-15, 0)"> <path d="M 90,166 L 130,166 M 140,166 L 180,166
-                 M 90,346 L 130,346 M 140,346 L 180,346" 
-              stroke="#00FFFF" stroke-width="15" opacity="0.5" stroke-linejoin="miter" stroke-linecap="butt"/>
-        
-        <path d="M 70,166 L 80,166 M 90,166 L 100,166 M 110,166 L 120,166
-                 M 70,346 L 80,346 M 90,346 L 100,346 M 110,346 L 120,346" 
-              stroke="#00FFFF" stroke-width="10" opacity="0.4" stroke-linejoin="miter" stroke-linecap="butt"/>
-
-        <circle cx="50" cy="166" r="10" fill="#00FFFF" opacity="0.4"/>
-        <circle cx="30" cy="166" r="6" fill="#00FFFF" opacity="0.3"/>
-        <circle cx="15" cy="166" r="3" fill="#00FFFF" opacity="0.2"/>
-        
-        <circle cx="50" cy="346" r="10" fill="#00FFFF" opacity="0.4"/>
-        <circle cx="30" cy="346" r="6" fill="#00FFFF" opacity="0.3"/>
-        <circle cx="15" cy="346" r="3" fill="#00FFFF" opacity="0.2"/>
-    </g>
-
-  </g>
+  <!-- Joystick base: bottom segment of the circle, shaded like a dome -->
+  <path d="M 12.5 335 L 499.5 335 A 256 256 0 0 1 12.5 335 Z"
+        fill="url(#baseGrad)" />
+  <!-- Joystick shaft: cylinder (drawn first so the ball sits on top) -->
+  <rect x="231" y="150" width="50" height="185" fill="url(#shaftGrad)" />
+  <!-- Joystick ball: sphere -->
+  <circle cx="256" cy="150" r="60" fill="url(#ballGrad)" />
 </svg>

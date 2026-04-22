@@ -2,6 +2,7 @@
     <qresource prefix="/images">
         <file>monitor_frame.png</file>
         <file>cadence.svg</file>
+        <file>cadence.png</file>
         <file>disk.svg</file>
         <file>tape.svg</file>
         <file>cartridge.svg</file>
