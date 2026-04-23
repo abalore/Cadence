@@ -32,6 +32,8 @@ void CRTC::Reset()
     MA = DSA;
     baseMA = DSA;
     VSW = 8;
+    VLC = 0;
+    vccWrapped = false;
 
 }
 
@@ -219,8 +221,21 @@ void CRTC::RunHorizontalChar()
     }
     if (!VSYNC && VCC == VSP)
     {
-        VSYNC = true;
-        VSC = 0;
+        if (crtcType == 3 || crtcType == 4)
+        {
+            // Types 3/4: VSYNC only latches at the start of a character row
+            if (HCC == 0 && RA == 0)
+            {
+                VSYNC = true;
+                VSC = 0;
+            }
+        }
+        else
+        {
+            VSYNC = true;
+            // Types 1/2 triggered mid-line start VSC at 1 (shortens pulse by 1 line); Type 0 always 0.
+            VSC = (HCC > 0 && (crtcType == 1 || crtcType == 2)) ? 1 : 0;
+        }
     }
 
     if (VDISP && VCC == VD) VDISP = false;
@@ -265,7 +280,9 @@ void CRTC::EndOfLine()
             }
             else
             {
+                BYTE prev = VCC;
                 VCC = (VCC + 1) & 0x7F;
+                if (prev == 0x7F) vccWrapped = true;
             }
         }
         else
@@ -279,6 +296,12 @@ void CRTC::EndOfLine()
         MA = baseMA;
         VDISP = (VD > 0);
         VCC = 0;
+        VLC = 0;
+        vccWrapped = false;
+    }
+    else
+    {
+        VLC++;
     }
 
 }
@@ -286,5 +309,7 @@ void CRTC::EndOfLine()
 void CRTC::Clock()
 {
     RunHorizontalChar();
-    BORDER = !HDISP || !VDISP;
+    // R8 bits 7-6 = 11 forces display off on Types 0/3/4; Types 1/2 use these bits for interlace only.
+    bool skewOff = ((IS & 0xC0) == 0xC0) && (crtcType == 0 || crtcType == 3 || crtcType == 4);
+    BORDER = !HDISP || !VDISP || skewOff;
 }
