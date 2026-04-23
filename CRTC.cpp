@@ -37,39 +37,66 @@ void CRTC::Reset()
 
 BYTE CRTC::RD(BYTE address)
 {
-    switch(address)
+    if (crtcType == 3 || crtcType == 4)
     {
-    case 2: // Status out
-        return 0;
-    case 3: // Data out
-        switch(Index)
+        // Types 3/4: &BE00 and &BF00 both use the 3 LSB of the index
+        switch (Index & 7)
         {
-        case 0:
-            return HT;
-        case 1:
-            return HD;
-        case 2:
-            return HSP;
-        case 3:
-            return VSW * 16 + HSW;
-        case 4:
-            return VT;
-        case 5:
-            return VTA;
-        case 6:
-            return VD;
-        case 7:
-            return VSP;
-        case 8:
-            return IS;
-        case 9:
-            return MRA;
-        case 12:
-            return DSA >> 8;
-        case 13:
-            return DSA & 0xFF;
+        case 0: return 0;                              // R16 (LPEN H)
+        case 1: return 0;                              // R17 (LPEN L)
+        case 2: return 0;                              // R10 (ASIC status 1)
+        case 3: return (crtcType == 4) ? 0x08 : 0x00;  // R11 (ASIC status 2): bit 3 distinguishes type 4 from type 3
+        case 4: return DSA >> 8;                       // R12
+        case 5: return DSA & 0xFF;                     // R13
+        case 6: return CH;                             // R14
+        case 7: return CL;                             // R15
         }
-        break;
+        return 0;
+    }
+
+    switch (address)
+    {
+    case 2: // Status port &BE
+        if (crtcType == 1)
+        {
+            BYTE s = 0;
+            if (!VDISP) s |= 0x20; // bit 5: vertical border (past R6)
+            return s;
+        }
+        // Types 0, 2: high-Z → floating bus
+        return 0xFF;
+    case 3: // Data port &BF
+        switch (crtcType)
+        {
+        case 0: // HD6845S: R12-R17 readable, 5-bit index truncation
+            switch (Index & 0x1F)
+            {
+            case 12: return DSA >> 8;
+            case 13: return DSA & 0xFF;
+            case 14: return CH;
+            case 15: return CL;
+            case 16: return 0;
+            case 17: return 0;
+            }
+            return 0;
+        case 1: // UM6845R: R14-R17 readable; indices with lower-5-bits all 1 return 0xFF
+            if ((Index & 0x1F) == 0x1F) return 0xFF;
+            switch (Index & 0x1F)
+            {
+            case 14: return CH;
+            case 15: return CL;
+            case 16: return 0;
+            case 17: return 0;
+            }
+            return 0;
+        case 2: // MC6845: only R16/R17 readable
+            switch (Index & 0x1F)
+            {
+            case 16: return 0;
+            case 17: return 0;
+            }
+            return 0;
+        }
     }
     return 0;
 }
@@ -125,6 +152,12 @@ void CRTC::WR(BYTE address, BYTE value)
             DSA &= 0xFF00;
             DSA |= value;
             break;
+        case 14:
+            CH = value & 0x3F;
+            break;
+        case 15:
+            CL = value;
+            break;
         }
 
         break;
@@ -162,14 +195,18 @@ void CRTC::RunHorizontalChar()
     }
     if (HCC == HSP)
     {
-        HSYNC = true;
         HSC = 0;
+        // Types 0, 1 with HSW=0 produce no HSYNC; Types 2, 3, 4 produce 16-cycle HSYNC (wraps via 4-bit counter)
+        HSYNC = !(HSW == 0 && (crtcType == 0 || crtcType == 1));
     }
     if (HSYNC)
     {
+        HSC = (HSC + 1) & 0x0F;
         if (HSC == HSW)
+        {
             HSYNC = false;
-        else HSC = (HSC + 1) & 0x0F;
+            HSC = 0;
+        }
     }
     if (HCC == HD)
     {
@@ -191,7 +228,8 @@ void CRTC::EndOfLine()
     if (VSYNC)
     {
         VSC = (VSC + 1) & 0x0F;
-        if (VSC == VSW)
+        BYTE effVSW = (crtcType == 1 || crtcType == 2) ? 0 : VSW;
+        if (VSC == effVSW)
         {
             VSYNC = false;
             VSC = 0;

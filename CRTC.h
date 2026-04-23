@@ -26,6 +26,7 @@ public:
     BYTE crtcType = 0;
 
     BYTE HT, HD, HSP, HSW, VSW, VT, VTA, VD, VSP, IS, MRA;
+    BYTE CH = 0, CL = 0;
 
 
     bool HDISP;
