@@ -43,6 +43,8 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QUrl>
+#include <QApplication>
+#include <QScreen>
 
 using namespace std;
 
@@ -54,6 +56,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setAcceptDrops(true);
+    if (QScreen *screen = QApplication::primaryScreen())
+    {
+        QRect avail = screen->availableGeometry();
+        QSize hint = sizeHint();
+        move(avail.center() - QPoint(hint.width() / 2, hint.height() / 2));
+    }
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
@@ -702,6 +710,11 @@ void MainWindow::onMenuViewFullScreen()
         statusBar()->show();
         adjustSize();
         setFixedSize(this->size());
+        if (QScreen *screen = this->windowHandle() ? this->windowHandle()->screen() : QApplication::primaryScreen())
+        {
+            QRect avail = screen->availableGeometry();
+            move(avail.center() - QPoint(width() / 2, height() / 2));
+        }
     }
 }
 
