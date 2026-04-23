@@ -39,6 +39,10 @@
 #include <QImage>
 #include <QFontMetrics>
 #include <QTimer>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
 
 using namespace std;
 
@@ -49,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setAcceptDrops(true);
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
@@ -739,4 +744,41 @@ void MainWindow::SetCPC664()
 void MainWindow::SetCPC6128()
 {
     SwitchMachine(CPCType::CPC6128);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (!event->mimeData()->hasUrls())
+        return;
+    for (const QUrl &url : event->mimeData()->urls())
+    {
+        if (!url.isLocalFile())
+            continue;
+        const QString ext = QFileInfo(url.toLocalFile()).suffix().toLower();
+        if (ext == "dsk" || ext == "cdt" || ext == "wav" || ext == "cpr")
+        {
+            event->acceptProposedAction();
+            return;
+        }
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    if (!event->mimeData()->hasUrls())
+        return;
+    for (const QUrl &url : event->mimeData()->urls())
+    {
+        if (!url.isLocalFile())
+            continue;
+        const QString path = url.toLocalFile();
+        const QString ext = QFileInfo(path).suffix().toLower();
+        if (ext == "dsk")
+            media->LoadDiskA(path);
+        else if (ext == "cdt" || ext == "wav")
+            media->LoadTape(path);
+        else if (ext == "cpr")
+            media->LoadCartridge(path);
+    }
+    event->acceptProposedAction();
 }

@@ -8,12 +8,12 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
     setStyleSheet(
-        "QDialog { background-color: #0b1220; border: 1px solid #00e5ff; }"
+        "QDialog { background-color: #0b1220; border: 1px solid #b6b6b6; }"
         "QLabel { color: #e0e8f0; background: transparent; }"
-        "QPushButton { background-color: #0b1220; color: #00e5ff; "
-        "border: 1px solid #00e5ff; padding: 6px 28px; border-radius: 4px; font-weight: bold; }"
-        "QPushButton:hover { background-color: #00e5ff; color: #0b1220; }"
-        "QPushButton:pressed { background-color: #00b8cc; color: #0b1220; }"
+        "QPushButton { background-color: #0b1220; color: #b6b6b6; "
+        "border: 1px solid #b6b6b6; padding: 6px 28px; border-radius: 4px; font-weight: bold; }"
+        "QPushButton:hover { background-color: #b6b6b6; color: #0b1220; }"
+        "QPushButton:pressed { background-color: #929292; color: #0b1220; }"
     );
 
     QVBoxLayout *layout = new QVBoxLayout(this);

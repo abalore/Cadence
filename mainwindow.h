@@ -35,6 +35,8 @@ public:
 protected:
     void closeEvent(QCloseEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *ev) override;
 private slots:
     void onEmulatorPaused();
