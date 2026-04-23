@@ -9,6 +9,7 @@
 #include "MediaController.h"
 #include "Settings.h"
 #include "CPC.h"
+#include "AssemblerWindow.h"
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -29,6 +30,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     static MainWindow *Instance;
+    void RefreshDebuggerIfOpen();
+    void ResetEmulation();
+protected:
+    void closeEvent(QCloseEvent *event) override;
 private slots:
     void onEmulatorPaused();
     void onEmulatorResumed();
@@ -50,13 +55,14 @@ private slots:
     void onMenuMemoryEnterBytes();
     void onMenuMediaRemoveCartridge();
     void onMenuMediaInsertCartridge();
+    void onMenuMediaInsertBlankCartridge();
     void onMenuScreenGreenMonitor();
     void onMenuViewFullScreen();
+    void onMenuDebugAssembler();
     void onMenuAbout();
     void onMediaChanged(MediaSlot slot, const QString &text);
     void StartThreads();
     void StopThreads();
-    void ResetEmulation();
 
     void SetCPC464();
     void SetCPC664();
@@ -71,6 +77,7 @@ private:
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
     EnterBytesDialog *enterBytesDialog;
+    AssemblerWindow *assemblerWindow;
     EmulatorThread *workerThread;
     SoundThread *soundThread;
     MediaController *media;

@@ -1728,6 +1728,36 @@ QLabel#lblStack { background-color: white; color: black; }</string>
        </widget>
       </item>
       <item>
+       <spacer name="spacerGA3bCart">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblCartHdr">
+        <property name="text">
+         <string>Cart</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="chkCartridge">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="spacerGA3b">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

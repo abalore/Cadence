@@ -27,7 +27,14 @@ void PboWidget::initializeGL()
     glCullFace(GL_FRONT);
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
     glEnable(GL_TEXTURE_2D);
-    setSmoothing(true);
+    applySmoothing();
+}
+
+void PboWidget::applySmoothing()
+{
+    GLint filter = smoothing ? GL_LINEAR : GL_NEAREST;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 }
 
 void PboWidget::paintGL()
@@ -60,14 +67,10 @@ void PboWidget::updateTexture()
 
 void PboWidget::setSmoothing(bool enabled)
 {
-    if (enabled)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
+    smoothing = enabled;
+    if (ID == 0) return;
+    makeCurrent();
+    glBindTexture(GL_TEXTURE_2D, ID);
+    applySmoothing();
+    doneCurrent();
 }

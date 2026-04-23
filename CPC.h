@@ -34,6 +34,7 @@ public:
     static void ReadROM(char *filename, int number);
     static void ClearROM(int number);
     static void ReadCartridge(char *filename);
+    static void InsertBlankCartridge();
     static void SelectRAM(BYTE mmr);
     static void UpdateMemoryMap();
     static inline BYTE GetByteAt(word address) { return memPage[address >> 14][address & 0x3FFF]; }

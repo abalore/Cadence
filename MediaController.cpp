@@ -1,5 +1,6 @@
 #include "MediaController.h"
 #include "CPC.h"
+#include "mainwindow.h"
 #include <QFileInfo>
 
 MediaController::MediaController(QObject *parent) : QObject(parent) {}
@@ -50,6 +51,16 @@ bool MediaController::LoadCartridge(const QString &path)
     notify(MediaSlot::Cartridge, path);
     CPC::Reset();
     return true;
+}
+
+void MediaController::InsertBlankCartridge()
+{
+    CPC::InsertBlankCartridge();
+    cartridgePath.clear();
+    CPC::cartridgeEnabled = true;
+    emit mediaChanged(MediaSlot::Cartridge, "<Blank>");
+    if (MainWindow::Instance)
+        MainWindow::Instance->ResetEmulation();
 }
 
 void MediaController::EjectDiskA()

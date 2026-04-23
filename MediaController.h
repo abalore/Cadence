@@ -16,6 +16,7 @@ public:
     bool LoadDiskB(const QString &path);
     bool LoadTape(const QString &path);
     bool LoadCartridge(const QString &path);
+    void InsertBlankCartridge();
 
     void EjectDiskA();
     void EjectDiskB();

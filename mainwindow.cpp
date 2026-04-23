@@ -10,6 +10,7 @@
 #include "Keyboard.h"
 #include "AboutDialog.h"
 #include "ROMBoxDialog.h"
+#include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
 #include <QThread>
@@ -49,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
     enterBytesDialog = new EnterBytesDialog(this);
+    assemblerWindow = nullptr;
 
     Instance = this;
 
@@ -86,8 +88,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
     connect(ui->actionRemove_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveCartridge);
     connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
+    connect(ui->actionInsert_blank_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertBlankCartridge);
     connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
     connect(ui->actionFull_screen, &QAction::changed, this, &MainWindow::onMenuViewFullScreen);
+    connect(ui->actionAssembler, &QAction::triggered, this, &MainWindow::onMenuDebugAssembler);
 
     QActionGroup *modelGroup = new QActionGroup(this);
     modelGroup->setExclusive(true);
@@ -171,6 +175,35 @@ MainWindow::~MainWindow()
     delete graphicsInspector;
     delete debugger;
     delete ui;
+}
+
+void MainWindow::RefreshDebuggerIfOpen()
+{
+    if (debugger && debugger->isVisible())
+        debugger->Update();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (assemblerWindow && !assemblerWindow->close())
+    {
+        event->ignore();
+        return;
+    }
+    event->accept();
+}
+
+void MainWindow::onMenuDebugAssembler()
+{
+    if (!assemblerWindow)
+    {
+        assemblerWindow = new AssemblerWindow(this);
+        assemblerWindow->setAttribute(Qt::WA_DeleteOnClose);
+        connect(assemblerWindow, &QObject::destroyed, this, [this]() { assemblerWindow = nullptr; });
+    }
+    assemblerWindow->show();
+    assemblerWindow->raise();
+    assemblerWindow->activateWindow();
 }
 
 void MainWindow::applySettingsToUi()
@@ -505,6 +538,11 @@ void MainWindow::onMenuMediaInsertCartridge()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), QDir::homePath() + "/.cadence/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
     if (fileName != nullptr)
         media->LoadCartridge(fileName);
+}
+
+void MainWindow::onMenuMediaInsertBlankCartridge()
+{
+    media->InsertBlankCartridge();
 }
 
 void MainWindow::onMenuAbout()

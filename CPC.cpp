@@ -87,6 +87,13 @@ void CPC::ReadCartridge(char *filename)
     }
 }
 
+void CPC::InsertBlankCartridge()
+{
+    if (Cartridge != nullptr) free(Cartridge);
+    Cartridge = (BYTE *)malloc(524288);
+    memset(Cartridge, 0, 524288);
+}
+
 void CPC::Init()
 {
     tick = 0;
@@ -206,7 +213,6 @@ void CPC::Reset()
     screen.Init();
     SelectRAM(0);
     SelectROM(0);
-    memset(Breakpoint, 0, sizeof(Breakpoint));
 }
 
 BYTE CPC::PortRead(word addr)
@@ -250,7 +256,7 @@ BYTE CPC::GetRAMByteAt(word address)
 
 void CPC::UpdateMemoryMap()
 {
-    if (!gateArray.LoROMActive)
+    if (gateArray.LoROMActive)
         memPage[0] = (cartridgeEnabled && Cartridge) ? Cartridge : LoROM;
     else
         memPage[0] = RAM[0];
@@ -258,7 +264,7 @@ void CPC::UpdateMemoryMap()
     memPage[1] = RAM[1];
     memPage[2] = RAM[2];
 
-    if (!gateArray.HiROMActive)
+    if (gateArray.HiROMActive)
         memPage[3] = HiROM ? HiROM : zeroPage;
     else
         memPage[3] = RAM[3];

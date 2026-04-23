@@ -345,6 +345,7 @@ void Debugger::UpdateGateArrayPanel()
     }
     ui->chkLoR->setChecked(g.LoROMActive);
     ui->chkHiR->setChecked(g.HiROMActive);
+    ui->chkCartridge->setChecked(CPC::cartridgeEnabled);
     setDec(ui->txtR52, g.R52);
     BYTE cw = CPC::ppi.controlWord;
     char binBuf[9];

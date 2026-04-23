@@ -70,6 +70,8 @@ void EmulatorThread::run()
     paused = false;
     running = true;
     CPC::Reset();
+    if (runMode == RunMode::Run && CPC::Breakpoint[CPC::z80.GetPC()])
+        Stop();
     while (!end)
     {
         if (!paused)

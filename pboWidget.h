@@ -17,9 +17,11 @@ public:
     PboWidget(QWidget *parent);
     void updateTexture();
     void setSmoothing(bool enabled);
+    void applySmoothing();
 protected:
     void initializeGL() override;
     void paintGL() override;
 private:
-    unsigned int ID;
+    unsigned int ID = 0;
+    bool smoothing = true;
 };

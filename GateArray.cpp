@@ -15,8 +15,8 @@ void GateArray::Reset()
     pi = 0;
     hsyncTrigger = false;
     vsyncTrigger = false;
-    LoROMActive = false;
-    HiROMActive = false;
+    LoROMActive = true;
+    HiROMActive = true;
     // private
     RMR = 0;
     MMR = 0;
@@ -211,8 +211,8 @@ void GateArray::WR(BYTE value)
             R52 = 0;
             CPC::z80.InterruptRequest = true;
         }
-        LoROMActive = (RMR & 0x04) != 0;
-        HiROMActive = (RMR & 0x08) != 0;
+        LoROMActive = (RMR & 0x04) == 0;
+        HiROMActive = (RMR & 0x08) == 0;
         nextMode = RMR & 0x03;
         CPC::UpdateMemoryMap();
         break;

@@ -70,7 +70,9 @@ SOURCES += \
     Settings.cpp \
     MediaController.cpp \
     AboutDialog.cpp \
-    ROMBoxDialog.cpp
+    ROMBoxDialog.cpp \
+    Assembler.cpp \
+    AssemblerWindow.cpp
 
 HEADERS += \
     Debugger.h \
@@ -100,7 +102,9 @@ HEADERS += \
     Settings.h \
     MediaController.h \
     AboutDialog.h \
-    ROMBoxDialog.h
+    ROMBoxDialog.h \
+    Assembler.h \
+    AssemblerWindow.h
 
 FORMS += \
     Debugger.ui \

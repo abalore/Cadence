@@ -98,7 +98,7 @@
    </property>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
-     <string>Debug</string>
+     <string>Development</string>
     </property>
     <widget class="QMenu" name="menuMemory">
      <property name="title">
@@ -112,6 +112,8 @@
     <addaction name="separator"/>
     <addaction name="actionInspect_video_memory"/>
     <addaction name="menuMemory"/>
+    <addaction name="separator"/>
+    <addaction name="actionAssembler"/>
    </widget>
    <widget class="QMenu" name="menuSystem">
     <property name="title">
@@ -189,6 +191,7 @@
       <string>Cartridge</string>
      </property>
      <addaction name="actionInsert_cartridge"/>
+     <addaction name="actionInsert_blank_cartridge"/>
      <addaction name="actionRemove_cartridge"/>
     </widget>
     <addaction name="menuDisk_A"/>
@@ -214,10 +217,10 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Pause</string>
+    <string>Show debugger...</string>
    </property>
    <property name="toolTip">
-    <string>Pause</string>
+    <string>Show debugger</string>
    </property>
    <property name="shortcut">
     <string>F5</string>
@@ -258,6 +261,11 @@
   <action name="actionInspect_video_memory">
    <property name="text">
     <string>Inspect video memory</string>
+   </property>
+  </action>
+  <action name="actionAssembler">
+   <property name="text">
+    <string>Assembler...</string>
    </property>
   </action>
   <action name="actionAmstrad_CPC464">
@@ -478,6 +486,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F3</string>
+   </property>
+  </action>
+  <action name="actionInsert_blank_cartridge">
+   <property name="text">
+    <string>Insert blank cartridge</string>
    </property>
   </action>
   <action name="actionFull_screen">
