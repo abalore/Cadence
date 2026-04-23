@@ -118,6 +118,18 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAmstrad_CPC464, &QAction::triggered, this, &MainWindow::SetCPC464);
     connect(ui->actionAmstrad_CPC664, &QAction::triggered, this, &MainWindow::SetCPC664);
     connect(ui->actionAmstrad_CPC6128, &QAction::triggered, this, &MainWindow::SetCPC6128);
+
+    QActionGroup *crtcGroup = new QActionGroup(this);
+    crtcGroup->setExclusive(true);
+    QAction *crtcActions[5] = {
+        ui->actionCRTC_0, ui->actionCRTC_1, ui->actionCRTC_2,
+        ui->actionCRTC_3, ui->actionCRTC_4
+    };
+    for (int i = 0; i < 5; i++)
+    {
+        crtcGroup->addAction(crtcActions[i]);
+        connect(crtcActions[i], &QAction::triggered, this, [i]{ CPC::crtc.crtcType = i; });
+    }
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAudio_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::enabled = checked; });
     connect(ui->actionSFX_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::sfxEnabled = checked; });
@@ -248,16 +260,6 @@ MainWindow::MainWindow(QWidget *parent)
     StartThreads();
 }
 
-void MainWindow::showEvent(QShowEvent *event)
-{
-    QMainWindow::showEvent(event);
-    if (!aboutShown)
-    {
-        aboutShown = true;
-        QTimer::singleShot(0, this, [this]() { AboutDialog(this).exec(); });
-    }
-}
-
 MainWindow::~MainWindow()
 {
     collectSettingsFromUi();
@@ -347,6 +349,14 @@ void MainWindow::applySettingsToUi()
     case CPCType::CPC6128: ui->actionAmstrad_CPC6128->setChecked(true); break;
     }
 
+    QAction *crtcActions[5] = {
+        ui->actionCRTC_0, ui->actionCRTC_1, ui->actionCRTC_2,
+        ui->actionCRTC_3, ui->actionCRTC_4
+    };
+    const int ct = (settings.crtcType >= 0 && settings.crtcType < 5) ? settings.crtcType : 0;
+    crtcActions[ct]->setChecked(true);
+    CPC::crtc.crtcType = ct;
+
     const bool smooth = settings.smooth;
     QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
     CPC::gateArray.SetMonochrome(settings.greenMonitor);
@@ -368,6 +378,7 @@ void MainWindow::collectSettingsFromUi()
     settings.sfxEnabled   = ui->actionSFX_enabled->isChecked();
     settings.tapeEnabled  = ui->actionTape_enabled->isChecked();
     settings.rsBackslash  = ui->actionRight_shift_as_backslash->isChecked();
+    settings.crtcType     = CPC::crtc.crtcType;
 }
 
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)

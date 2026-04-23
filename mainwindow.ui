@@ -155,9 +155,20 @@
      </property>
      <addaction name="actionRight_shift_as_backslash"/>
     </widget>
+    <widget class="QMenu" name="menuCRTC">
+     <property name="title">
+      <string>CRTC</string>
+     </property>
+     <addaction name="actionCRTC_0"/>
+     <addaction name="actionCRTC_1"/>
+     <addaction name="actionCRTC_2"/>
+     <addaction name="actionCRTC_3"/>
+     <addaction name="actionCRTC_4"/>
+    </widget>
     <addaction name="menuScreen"/>
     <addaction name="menuAudio"/>
     <addaction name="menuKeyboard"/>
+    <addaction name="menuCRTC"/>
     <addaction name="actionROM_Box"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
@@ -294,6 +305,49 @@
    </property>
    <property name="text">
     <string>Amstrad CPC6128</string>
+   </property>
+  </action>
+  <action name="actionCRTC_0">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>0 - HD6845S</string>
+   </property>
+  </action>
+  <action name="actionCRTC_1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>1 - UM6845R</string>
+   </property>
+  </action>
+  <action name="actionCRTC_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>2 - MC6845</string>
+   </property>
+  </action>
+  <action name="actionCRTC_3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3 - Pre-ASIC</string>
+   </property>
+  </action>
+  <action name="actionCRTC_4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>4 - ASIC</string>
    </property>
   </action>
   <action name="actionRight_shift_as_backslash">

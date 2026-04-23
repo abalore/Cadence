@@ -13,6 +13,7 @@ public:
     bool sfxEnabled = true;
     bool tapeEnabled = true;
     bool rsBackslash = true;
+    int crtcType = 0;
     QString system = "CPC6128";
     QString diskAPath;
     QString diskBPath;

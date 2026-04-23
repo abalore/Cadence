@@ -22,6 +22,7 @@ void Settings::Load()
     sfxEnabled    = s.value("audio/sfx", true).toBool();
     tapeEnabled   = s.value("audio/tape", true).toBool();
     rsBackslash   = s.value("keyboard/right_shift_as_backslash", true).toBool();
+    crtcType      = s.value("machine/crtc_type", 0).toInt();
     system        = s.value("machine/system", "CPC6128").toString();
     diskAPath     = s.value("media/disk_a").toString();
     diskBPath     = s.value("media/disk_b").toString();
@@ -42,6 +43,7 @@ void Settings::Save()
     s.setValue("audio/sfx", sfxEnabled);
     s.setValue("audio/tape", tapeEnabled);
     s.setValue("keyboard/right_shift_as_backslash", rsBackslash);
+    s.setValue("machine/crtc_type", crtcType);
     s.setValue("machine/system", system);
     s.setValue("media/disk_a", diskAPath);
     s.setValue("media/disk_b", diskBPath);
