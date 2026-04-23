@@ -147,7 +147,8 @@ void AssemblerWindow::onOpen()
 {
     if (!maybeSave()) return;
     QString path = QFileDialog::getOpenFileName(this, tr("Open Source"), QString(),
-                                                tr("Assembly files (*.asm *.z80 *.s);;All files (*)"));
+                                                tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
+                                                nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
     if (readFromFile(path))
     {
@@ -169,7 +170,8 @@ void AssemblerWindow::onSave()
 void AssemblerWindow::onSaveAs()
 {
     QString path = QFileDialog::getSaveFileName(this, tr("Save Source"), currentFile,
-                                                tr("Assembly files (*.asm *.z80 *.s);;All files (*)"));
+                                                tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
+                                                nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
     if (writeToFile(path))
         setCurrentFile(path);

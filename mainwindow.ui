@@ -125,11 +125,13 @@
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
+    <addaction name="menuSettings"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
-     <string>Settings</string>
+     <string>Options</string>
     </property>
     <widget class="QMenu" name="menuScreen">
      <property name="title">
@@ -164,7 +166,7 @@
     </property>
     <widget class="QMenu" name="menuDisk_A">
      <property name="title">
-      <string>Disk A:</string>
+      <string>Drive A:</string>
      </property>
      <addaction name="actionNew_blank_disk"/>
      <addaction name="actionInsert_disk"/>
@@ -173,7 +175,7 @@
     </widget>
     <widget class="QMenu" name="menuDisk_B">
      <property name="title">
-      <string>Disk B:</string>
+      <string>Drive B:</string>
      </property>
      <addaction name="actionInsert_disk_2"/>
      <addaction name="actionRemove_disk_2"/>
@@ -207,7 +209,6 @@
    </widget>
    <addaction name="menuSystem"/>
    <addaction name="menuDevices"/>
-   <addaction name="menuSettings"/>
    <addaction name="menuDebug"/>
    <addaction name="menuHelp"/>
   </widget>

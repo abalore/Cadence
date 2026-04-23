@@ -34,6 +34,8 @@ public:
     void ResetEmulation();
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *ev) override;
 private slots:
     void onEmulatorPaused();
     void onEmulatorResumed();
@@ -89,5 +91,10 @@ private:
     QLabel *diskBLabel;
     QLabel *tapeLabel;
     QLabel *cartridgeLabel;
+    QWidget *diskChip;
+    QWidget *diskBChip;
+    QWidget *tapeChip;
+    QWidget *cartridgeChip;
+    bool aboutShown = false;
 };
 #endif // MAINWINDOW_H

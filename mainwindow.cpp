@@ -27,6 +27,7 @@
 #include <QGroupBox>
 #include <QRadioButton>
 #include <QHBoxLayout>
+#include <QStyle>
 #include <QVBoxLayout>
 #include <QActionGroup>
 #include <QMessageBox>
@@ -34,6 +35,8 @@
 #include <QStatusBar>
 #include <QFileInfo>
 #include <QIcon>
+#include <QPainter>
+#include <QImage>
 #include <QFontMetrics>
 #include <QTimer>
 
@@ -112,33 +115,102 @@ MainWindow::MainWindow(QWidget *parent)
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
 
+    menuBar()->setStyleSheet(
+        "QMenu::separator { background: #606060; height: 1px; margin: 4px 6px; }"
+    );
+
     statusBar()->setSizeGripEnabled(false);
+    statusBar()->setStyleSheet(
+        "QStatusBar::item { border: none; }"
+        "QWidget#mediaChip {"
+        "  border: 1px solid #606060;"
+        "  border-radius: 4px;"
+        "  background-color: #202020;"
+        "}"
+        "QWidget#mediaChip:hover {"
+        "  background-color: #6a8fbf;"
+        "  border-color: #3a5a8f;"
+        "}"
+        "QWidget#motorChip {"
+        "  border: 1px solid #606060;"
+        "  border-radius: 4px;"
+        "  background-color: #202020;"
+        "}"
+        "QWidget#mediaChip QLabel, QWidget#motorChip QLabel { color: #FFFFFF; }"
+        "QWidget#mediaChip QLabel[mediaEmpty=\"true\"] { color: #606060; }"
+    );
 
     const int iconSize = 24;
+    const int outlineRadius = 1;
     const int sectionWidth = 771 / 5;
-    const int textWidth = sectionWidth - iconSize - 6;
+    const int textWidth = sectionWidth - iconSize - 20;
+    auto outlinePixmap = [](const QPixmap &src, int radius) -> QPixmap {
+        QImage mask = src.toImage().convertToFormat(QImage::Format_ARGB32);
+        for (int y = 0; y < mask.height(); y++)
+        {
+            QRgb *row = reinterpret_cast<QRgb *>(mask.scanLine(y));
+            for (int x = 0; x < mask.width(); x++)
+                row[x] = qRgba(0x60, 0x60, 0x60, qAlpha(row[x]));
+        }
+        QPixmap maskPm = QPixmap::fromImage(mask);
+        QPixmap dst(src.width() + radius * 2, src.height() + radius * 2);
+        dst.fill(Qt::transparent);
+        QPainter p(&dst);
+        for (int dy = -radius; dy <= radius; dy++)
+            for (int dx = -radius; dx <= radius; dx++)
+                if ((dx || dy) && dx * dx + dy * dy <= radius * radius)
+                    p.drawPixmap(radius + dx, radius + dy, maskPm);
+        p.drawPixmap(radius, radius, src);
+        return dst;
+    };
     auto leftStretch = new QWidget(this);
     leftStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     statusBar()->addWidget(leftStretch, 1);
-    auto addMediaLabel = [this](const QString &iconPath, QLabel *&textLabel) {
-        QLabel *icon = new QLabel(this);
-        icon->setPixmap(QIcon(iconPath).pixmap(iconSize, iconSize));
-        textLabel = new QLabel(this);
+    auto addMediaChip = [this, outlinePixmap, outlineRadius](const QString &iconPath, QLabel *&textLabel, QWidget *&chipOut) {
+        QWidget *chip = new QWidget(this);
+        chip->setObjectName("mediaChip");
+        chip->setCursor(Qt::PointingHandCursor);
+        auto *h = new QHBoxLayout(chip);
+        h->setContentsMargins(6, 2, 8, 2);
+        h->setSpacing(6);
+        QLabel *icon = new QLabel(chip);
+        icon->setPixmap(outlinePixmap(QIcon(iconPath).pixmap(iconSize, iconSize), outlineRadius));
+        icon->setAttribute(Qt::WA_TransparentForMouseEvents);
+        textLabel = new QLabel(chip);
         textLabel->setFixedWidth(textWidth);
         textLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        statusBar()->addWidget(icon);
-        statusBar()->addWidget(textLabel);
+        textLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+        h->addWidget(icon);
+        h->addWidget(textLabel);
+        statusBar()->addWidget(chip);
+        chipOut = chip;
         setMediaText(textLabel, "<Empty>");
     };
-    addMediaLabel(":/images/cartridge.png", cartridgeLabel);
-    addMediaLabel(":/images/tape.png", tapeLabel);
-    addMediaLabel(":/images/disk.png", diskLabel);
-    addMediaLabel(":/images/disk.png", diskBLabel);
-    ledOnPixmap = QIcon(":/images/led_on.png").pixmap(iconSize, iconSize / 2);
-    ledOffPixmap = QIcon(":/images/led_off.png").pixmap(iconSize, iconSize / 2);
-    motorLabel = new QLabel(this);
-    motorLabel->setPixmap(ledOffPixmap);
-    statusBar()->addWidget(motorLabel);
+    addMediaChip(":/images/cartridge.png", cartridgeLabel, cartridgeChip);
+    addMediaChip(":/images/tape.png",      tapeLabel,      tapeChip);
+    addMediaChip(":/images/disk.png",      diskLabel,      diskChip);
+    addMediaChip(":/images/disk.png",      diskBLabel,     diskBChip);
+    cartridgeChip->installEventFilter(this);
+    tapeChip->installEventFilter(this);
+    diskChip->installEventFilter(this);
+    diskBChip->installEventFilter(this);
+
+    ledOnPixmap = outlinePixmap(QIcon(":/images/led_on.png").pixmap(iconSize, iconSize / 2), outlineRadius);
+    ledOffPixmap = outlinePixmap(QIcon(":/images/led_off.png").pixmap(iconSize, iconSize / 2), outlineRadius);
+    {
+        QWidget *motorChip = new QWidget(this);
+        motorChip->setObjectName("motorChip");
+        auto *h = new QHBoxLayout(motorChip);
+        h->setContentsMargins(6, 2, 8, 2);
+        h->setSpacing(6);
+        QLabel *motorText = new QLabel(tr("Motor"), motorChip);
+        motorLabel = new QLabel(motorChip);
+        motorLabel->setPixmap(ledOffPixmap);
+        h->addWidget(motorText);
+        h->addWidget(motorLabel);
+        statusBar()->addWidget(motorChip);
+    }
+
     auto rightStretch = new QWidget(this);
     rightStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     statusBar()->addWidget(rightStretch, 1);
@@ -161,6 +233,16 @@ MainWindow::MainWindow(QWidget *parent)
         media->LoadCartridge(settings.cartridgePath);
 
     StartThreads();
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    if (!aboutShown)
+    {
+        aboutShown = true;
+        QTimer::singleShot(0, this, [this]() { AboutDialog(this).exec(); });
+    }
 }
 
 MainWindow::~MainWindow()
@@ -191,6 +273,38 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
     event->accept();
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *ev)
+{
+    if (ev->type() == QEvent::MouseButtonDblClick)
+    {
+        if (obj == tapeChip)
+        {
+            if (media->TapePath().isEmpty()) onMenuMediaInsertTape();
+            else                             media->EjectTape();
+            return true;
+        }
+        if (obj == cartridgeChip)
+        {
+            if (CPC::cartridgeEnabled) onMenuMediaRemoveCartridge();
+            else                       onMenuMediaInsertCartridge();
+            return true;
+        }
+        if (obj == diskChip)
+        {
+            if (media->DiskAPath().isEmpty()) onMenuMediaInsertDiskA();
+            else                              media->EjectDiskA();
+            return true;
+        }
+        if (obj == diskBChip)
+        {
+            if (media->DiskBPath().isEmpty()) onMenuMediaInsertDiskB();
+            else                              media->EjectDiskB();
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(obj, ev);
 }
 
 void MainWindow::onMenuDebugAssembler()
@@ -307,7 +421,7 @@ void MainWindow::onEmulatorFinishedFrame()
 
 void MainWindow::onMenuMemoryLoadBinaryFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
     QFile file = QFile(fileName);
     file.open(QIODevice::ReadOnly);
     if (file.isOpen())
@@ -343,7 +457,7 @@ void MainWindow::onMenuMemorySaveBinaryFile()
     int length = lengthEdit->text().toInt(nullptr, 16);
     if (length <= 0) return;
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
     QFile file = QFile(fileName);
     file.open(QIODevice::WriteOnly);
     if (file.isOpen())
@@ -366,7 +480,7 @@ void MainWindow::onMenuScreenInspectGraphics()
 
 void MainWindow::onMenuMediaInsertTape()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), QDir::homePath() + "/.cadence/CDT", tr("Tape Files (*.cdt *.wav)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), QDir::homePath() + "/.cadence/CDT", tr("Tape Files (*.cdt *.wav)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadTape(fileName);
 }
@@ -378,7 +492,7 @@ void MainWindow::onMenuScreenSmooth()
 
 void MainWindow::onMenuMediaInsertDiskA()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadDiskA(fileName);
 }
@@ -395,7 +509,7 @@ void MainWindow::onMenuMediaWriteProtectB()
 
 void MainWindow::onMenuMediaNewBlankDiskA()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("New blank disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("New blank disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty())
         return;
     if (!fileName.endsWith(".dsk", Qt::CaseInsensitive))
@@ -492,7 +606,7 @@ void MainWindow::onMenuMediaNewBlankDiskA()
 
 void MainWindow::onMenuMediaInsertDiskB()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadDiskB(fileName);
 }
@@ -535,7 +649,7 @@ void MainWindow::onMenuMediaRemoveCartridge()
 
 void MainWindow::onMenuMediaInsertCartridge()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), QDir::homePath() + "/.cadence/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), QDir::homePath() + "/.cadence/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadCartridge(fileName);
 }
@@ -589,6 +703,10 @@ void MainWindow::onMenuViewFullScreen()
 void MainWindow::setMediaText(QLabel *label, const QString &text)
 {
     label->setProperty("fullText", text);
+    bool empty = (text == "<Empty>" || text.isEmpty());
+    label->setProperty("mediaEmpty", empty);
+    label->style()->unpolish(label);
+    label->style()->polish(label);
     QFontMetrics fm(label->font());
     label->setText(fm.elidedText(text, Qt::ElideRight, label->width()));
 }

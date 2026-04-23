@@ -4,7 +4,60 @@
 #include <QIcon>
 #include <QPalette>
 #include <QStyleFactory>
+#include <QProxyStyle>
+#include <QStyleOption>
+#include <QMenu>
+#include <QPainter>
+#include <QPainterPath>
 #include <cstdlib>
+
+class MenuIndicatorStyle : public QProxyStyle
+{
+public:
+    using QProxyStyle::QProxyStyle;
+    void drawPrimitive(PrimitiveElement el, const QStyleOption *opt,
+                       QPainter *p, const QWidget *w = nullptr) const override
+    {
+        const bool isMenu = qobject_cast<const QMenu *>(w);
+        if (isMenu && (el == PE_IndicatorCheckBox || el == PE_IndicatorRadioButton))
+        {
+            QRect r = opt->rect.adjusted(1, 1, -1, -1);
+            const QColor outline(0xa0, 0xa0, 0xa0);
+            const QColor accent(0x00, 0xe5, 0xff);
+            p->save();
+            p->setRenderHint(QPainter::Antialiasing, true);
+            p->setPen(QPen(outline, 1));
+            p->setBrush(Qt::NoBrush);
+            if (el == PE_IndicatorRadioButton)
+            {
+                p->drawEllipse(r);
+                if (opt->state & State_On)
+                {
+                    p->setBrush(accent);
+                    p->setPen(Qt::NoPen);
+                    p->drawEllipse(r.adjusted(3, 3, -3, -3));
+                }
+            }
+            else
+            {
+                p->drawRect(r);
+                if (opt->state & State_On)
+                {
+                    QPainterPath path;
+                    qreal x = r.x(), y = r.y(), ww = r.width(), hh = r.height();
+                    path.moveTo(x + ww * 0.22, y + hh * 0.52);
+                    path.lineTo(x + ww * 0.44, y + hh * 0.74);
+                    path.lineTo(x + ww * 0.80, y + hh * 0.28);
+                    p->setPen(QPen(accent, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                    p->drawPath(path);
+                }
+            }
+            p->restore();
+            return;
+        }
+        QProxyStyle::drawPrimitive(el, opt, p, w);
+    }
+};
 
 
 int main(int argc, char *argv[])
@@ -14,7 +67,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);
 
-    QApplication::setStyle(QStyleFactory::create("Fusion"));
+    QApplication::setStyle(new MenuIndicatorStyle(QStyleFactory::create("Fusion")));
     QPalette p;
     p.setColor(QPalette::Window,          QColor(53, 53, 53));
     p.setColor(QPalette::WindowText,      Qt::white);
