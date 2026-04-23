@@ -1,7 +1,7 @@
 #include "FloppyDrive.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <filesystem>
+#include <QFileInfo>
 
 using namespace std;
 
@@ -11,15 +11,16 @@ bool FloppyDrive::InsertDSK(char *fn)
     FreeBuffer();
     DiskInserted = false;
     filename.clear();
-    bufferSize = filesystem::file_size(fn);
+    qint64 sz = QFileInfo(fn).size();
+    if (sz <= 0) return false;
     FILE *f = fopen(fn, "rb");
     if (f)
     {
-        buffer = (BYTE *)malloc(bufferSize);
+        buffer = (BYTE *)malloc(sz);
+        bufferSize = sz;
         size_t n = fread(buffer, 1, bufferSize, f);
-        (void)n;
         fclose(f);
-        if (dsk.Init(buffer, bufferSize))
+        if (n == bufferSize && dsk.Init(buffer, bufferSize))
         {
             DiskInserted = true;
             filename = fn;

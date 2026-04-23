@@ -11,6 +11,7 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QComboBox>
 #include <QStringListModel>
 #include <QModelIndex>
 #include <QScrollBar>
@@ -36,6 +37,12 @@ Debugger::Debugger(QWidget *parent)
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
     ui->listMemory->setModel(modelMemory);
+    PopulateMemorySources();
+    PopulateMemoryDetail();
+    connect(ui->cmbMemorySource, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &Debugger::onMemorySourceChanged);
+    connect(ui->cmbMemoryDetail, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &Debugger::onMemoryDetailChanged);
     connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
     connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
     connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
@@ -105,21 +112,68 @@ void Debugger::Update()
 
     int memoryIndex = ui->listMemory->currentIndex().row();
     listMemory.clear();
-    for (int i = 0x0000; i <= 0xFFF0; i += 16)
+
+    int startAddr = 0x0000;
+    int endAddr   = 0xFFF0;
+    int addrDigits = 4;
+    BYTE *base = nullptr;
+    int baseAddr = 0;
+    bool unavailable = false;
+    const char *unavailableMsg = nullptr;
+    switch (memSource)
     {
-        int bank = i >> 14;
-        int address = i & 0x3FFF;
-        BYTE *mem = CPC::RAM[bank];
-        sprintf(buff, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-                i, mem[address], mem[address + 1],
-                mem[address + 2], mem[address + 3],
-                mem[address + 4], mem[address + 5],
-                mem[address + 6], mem[address + 7],
-                mem[address + 8], mem[address + 9],
-                mem[address + 10], mem[address + 11],
-                mem[address + 12], mem[address + 13],
-                mem[address + 14], mem[address + 15]);
-        listMemory.append(buff);
+    case CpuView:
+    case RamCurrent:
+        break;
+    case RamBank:
+        if (memDetail < 0 || memDetail >= 8 || !CPC::RAMs[memDetail]) { unavailable = true; unavailableMsg = "(RAM bank not allocated)"; }
+        else { base = CPC::RAMs[memDetail]; startAddr = 0x0000; endAddr = 0x3FF0; }
+        break;
+    case LowerRom:
+        if (!CPC::LoROM) { unavailable = true; unavailableMsg = "(Lower ROM not loaded)"; }
+        else { base = CPC::LoROM; startAddr = 0x0000; endAddr = 0x3FF0; }
+        break;
+    case UpperRomSlot:
+        if (memDetail < 0 || memDetail >= ROM_SLOTS || !CPC::HiROMs[memDetail]) { unavailable = true; unavailableMsg = "(Upper ROM slot empty)"; }
+        else { base = CPC::HiROMs[memDetail]; startAddr = 0xC000; endAddr = 0xFFF0; baseAddr = 0xC000; }
+        break;
+    case Cartridge:
+        if (!CPC::Cartridge) { unavailable = true; unavailableMsg = "(no cartridge inserted)"; }
+        else { base = CPC::Cartridge; startAddr = 0x00000; endAddr = 0x7FFF0; addrDigits = 5; }
+        break;
+    }
+
+    ui->label->setText(addrDigits == 5
+        ? "MEM    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F"
+        : "MEM   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
+
+    if (unavailable)
+    {
+        listMemory.append(unavailableMsg);
+    }
+    else
+    {
+        const char *fmt = (addrDigits == 5)
+            ? "%05X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"
+            : "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X";
+        for (int i = startAddr; i <= endAddr; i += 16)
+        {
+            BYTE b[16];
+            for (int k = 0; k < 16; k++)
+            {
+                int a = i + k;
+                switch (memSource)
+                {
+                case CpuView:      b[k] = CPC::memPage[(a >> 14) & 3][a & 0x3FFF]; break;
+                case RamCurrent:   b[k] = CPC::RAM[(a >> 14) & 3][a & 0x3FFF];     break;
+                default:           b[k] = base[a - baseAddr];                      break;
+                }
+            }
+            sprintf(buff, fmt, i,
+                    b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+                    b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+            listMemory.append(buff);
+        }
     }
 
     modelMemory -> setStringList(listMemory);
@@ -352,4 +406,62 @@ void Debugger::UpdateGateArrayPanel()
     for (int i = 0; i < 8; i++) binBuf[i] = (cw & (0x80 >> i)) ? '1' : '0';
     binBuf[8] = 0;
     ui->txtPPI->setText(binBuf);
+}
+
+void Debugger::PopulateMemorySources()
+{
+    QSignalBlocker blocker(ui->cmbMemorySource);
+    ui->cmbMemorySource->clear();
+    ui->cmbMemorySource->addItem("CPU view",           int(CpuView));
+    ui->cmbMemorySource->addItem("RAM (current map)",  int(RamCurrent));
+    ui->cmbMemorySource->addItem("RAM bank",           int(RamBank));
+    ui->cmbMemorySource->addItem("Lower ROM",          int(LowerRom));
+    ui->cmbMemorySource->addItem("Upper ROM slot",     int(UpperRomSlot));
+    ui->cmbMemorySource->addItem("Cartridge",          int(Cartridge));
+    ui->cmbMemorySource->setCurrentIndex(0);
+}
+
+void Debugger::PopulateMemoryDetail()
+{
+    QSignalBlocker blocker(ui->cmbMemoryDetail);
+    ui->cmbMemoryDetail->clear();
+    switch (memSource)
+    {
+    case RamBank: {
+        int count = (CPC::cpcType == CPCType::CPC6128) ? 8 : 4;
+        for (int i = 0; i < count; i++)
+            ui->cmbMemoryDetail->addItem(QString("Bank %1").arg(i), i);
+        ui->cmbMemoryDetail->setEnabled(true);
+        break;
+    }
+    case UpperRomSlot: {
+        for (int i = 0; i < ROM_SLOTS; i++)
+            ui->cmbMemoryDetail->addItem(QString("Slot %1%2").arg(i).arg(CPC::HiROMs[i] ? "" : " (empty)"), i);
+        ui->cmbMemoryDetail->setEnabled(true);
+        break;
+    }
+    default:
+        ui->cmbMemoryDetail->setEnabled(false);
+        break;
+    }
+    if (memDetail >= 0 && memDetail < ui->cmbMemoryDetail->count())
+        ui->cmbMemoryDetail->setCurrentIndex(memDetail);
+    else if (ui->cmbMemoryDetail->count() > 0)
+        ui->cmbMemoryDetail->setCurrentIndex(0);
+}
+
+void Debugger::onMemorySourceChanged(int index)
+{
+    if (index < 0) return;
+    memSource = MemSource(ui->cmbMemorySource->itemData(index).toInt());
+    memDetail = 0;
+    PopulateMemoryDetail();
+    Update();
+}
+
+void Debugger::onMemoryDetailChanged(int index)
+{
+    if (index < 0) return;
+    memDetail = ui->cmbMemoryDetail->itemData(index).toInt();
+    Update();
 }

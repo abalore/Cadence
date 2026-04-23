@@ -33,7 +33,12 @@ private slots:
     void onResetNopsClicked();
     void onToggleBreakpointClicked();
     void onGoToClicked();
+    void onMemorySourceChanged(int index);
+    void onMemoryDetailChanged(int index);
 private:
+    enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
+    void PopulateMemorySources();
+    void PopulateMemoryDetail();
 
     void UpdateZ80Panel();
     void UpdateCRTCPanel();
@@ -49,6 +54,8 @@ private:
     QStringList listMemory;
     QStringListModel *modelMemory;
     QModelIndex modelMemoryIndex;
+    MemSource memSource = CpuView;
+    int memDetail = 0;
     uchar nextInstructionLength;
     uchar nextInstructionOpCode;
     void closeEvent(QCloseEvent *event);

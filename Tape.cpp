@@ -1,17 +1,20 @@
 #include "Tape.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <filesystem>
+#include <QFileInfo>
 
 void Tape::LoadWAV(char *filename)
 {
     FreeBuffer();
-    bufferSize = std::filesystem::file_size(filename);
-    buffer = (BYTE *)malloc(bufferSize);
-    FILE *f = fopen(filename, "r");
+    qint64 sz = QFileInfo(filename).size();
+    if (sz <= 0) return;
+    FILE *f = fopen(filename, "rb");
+    if (!f) return;
+    buffer = (BYTE *)malloc(sz);
+    bufferSize = sz;
     size_t n = fread(buffer, 1, bufferSize, f);
-    (void)n;
     fclose(f);
+    if (n != bufferSize) { FreeBuffer(); return; }
     bufferReadIndex = 44;
     tapeSource = TapeSource::WAV;
 }
@@ -19,12 +22,15 @@ void Tape::LoadWAV(char *filename)
 void Tape::LoadCDT(char *filename)
 {
     FreeBuffer();
-    bufferSize = std::filesystem::file_size(filename);
-    buffer = (BYTE *)malloc(bufferSize);
-    FILE *f = fopen(filename, "r");
+    qint64 sz = QFileInfo(filename).size();
+    if (sz <= 0) return;
+    FILE *f = fopen(filename, "rb");
+    if (!f) return;
+    buffer = (BYTE *)malloc(sz);
+    bufferSize = sz;
     size_t n = fread(buffer, 1, bufferSize, f);
-    (void)n;
     fclose(f);
+    if (n != bufferSize) { FreeBuffer(); return; }
     if (cdt.Init(buffer, bufferSize))
     {
         bufferReadIndex = 44;
