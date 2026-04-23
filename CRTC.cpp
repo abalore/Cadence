@@ -196,16 +196,19 @@ void CRTC::RunHorizontalChar()
     if (HCC == HSP)
     {
         HSC = 0;
-        // Types 0, 1 with HSW=0 produce no HSYNC; Types 2, 3, 4 produce 16-cycle HSYNC (wraps via 4-bit counter)
-        HSYNC = !(HSW == 0 && (crtcType == 0 || crtcType == 1));
+        if (HSW == 0)
+            HSYNC = !(crtcType == 0 || crtcType == 1); // types 2/3/4: start a 16-cycle wrap pulse
+        else
+            HSYNC = true;
     }
     if (HSYNC)
     {
-        HSC = (HSC + 1) & 0x0F;
-        if (HSC == HSW)
-        {
+        if (HSW > 0 && HSC == HSW)
             HSYNC = false;
-            HSC = 0;
+        else
+        {
+            HSC = (HSC + 1) & 0x0F;
+            if (HSW == 0 && HSC == 0) HSYNC = false; // wrapped past 16
         }
     }
     if (HCC == HD)
@@ -228,6 +231,7 @@ void CRTC::EndOfLine()
     if (VSYNC)
     {
         VSC = (VSC + 1) & 0x0F;
+        // Types 1 (UM6845R) and 2 (MC6845) ignore R3 high nibble; 4-bit VSC wrap gives a 16-line pulse.
         BYTE effVSW = (crtcType == 1 || crtcType == 2) ? 0 : VSW;
         if (VSC == effVSW)
         {
