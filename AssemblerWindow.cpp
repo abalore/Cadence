@@ -1,5 +1,6 @@
 #include "AssemblerWindow.h"
 
+#include "AsmHighlighter.h"
 #include "CPC.h"
 #include "EmulatorThread.h"
 #include "mainwindow.h"
@@ -172,6 +173,7 @@ QPlainTextEdit *AssemblerWindow::newEditorTab(const QString &path)
     ed->setTabStopDistance(QFontMetrics(monoFont).horizontalAdvance(' ') * 8);
     ed->setPlaceholderText(tr("; Type Z80 assembly here\n; Example:\n;   ORG &8000\n;   LD A,42\n;   RET\n"));
     ed->setProperty(kFilePropName, path);
+    new AsmHighlighter(ed->document());
 
     connect(ed->document(), &QTextDocument::modificationChanged, this, [this, ed]() {
         updateTabLabel(ed);

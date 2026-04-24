@@ -72,7 +72,8 @@ SOURCES += \
     AboutDialog.cpp \
     ROMBoxDialog.cpp \
     Assembler.cpp \
-    AssemblerWindow.cpp
+    AssemblerWindow.cpp \
+    AsmHighlighter.cpp
 
 HEADERS += \
     Debugger.h \
@@ -104,7 +105,8 @@ HEADERS += \
     AboutDialog.h \
     ROMBoxDialog.h \
     Assembler.h \
-    AssemblerWindow.h
+    AssemblerWindow.h \
+    AsmHighlighter.h
 
 FORMS += \
     Debugger.ui \
