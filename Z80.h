@@ -58,6 +58,7 @@ public:
     bool InterruptRequest;
 
     inline word GetPC() const { return PC; }
+    inline void SetPC(word v) { PC = v; }
     inline word GetSP() const { return SP; }
     void ResetNopCounter() { nops = 0; }
     Z80DebugState GetDebugState();

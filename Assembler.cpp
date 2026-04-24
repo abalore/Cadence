@@ -470,7 +470,8 @@ QVector<Token> Lexer::all(QString *errorText, int *errorLine)
 struct Core
 {
     AssemblerResult run(const QString &source, const QString &basePath,
-                        const Assembler::ProgressFn &progress);
+                        const Assembler::ProgressFn &progress,
+                        const Assembler::MemoryReadFn &memReader);
 
     QVector<Token> toks;
     int ti = 0;
@@ -488,7 +489,10 @@ struct Core
     QString curFile;
     bool curToDisk = false;
     int curExec = -1;
+    QVector<AssemblerSectorRef> curSectors;
     QString basePath;
+    QVector<AssemblerSaveRequest> saves;
+    AssemblerRunRequest runReq;
     int includeDepth = 0;
     int estimatedTokens = 0;
     bool codeEnabled = true;
@@ -498,6 +502,7 @@ struct Core
     bool hadError = false;
     QVector<AssemblerMessage> messages;
     Assembler::ProgressFn progressFn;
+    Assembler::MemoryReadFn memReadFn;
 
     struct CondFrame { bool parentActive; bool active; bool takenThisIf; };
     QVector<CondFrame> condStack;
@@ -581,6 +586,59 @@ struct Core
         return out;
     }
 
+    QVector<AssemblerSectorRef> parseSectorRangeSpec(const QString &specIn, QString *err) const
+    {
+        QVector<AssemblerSectorRef> out;
+        QString s = specIn.trimmed();
+        int drive = 0;
+        if (s.size() >= 2 && s[1] == QLatin1Char(':'))
+        {
+            QChar d = s[0].toUpper();
+            if (d == QLatin1Char('A')) drive = 0;
+            else if (d == QLatin1Char('B')) drive = 1;
+            else { *err = QStringLiteral("drive must be A: or B:"); return out; }
+            s = s.mid(2).trimmed();
+        }
+        auto parseRange = [](QString piece, int base, int *lo, int *hi) -> bool {
+            piece = piece.trimmed();
+            int dash = piece.indexOf(QLatin1Char('-'));
+            bool ok;
+            if (dash < 0)
+            {
+                int v = piece.toInt(&ok, base);
+                if (!ok) return false;
+                *lo = *hi = v;
+                return true;
+            }
+            int a = piece.left(dash).trimmed().toInt(&ok, base);
+            if (!ok) return false;
+            int b = piece.mid(dash + 1).trimmed().toInt(&ok, base);
+            if (!ok) return false;
+            if (a > b) { int t = a; a = b; b = t; }
+            *lo = a; *hi = b;
+            return true;
+        };
+        const QStringList parts = s.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+        for (const QString &part : parts)
+        {
+            int colon = part.indexOf(QLatin1Char(':'));
+            if (colon < 0) { *err = QString("expected ':' in range \"%1\"").arg(part); return out; }
+            int t0 = 0, t1 = 0, s0 = 0, s1 = 0;
+            if (!parseRange(part.left(colon), 10, &t0, &t1))
+            { *err = QString("bad track in \"%1\"").arg(part); return out; }
+            if (!parseRange(part.mid(colon + 1), 16, &s0, &s1))
+            { *err = QString("bad sector in \"%1\"").arg(part); return out; }
+            for (int t = t0; t <= t1; t++)
+                for (int sec = s0; sec <= s1; sec++)
+                {
+                    AssemblerSectorRef r;
+                    r.drive = drive; r.track = t; r.sector = sec;
+                    out.append(r);
+                }
+        }
+        return out;
+    }
+
     QString resolveIncludePath(const QString &name) const
     {
         QFileInfo fi(name);
@@ -635,6 +693,7 @@ struct Core
                 s.fileName = curFile;
                 s.toDisk = curToDisk;
                 s.execAddress = curExec;
+                s.sectors = curSectors;
                 segments.append(s);
             }
             segments.last().bytes.append(char(value & 0xFF));
@@ -656,6 +715,7 @@ struct Core
         s.fileName = curFile;
         s.toDisk = curToDisk;
         s.execAddress = curExec;
+        s.sectors = curSectors;
         segments.append(s);
     }
 
@@ -673,6 +733,7 @@ struct Core
             s.fileName = curFile;
             s.toDisk = curToDisk;
             s.execAddress = curExec;
+            s.sectors = curSectors;
             segments.append(s);
         }
         else
@@ -685,6 +746,7 @@ struct Core
             segments.last().fileName     = curFile;
             segments.last().toDisk       = curToDisk;
             segments.last().execAddress  = curExec;
+            segments.last().sectors      = curSectors;
         }
     }
 
@@ -997,6 +1059,60 @@ Core::ExprResult Core::parsePrimary()
     {
         ti++;
         if (t.text == "@") { ExprResult r; r.value = writePc; return r; }
+        if (t.text == "memory")
+        {
+            if (cur().t != Tk::LP)
+            {
+                if (pass == 2) error(t.line, "memory(): expected '('");
+                ExprResult r; r.value = 0; return r;
+            }
+            ti++;
+            ExprResult arg = parseExpr();
+            if (cur().t != Tk::RP)
+            {
+                if (pass == 2) errorHere("memory(): expected ')'");
+            }
+            else ti++;
+            int addr = int(arg.value) & 0xFFFF;
+            ExprResult r;
+            if (memReadFn)
+            {
+                int lo = memReadFn(addr, curLowerRom, curUpperRom, curRamBank) & 0xFF;
+                int hi = memReadFn((addr + 1) & 0xFFFF,
+                                   curLowerRom, curUpperRom, curRamBank) & 0xFF;
+                r.value = lo | (hi << 8);
+            }
+            else
+            {
+                r.value = 0;
+                if (pass == 2)
+                    info(t.line, QStringLiteral("memory(): no memory backend; returning 0"));
+            }
+            return r;
+        }
+        if (t.text == "checksum")
+        {
+            if (cur().t == Tk::LP)
+            {
+                ti++;
+                int depth = 1;
+                while (depth > 0 && cur().t != Tk::End)
+                {
+                    if (cur().t == Tk::LP) depth++;
+                    else if (cur().t == Tk::RP) { depth--; if (depth == 0) { ti++; break; } }
+                    ti++;
+                }
+            }
+            if (pass == 2)
+                info(t.line, QString("%1(): not implemented; returning 0").arg(t.text));
+            ExprResult r; r.value = 0; return r;
+        }
+        if (t.text == "relocate_count" || t.text == "relocate_size")
+        {
+            if (pass == 2)
+                info(t.line, QString("%1: not implemented; returning 0").arg(t.text));
+            ExprResult r; r.value = 0; return r;
+        }
         auto it = symbols.find(t.text);
         if (it == symbols.end())
         {
@@ -1897,12 +2013,100 @@ bool Core::parseDirective(const QString &name)
         curLowerRom = -1;
         curUpperRom = -1;
         curRamBank  = 0xC0;
+        curSectors.clear();
         if (pass == 2) retargetSegment();
         return true;
     }
     if (name == "end")
     {
         endHit = true;
+        return true;
+    }
+    if (name == "stop")
+    {
+        error(ln, "Assembly Stopped");
+        endHit = true;
+        return true;
+    }
+    if (name == "save")
+    {
+        bool direct = false;
+        if (cur().t == Tk::Ident && cur().text == QLatin1String("direct"))
+        {
+            direct = true;
+            ti++;
+        }
+        if (cur().t != Tk::String)
+        {
+            if (pass == 2) error(ln, "SAVE: expected \"filename\"");
+            skipToEndOfStatement();
+            return true;
+        }
+        QString fname = cur().text;
+        ti++;
+        QVector<i64> args;
+        while (cur().t == Tk::Comma)
+        {
+            ti++;
+            ExprResult er = parseExpr();
+            args.append(er.value);
+        }
+        if (pass == 2)
+        {
+            if (fname.isEmpty())
+            {
+                error(ln, "SAVE: filename must not be empty");
+                return true;
+            }
+            if (args.size() < 2)
+            {
+                error(ln, "SAVE: need at least one address,size pair");
+                return true;
+            }
+            AssemblerSaveRequest req;
+            req.filename = fname;
+            req.toDisk = direct;
+            int pairCount = args.size();
+            if (pairCount % 2 == 1)
+            {
+                req.execAddress = int(args.last()) & 0xFFFF;
+                pairCount--;
+            }
+            for (int i = 0; i < pairCount; i += 2)
+            {
+                AssemblerSaveRegion rg;
+                rg.address = int(args[i]) & 0xFFFF;
+                rg.size = int(args[i + 1]) & 0xFFFF;
+                req.regions.append(rg);
+            }
+            saves.append(req);
+        }
+        return true;
+    }
+    if (name == "run")
+    {
+        ExprResult erA = parseExpr();
+        int bp = -1;
+        if (cur().t == Tk::Comma)
+        {
+            ti++;
+            ExprResult erB = parseExpr();
+            bp = int(erB.value) & 0xFFFF;
+        }
+        if (pass == 2)
+        {
+            runReq.valid = true;
+            runReq.address = int(erA.value) & 0xFFFF;
+            runReq.breakpoint = bp;
+        }
+        return true;
+    }
+    if (name == "charset" || name == "checksum" ||
+        name == "relocate_start" || name == "relocate_end" || name == "relocate_table")
+    {
+        if (pass == 2)
+            info(ln, QString("%1: directive not implemented; ignored").arg(name.toUpper()));
+        skipToEndOfStatement();
         return true;
     }
     if (name == "let")
@@ -2176,6 +2380,7 @@ bool Core::parseDirective(const QString &name)
                 curRamBank  = 0xC0;
                 curToDisk = false;
                 curExec = -1;
+                curSectors.clear();
                 retargetSegment();
             }
             return true;
@@ -2189,8 +2394,38 @@ bool Core::parseDirective(const QString &name)
         ti++;
         if (cur().t == Tk::Ident && cur().text == "sectors")
         {
-            if (pass == 2) error(ln, "WRITE DIRECT SECTORS not yet supported");
-            skipToEndOfStatement();
+            ti++;
+            if (cur().t != Tk::String)
+            {
+                if (pass == 2) error(ln, "WRITE DIRECT SECTORS: expected sector-range string");
+                skipToEndOfStatement();
+                return true;
+            }
+            QString spec = cur().text;
+            ti++;
+            if (pass == 2)
+            {
+                QString parseErr;
+                QVector<AssemblerSectorRef> list = parseSectorRangeSpec(spec, &parseErr);
+                if (!parseErr.isEmpty())
+                {
+                    error(ln, QString("WRITE DIRECT SECTORS: %1 (in \"%2\")").arg(parseErr, spec));
+                    return true;
+                }
+                if (list.isEmpty())
+                {
+                    error(ln, "WRITE DIRECT SECTORS: empty sector range");
+                    return true;
+                }
+                curFile.clear();
+                curToDisk = false;
+                curExec = -1;
+                curLowerRom = -1;
+                curUpperRom = -1;
+                curRamBank  = 0xC0;
+                curSectors = list;
+                retargetSegment();
+            }
             return true;
         }
         if (cur().t == Tk::String)
@@ -2215,6 +2450,7 @@ bool Core::parseDirective(const QString &name)
                 curRamBank  = 0xC0;
                 curToDisk = true;
                 curExec = haveExec ? int(execAddr) : -1;
+                curSectors.clear();
                 retargetSegment();
             }
             return true;
@@ -2261,6 +2497,7 @@ bool Core::parseDirective(const QString &name)
             curFile.clear();
             curToDisk = false;
             curExec = -1;
+            curSectors.clear();
             retargetSegment();
         }
         return true;
@@ -2690,7 +2927,8 @@ void Core::parseLine()
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
             "read","incbin","limit","nolist","list","text","brk","code","nocode",
             "byte","word","rmem","close","str","end","print",
-            "repeat","rend","while","wend","let"
+            "repeat","rend","while","wend","let","stop","save","run",
+            "charset","checksum","relocate_start","relocate_end","relocate_table"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
         (void)hasColon;
@@ -2755,11 +2993,13 @@ void Core::parseLine()
 }
 
 AssemblerResult Core::run(const QString &source, const QString &base,
-                          const Assembler::ProgressFn &progress)
+                          const Assembler::ProgressFn &progress,
+                          const Assembler::MemoryReadFn &memReader)
 {
     AssemblerResult r;
     basePath = base;
     progressFn = progress;
+    memReadFn = memReader;
     if (progress) progress(0, 0, QStringLiteral("Lexing..."));
     Lexer lx(source);
     QString lxErr; int lxLn = 0;
@@ -2822,6 +3062,9 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curFile.clear();
     curToDisk = false;
     curExec = -1;
+    curSectors.clear();
+    saves.clear();
+    runReq = AssemblerRunRequest();
     codeEnabled = true;
     codeLimit = -1;
     limitErrorReported = false;
@@ -2860,6 +3103,9 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curFile.clear();
     curToDisk = false;
     curExec = -1;
+    curSectors.clear();
+    saves.clear();
+    runReq = AssemblerRunRequest();
     codeEnabled = true;
     codeLimit = -1;
     limitErrorReported = false;
@@ -2885,6 +3131,8 @@ AssemblerResult Core::run(const QString &source, const QString &base,
 
     r.messages = messages;
     r.segments = segments;
+    r.saves = saves;
+    r.run = runReq;
     r.ok = !hadError;
     return r;
 }
@@ -2892,8 +3140,9 @@ AssemblerResult Core::run(const QString &source, const QString &base,
 } // namespace
 
 AssemblerResult Assembler::Assemble(const QString &source, const QString &basePath,
-                                    const ProgressFn &progress)
+                                    const ProgressFn &progress,
+                                    const MemoryReadFn &memReader)
 {
     Core c;
-    return c.run(source, basePath, progress);
+    return c.run(source, basePath, progress, memReader);
 }

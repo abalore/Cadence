@@ -690,7 +690,36 @@ void AssemblerWindow::onAssemble()
             pulseTimer.restart();
         }
     };
-    AssemblerResult r = assembler.Assemble(ed->toPlainText(), base, progress);
+    Assembler::MemoryReadFn memReader = [](int addr, int lowerRom, int upperRom, int ramBank) -> int {
+        word a = word(addr & 0xFFFF);
+        int bankIdx = a >> 14;
+        int off = a & 0x3FFF;
+        const BYTE *src = nullptr;
+        if (bankIdx == 0 && lowerRom == 0)
+            src = CPC::LoROM;
+        else if (bankIdx == 3 && upperRom >= 0)
+        {
+            if (upperRom >= 0x80 && upperRom <= 0x9F)
+            {
+                if (CPC::cartridgeEnabled && CPC::Cartridge)
+                    src = CPC::Cartridge + (upperRom - 0x80) * 0x4000;
+            }
+            else
+                src = CPC::HiROMs[upperRom];
+        }
+        else
+        {
+            int cfg = ramBank & 0x07;
+            static const int map[8][4] = {
+                {0, 1, 2, 3}, {0, 1, 2, 7}, {4, 5, 6, 7}, {0, 3, 2, 7},
+                {0, 4, 2, 3}, {0, 5, 2, 3}, {0, 6, 2, 3}, {0, 7, 2, 3},
+            };
+            int slot = map[cfg][bankIdx];
+            src = CPC::RAMs[slot];
+        }
+        return src ? int(src[off]) : 0;
+    };
+    AssemblerResult r = assembler.Assemble(ed->toPlainText(), base, progress, memReader);
     statusBar()->removeWidget(progressBar);
     progressBar->deleteLater();
     actAssemble->setEnabled(true);
@@ -755,6 +784,57 @@ void AssemblerWindow::onAssemble()
     QStringList diskOrder;
     for (const AssemblerSegment &s : r.segments)
     {
+        if (!s.sectors.isEmpty())
+        {
+            int driveIdx = s.sectors.first().drive;
+            FloppyDrive *drv = CPC::fdc.GetDrive(driveIdx);
+            if (!drv || !drv->DiskInserted)
+            {
+                appendOutput(tr("WRITE DIRECT SECTORS: no disc in drive %1")
+                                 .arg(QChar('A' + driveIdx)), true);
+                anyFailed = true;
+                continue;
+            }
+            int pos = 0;
+            int sectorsWritten = 0;
+            for (const AssemblerSectorRef &ref : s.sectors)
+            {
+                if (pos >= s.bytes.size()) break;
+                int secSize = 0;
+                BYTE *secData = drv->GetSectorDataById(
+                    BYTE(ref.track), 0, BYTE(ref.sector), &secSize);
+                if (!secData)
+                {
+                    appendOutput(QString("WRITE DIRECT SECTORS: sector %1:&%2 not found on drive %3")
+                                     .arg(ref.track)
+                                     .arg(QString::number(ref.sector, 16).toUpper())
+                                     .arg(QChar('A' + ref.drive)),
+                                 true);
+                    anyFailed = true;
+                    continue;
+                }
+                int remaining = s.bytes.size() - pos;
+                int toWrite = qMin(secSize, remaining);
+                std::memcpy(secData, s.bytes.constData() + pos, toWrite);
+                if (toWrite < secSize)
+                    std::memset(secData + toWrite, 0, secSize - toWrite);
+                pos += toWrite;
+                sectorsWritten++;
+            }
+            if (sectorsWritten > 0) drv->MarkDirty();
+            if (pos < s.bytes.size())
+            {
+                appendOutput(QString("WRITE DIRECT SECTORS: %1 bytes exceeded sector range (%2 dropped)")
+                                 .arg(s.bytes.size()).arg(s.bytes.size() - pos), true);
+                anyFailed = true;
+            }
+            else
+            {
+                appendOutput(QString("wrote %1 bytes to %2 sector(s) on drive %3")
+                                 .arg(pos).arg(sectorsWritten).arg(QChar('A' + driveIdx)), false);
+            }
+            continue;
+        }
         if (s.toDisk && !s.fileName.isEmpty())
         {
             if (!diskBuffers.contains(s.fileName))
@@ -881,6 +961,7 @@ void AssemblerWindow::onAssemble()
         }
         else
         {
+            bool anyDiskSucceeded = false;
             for (const QString &fname : diskOrder)
             {
                 const DiskFile &df = diskBuffers[fname];
@@ -894,7 +975,76 @@ void AssemblerWindow::onAssemble()
                 else
                 {
                     for (const QString &line : log) appendOutput(line, false);
+                    anyDiskSucceeded = true;
                 }
+            }
+            if (anyDiskSucceeded) drv->MarkDirty();
+        }
+    }
+
+    int saveTotal = 0;
+    for (const AssemblerSaveRequest &sq : r.saves)
+    {
+        QByteArray data;
+        int totalSize = 0;
+        for (const AssemblerSaveRegion &rg : sq.regions) totalSize += rg.size;
+        data.reserve(totalSize);
+        for (const AssemblerSaveRegion &rg : sq.regions)
+            for (int i = 0; i < rg.size; i++)
+                data.append(char(CPC::GetByteAt(word((rg.address + i) & 0xFFFF))));
+        if (sq.toDisk)
+        {
+            FloppyDrive *drv = CPC::fdc.GetDrive(0);
+            if (!drv || !drv->DiskInserted)
+            {
+                appendOutput(tr("SAVE DIRECT \"%1\": no disc in drive A").arg(sq.filename), true);
+                anyFailed = true;
+                continue;
+            }
+            int loadAddr = sq.regions.isEmpty() ? 0 : (sq.regions.first().address & 0xFFFF);
+            int execAddr = (sq.execAddress >= 0) ? sq.execAddress : loadAddr;
+            QStringList log;
+            QString err;
+            if (!writeAmsdosFile(drv, sq.filename, loadAddr, execAddr, data, log, err))
+            {
+                appendOutput(QString("SAVE DIRECT \"%1\": %2").arg(sq.filename, err), true);
+                anyFailed = true;
+            }
+            else
+            {
+                for (const QString &line : log) appendOutput(line, false);
+                drv->MarkDirty();
+                saveTotal += data.size();
+            }
+        }
+        else
+        {
+            QString fullPath = sq.filename;
+            if (QDir::isRelativePath(sq.filename))
+            {
+                QString binDir = QDir::homePath() + "/.cadence/BIN";
+                QDir().mkpath(binDir);
+                fullPath = binDir + "/" + sq.filename;
+            }
+            QFile f(fullPath);
+            if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            {
+                appendOutput(QString("SAVE \"%1\": %2").arg(fullPath, f.errorString()), true);
+                anyFailed = true;
+                continue;
+            }
+            qint64 w = f.write(data);
+            f.close();
+            if (w != data.size())
+            {
+                appendOutput(QString("SAVE short write to \"%1\" (%2 of %3 bytes)")
+                                 .arg(fullPath).arg(w).arg(data.size()), true);
+                anyFailed = true;
+            }
+            else
+            {
+                appendOutput(QString("saved %1 bytes to %2").arg(data.size()).arg(fullPath), false);
+                saveTotal += data.size();
             }
         }
     }
@@ -902,6 +1052,7 @@ void AssemblerWindow::onAssemble()
     QStringList summaryBits;
     if (fileTotal > 0) summaryBits.append(tr("%1 bytes to file(s)").arg(fileTotal));
     if (diskTotal > 0) summaryBits.append(tr("%1 bytes to disc A").arg(diskTotal));
+    if (saveTotal > 0) summaryBits.append(tr("%1 bytes via SAVE").arg(saveTotal));
     if (summaryBits.isEmpty())
         appendOutput(tr("Assembled %1 bytes into emulator memory.").arg(total), false);
     else
@@ -914,6 +1065,19 @@ void AssemblerWindow::onAssemble()
 
     if (MainWindow::Instance)
         MainWindow::Instance->RefreshDebuggerIfOpen();
+
+    if (r.run.valid)
+    {
+        if (r.run.breakpoint >= 0)
+            CPC::Breakpoint[r.run.breakpoint & 0xFFFF] = true;
+        CPC::z80.SetPC(word(r.run.address & 0xFFFF));
+        appendOutput(QString("RUN from &%1%2")
+                         .arg(QString::number(r.run.address & 0xFFFF, 16).toUpper().rightJustified(4, '0'))
+                         .arg(r.run.breakpoint >= 0
+                              ? QString(", break at &%1").arg(QString::number(r.run.breakpoint & 0xFFFF, 16).toUpper().rightJustified(4, '0'))
+                              : QString()),
+                     false);
+    }
 
     EmulatorThread::Run();
 }
