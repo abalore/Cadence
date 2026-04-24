@@ -1790,6 +1790,17 @@ bool Core::parseDirective(const QString &name)
         if (wasDisabled) retargetSegment();
         return true;
     }
+    if (name == "close")
+    {
+        curFile.clear();
+        curToDisk = false;
+        curExec = -1;
+        curLowerRom = -1;
+        curUpperRom = -1;
+        curRamBank  = 0xC0;
+        if (pass == 2) retargetSegment();
+        return true;
+    }
 
     if (name == "org")
     {
@@ -1816,7 +1827,8 @@ bool Core::parseDirective(const QString &name)
         }
         return true;
     }
-    if (name == "db" || name == "defb" || name == "dm" || name == "defm" || name == "text")
+    if (name == "db" || name == "defb" || name == "dm" || name == "defm" ||
+        name == "text" || name == "byte")
     {
         do
         {
@@ -1846,7 +1858,7 @@ bool Core::parseDirective(const QString &name)
         } while (true);
         return true;
     }
-    if (name == "dw" || name == "defw")
+    if (name == "dw" || name == "defw" || name == "word")
     {
         do
         {
@@ -1857,7 +1869,7 @@ bool Core::parseDirective(const QString &name)
         } while (true);
         return true;
     }
-    if (name == "ds" || name == "defs")
+    if (name == "ds" || name == "defs" || name == "rmem")
     {
         ExprResult count = parseExpr();
         if (!count.defined) { error(ln, "DS size must be known in pass 1"); skipToEndOfStatement(); return true; }
@@ -2097,7 +2109,7 @@ void Core::handleMacroDefinition()
     Macro m;
     m.name = cur().text;
     ti++;
-    while (cur().t == Tk::Ident && cur().text != "mend")
+    while (cur().t == Tk::Ident && cur().text != "mend" && cur().text != "endm")
     {
         m.params.append(cur().text);
         ti++;
@@ -2109,7 +2121,7 @@ void Core::handleMacroDefinition()
     bool closed = false;
     while (cur().t != Tk::End)
     {
-        if (cur().t == Tk::Ident && cur().text == "mend")
+        if (cur().t == Tk::Ident && (cur().text == "mend" || cur().text == "endm"))
         {
             ti++;
             closed = true;
@@ -2244,6 +2256,26 @@ void Core::handleConditional(const QString &id)
         }
         return;
     }
+    if (id == "elseif")
+    {
+        ExprResult er = parseExpr();
+        if (condStack.isEmpty())
+        {
+            error(ln, "ELSEIF without matching IF/IFDEF");
+            return;
+        }
+        CondFrame &top = condStack.last();
+        if (top.parentActive && !top.takenThisIf && er.value != 0)
+        {
+            top.active = true;
+            top.takenThisIf = true;
+        }
+        else
+        {
+            top.active = false;
+        }
+        return;
+    }
     if (id == "endif")
     {
         if (condStack.isEmpty())
@@ -2265,7 +2297,7 @@ void Core::parseLine()
     {
         QString id = cur().text;
         if (id == "ifdef" || id == "ifndef" || id == "if" || id == "ifnot" ||
-            id == "else" || id == "endif")
+            id == "else" || id == "elseif" || id == "endif")
         {
             ti++;
             handleConditional(id);
@@ -2306,7 +2338,8 @@ void Core::parseLine()
         };
         static QSet<QString> directives = {
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
-            "read","incbin","limit","nolist","list","text","brk","code","nocode"
+            "read","incbin","limit","nolist","list","text","brk","code","nocode",
+            "byte","word","rmem","close"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
         (void)hasColon;
