@@ -135,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionSFX_enabled, &QAction::toggled, this, [](bool checked){ SoundThread::sfxEnabled = checked; });
     connect(ui->actionTape_enabled, &QAction::toggled, this, [](bool checked){ CPC::tape.audioEnabled = checked; });
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
+    connect(ui->action512kExpansion, &QAction::toggled, this, &MainWindow::onToggle512kExpansion);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
 
     ui->hLine->setVisible(false);
@@ -357,6 +358,9 @@ void MainWindow::applySettingsToUi()
     crtcActions[ct]->setChecked(true);
     CPC::crtc.crtcType = ct;
 
+    ui->action512kExpansion->setChecked(settings.ram512kExpansion);
+    CPC::has512kExpansion = settings.ram512kExpansion;
+
     const bool smooth = settings.smooth;
     QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
     CPC::gateArray.SetMonochrome(settings.greenMonitor);
@@ -379,6 +383,7 @@ void MainWindow::collectSettingsFromUi()
     settings.tapeEnabled  = ui->actionTape_enabled->isChecked();
     settings.rsBackslash  = ui->actionRight_shift_as_backslash->isChecked();
     settings.crtcType     = CPC::crtc.crtcType;
+    settings.ram512kExpansion = ui->action512kExpansion->isChecked();
 }
 
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)
@@ -738,6 +743,18 @@ void MainWindow::setMediaText(QLabel *label, const QString &text)
     label->style()->polish(label);
     QFontMetrics fm(label->font());
     label->setText(fm.elidedText(text, Qt::ElideRight, label->width()));
+}
+
+void MainWindow::onToggle512kExpansion(bool checked)
+{
+    if (CPC::has512kExpansion == checked) return;
+    StopThreads();
+    CPC::Finalize();
+    CPC::has512kExpansion = checked;
+    CPC::Init();
+    applyROMOverrides();
+    StartThreads();
+    settings.ram512kExpansion = checked;
 }
 
 void MainWindow::SwitchMachine(CPCType type)

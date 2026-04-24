@@ -47,7 +47,8 @@ public:
     static BYTE *LoROM;
     static BYTE *HiROM;
     static BYTE *HiROMs[ROM_SLOTS];
-    static BYTE *RAMs[8];
+    static BYTE *RAMs[36];
+    static bool has512kExpansion;
     static BYTE *Cartridge;
     static BYTE zeroPage[0x4000];
     static bool cartridgeEnabled;

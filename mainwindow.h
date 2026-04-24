@@ -70,6 +70,7 @@ private slots:
     void SetCPC464();
     void SetCPC664();
     void SetCPC6128();
+    void onToggle512kExpansion(bool checked);
 private:
     void SwitchMachine(CPCType type);
     void setMediaText(QLabel *label, const QString &text);

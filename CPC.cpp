@@ -28,7 +28,8 @@ BYTE CPC::zeroPage[0x4000] = {};
 BYTE *CPC::LoROM;
 BYTE *CPC::HiROM;
 BYTE *CPC::HiROMs[ROM_SLOTS];
-BYTE *CPC::RAMs[8];
+BYTE *CPC::RAMs[36];
+bool CPC::has512kExpansion = false;
 BYTE *CPC::Cartridge;
 bool CPC::cartridgeEnabled;
 CPCType CPC::cpcType = CPCType::CPC6128;
@@ -99,7 +100,7 @@ void CPC::Init()
     tick = 0;
 
     auto allocRAM = [](int count) {
-        for (int i = 0; i < 8; i++) if (RAMs[i] != nullptr)
+        for (int i = 0; i < 36; i++) if (RAMs[i] != nullptr)
         {
             free(RAMs[i]);
             RAMs[i] = nullptr;
@@ -108,27 +109,30 @@ void CPC::Init()
             RAMs[i] = (BYTE *) malloc(0x4000);
     };
 
+    // With 512k expansion: always 36 pages (64k base + 8 × 64k blocks accessible via MMR bits 5-3).
+    // On CPC6128, block 0 of the expansion coincides with the machine's built-in 64k.
+    int basePages = (cpcType == CPCType::CPC6128) ? 8 : 4;
+    int ramPages  = has512kExpansion ? 36 : basePages;
+
     switch(cpcType)
     {
     case CPCType::CPC464:
         ReadROM((char *)"ROM/ROM_BIOS_464.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_464.bin", 0);
-        allocRAM(4);
         break;
     case CPCType::CPC664:
         ReadROM((char *)"ROM/ROM_BIOS_664.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_664.bin", 0);
         ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
-        allocRAM(4);
         break;
     case CPCType::CPC6128:
         ReadROM((char *)"ROM/ROM_BIOS_6128.bin", -1);
         ReadROM((char *)"ROM/ROM_BASIC_6128.bin", 0);
         ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
         //ReadROM((char *)"ROM/PARADOS.ROM", 7);
-        allocRAM(8);
         break;
     }
+    allocRAM(ramPages);
 }
 
 void CPC::Finalize()
@@ -143,7 +147,7 @@ void CPC::Finalize()
         free(Cartridge);
         Cartridge = nullptr;
     }
-    for (int i = 0; i < 8; i++) if (RAMs[i] != nullptr)
+    for (int i = 0; i < 36; i++) if (RAMs[i] != nullptr)
         {
             free(RAMs[i]);
             RAMs[i] = nullptr;
@@ -305,27 +309,41 @@ void CPC::SelectROM(BYTE number)
 
 void CPC::SelectRAM(BYTE mmr)
 {
-    if (cpcType == CPCType::CPC6128)
+    if (cpcType == CPCType::CPC6128 || has512kExpansion)
     {
+        // MMR bits 5-3 select the 64k block (0-7). Without 512k expansion only block 0 is valid.
+        int block = has512kExpansion ? ((mmr >> 3) & 0x07) : 0;
+        BYTE *exp[4];
+        if (block == 0)
+        {
+            exp[0] = RAMs[4]; exp[1] = RAMs[5]; exp[2] = RAMs[6]; exp[3] = RAMs[7];
+        }
+        else
+        {
+            int base = 8 + (block - 1) * 4;
+            exp[0] = RAMs[base + 0]; exp[1] = RAMs[base + 1];
+            exp[2] = RAMs[base + 2]; exp[3] = RAMs[base + 3];
+        }
+
         switch(mmr & 0x07)
         {
         case 0:
             RAM[0] = RAMs[0]; RAM[1] = RAMs[1]; RAM[2] = RAMs[2]; RAM[3] = RAMs[3];
             break;
         case 1:
-            RAM[0] = RAMs[0]; RAM[1] = RAMs[1]; RAM[2] = RAMs[2]; RAM[3] = RAMs[7];
+            RAM[0] = RAMs[0]; RAM[1] = RAMs[1]; RAM[2] = RAMs[2]; RAM[3] = exp[3];
             break;
         case 2:
-            RAM[0] = RAMs[4]; RAM[1] = RAMs[5]; RAM[2] = RAMs[6]; RAM[3] = RAMs[7];
+            RAM[0] = exp[0];  RAM[1] = exp[1];  RAM[2] = exp[2];  RAM[3] = exp[3];
             break;
         case 3:
-            RAM[0] = RAMs[0]; RAM[1] = RAMs[3]; RAM[2] = RAMs[2]; RAM[3] = RAMs[7];
+            RAM[0] = RAMs[0]; RAM[1] = RAMs[3]; RAM[2] = RAMs[2]; RAM[3] = exp[3];
             break;
         case 4:
         case 5:
         case 6:
         case 7:
-            RAM[0] = RAMs[0]; RAM[1] = RAMs[mmr & 0x07]; RAM[2] = RAMs[2]; RAM[3] = RAMs[3];
+            RAM[0] = RAMs[0]; RAM[1] = exp[(mmr & 0x07) - 4]; RAM[2] = RAMs[2]; RAM[3] = RAMs[3];
             break;
         }
     }

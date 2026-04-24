@@ -14,6 +14,7 @@ public:
     bool tapeEnabled = true;
     bool rsBackslash = true;
     int crtcType = 0;
+    bool ram512kExpansion = false;
     QString system = "CPC6128";
     QString diskAPath;
     QString diskBPath;

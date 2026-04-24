@@ -165,10 +165,17 @@
      <addaction name="actionCRTC_3"/>
      <addaction name="actionCRTC_4"/>
     </widget>
+    <widget class="QMenu" name="menuMemory">
+     <property name="title">
+      <string>Memory</string>
+     </property>
+     <addaction name="action512kExpansion"/>
+    </widget>
     <addaction name="menuScreen"/>
     <addaction name="menuAudio"/>
     <addaction name="menuKeyboard"/>
     <addaction name="menuCRTC"/>
+    <addaction name="menuMemory"/>
     <addaction name="actionROM_Box"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
@@ -348,6 +355,14 @@
    </property>
    <property name="text">
     <string>4 - ASIC</string>
+   </property>
+  </action>
+  <action name="action512kExpansion">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>512k expansion</string>
    </property>
   </action>
   <action name="actionRight_shift_as_backslash">
