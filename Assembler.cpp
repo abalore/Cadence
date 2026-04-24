@@ -492,6 +492,9 @@ struct Core
     int includeDepth = 0;
     int estimatedTokens = 0;
     bool codeEnabled = true;
+    int codeLimit = -1;
+    bool limitErrorReported = false;
+    bool endHit = false;
     bool hadError = false;
     QVector<AssemblerMessage> messages;
     Assembler::ProgressFn progressFn;
@@ -526,6 +529,46 @@ struct Core
         hadError = true;
     }
     void errorHere(const QString &text) { error(cur().line, text); }
+    void info(int line, const QString &text)
+    {
+        AssemblerMessage m; m.line = line; m.text = text; m.isError = false;
+        m.source = cur().source;
+        messages.append(m);
+    }
+
+    QString interpolatePrintString(const QString &s) const
+    {
+        QString out;
+        for (int i = 0; i < s.size(); )
+        {
+            QChar c = s[i];
+            if (c == '$' || c == '&')
+            {
+                int j = i + 1;
+                if (j < s.size() && (s[j].isLetter() || s[j] == '_' || s[j] == '.' || s[j] == '@'))
+                {
+                    while (j < s.size() &&
+                           (s[j].isLetterOrNumber() || s[j] == '_' || s[j] == '.' || s[j] == '?'))
+                        j++;
+                    QString name = s.mid(i + 1, j - i - 1).toLower();
+                    auto it = symbols.find(name);
+                    if (it != symbols.end())
+                    {
+                        if (c == '$')
+                            out += QString::number(it.value() & 0xFFFF, 16).toUpper()
+                                       .rightJustified(4, QLatin1Char('0'));
+                        else
+                            out += QString::number(it.value());
+                        i = j;
+                        continue;
+                    }
+                }
+            }
+            out += c;
+            i++;
+        }
+        return out;
+    }
 
     QString resolveIncludePath(const QString &name) const
     {
@@ -552,7 +595,23 @@ struct Core
 
     void emitByte(int value)
     {
-        if (pass == 2 && codeEnabled)
+        bool overLimit = (codeLimit >= 0 && pc > codeLimit);
+        if (overLimit)
+        {
+            if (!limitErrorReported)
+            {
+                error(cur().line,
+                      QString("code exceeds LIMIT &%1 (pc=&%2)")
+                          .arg(QString::number(codeLimit, 16).toUpper())
+                          .arg(QString::number(pc, 16).toUpper()));
+                limitErrorReported = true;
+            }
+        }
+        else
+        {
+            limitErrorReported = false;
+        }
+        if (pass == 2 && codeEnabled && !overLimit)
         {
             if (segments.isEmpty())
             {
@@ -1770,12 +1829,40 @@ bool Core::parseDirective(const QString &name)
     }
     if (name == "limit")
     {
-        if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon) parseExpr();
+        if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon)
+        {
+            ExprResult er = parseExpr();
+            codeLimit = int(er.value) & 0xFFFF;
+            limitErrorReported = false;
+        }
         return true;
     }
     if (name == "brk")
     {
         emitByte(0xF7);
+        return true;
+    }
+    if (name == "str")
+    {
+        do
+        {
+            if (cur().t == Tk::String)
+            {
+                QString s = cur().text;
+                ti++;
+                if (s.isEmpty()) continue;
+                for (int i = 0; i < s.size() - 1; i++)
+                    emitByte(s[i].unicode() & 0xFF);
+                emitByte((s[s.size() - 1].unicode() & 0xFF) | 0x80);
+            }
+            else
+            {
+                ExprResult er = parseExpr();
+                emitByte((int(er.value) & 0xFF) | 0x80);
+            }
+            if (cur().t != Tk::Comma) break;
+            ti++;
+        } while (true);
         return true;
     }
     if (name == "nocode")
@@ -1799,6 +1886,32 @@ bool Core::parseDirective(const QString &name)
         curUpperRom = -1;
         curRamBank  = 0xC0;
         if (pass == 2) retargetSegment();
+        return true;
+    }
+    if (name == "end")
+    {
+        endHit = true;
+        return true;
+    }
+    if (name == "print")
+    {
+        do
+        {
+            QString text;
+            if (cur().t == Tk::String)
+            {
+                QString s = cur().text; ti++;
+                text = interpolatePrintString(s);
+            }
+            else
+            {
+                ExprResult er = parseExpr();
+                text = QString::number(er.value);
+            }
+            if (pass == 2) info(ln, text);
+            if (cur().t != Tk::Comma) break;
+            ti++;
+        } while (true);
         return true;
     }
 
@@ -1966,6 +2079,30 @@ bool Core::parseDirective(const QString &name)
         }
         QString fname = cur().text;
         ti++;
+        qint64 offset = 0;
+        qint64 size = -1;
+        qint64 offsetHigh = 0;
+        bool haveSize = false;
+        if (cur().t == Tk::Comma)
+        {
+            ti++;
+            ExprResult er = parseExpr();
+            offset = er.value & 0xFFFF;
+            if (cur().t == Tk::Comma)
+            {
+                ti++;
+                ExprResult er2 = parseExpr();
+                size = er2.value & 0xFFFF;
+                haveSize = true;
+                if (cur().t == Tk::Comma)
+                {
+                    ti++;
+                    ExprResult er3 = parseExpr();
+                    offsetHigh = er3.value & 0xFFFF;
+                }
+            }
+        }
+        qint64 totalOffset = offsetHigh * 65536 + offset;
         QString resolved = resolveIncludePath(fname);
         QFile f(resolved);
         if (!f.open(QFile::ReadOnly))
@@ -1974,7 +2111,14 @@ bool Core::parseDirective(const QString &name)
                 error(ln, QString("INCBIN: cannot open \"%1\"").arg(fname));
             return true;
         }
-        QByteArray data = f.readAll();
+        if (totalOffset > 0 && !f.seek(totalOffset))
+        {
+            if (pass == 1)
+                error(ln, QString("INCBIN: cannot seek to offset %1 in \"%2\"")
+                          .arg(totalOffset).arg(fname));
+            return true;
+        }
+        QByteArray data = haveSize ? f.read(size) : f.readAll();
         for (char b : data) emitByte(static_cast<unsigned char>(b));
         return true;
     }
@@ -2339,7 +2483,7 @@ void Core::parseLine()
         static QSet<QString> directives = {
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
             "read","incbin","limit","nolist","list","text","brk","code","nocode",
-            "byte","word","rmem","close"
+            "byte","word","rmem","close","str","end","print"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
         (void)hasColon;
@@ -2472,9 +2616,12 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curToDisk = false;
     curExec = -1;
     codeEnabled = true;
+    codeLimit = -1;
+    limitErrorReported = false;
+    endHit = false;
     condStack.clear();
     int counter = 0;
-    while (cur().t != Tk::End)
+    while (!endHit && cur().t != Tk::End)
     {
         int startTi = ti;
         int startToksSize = toks.size();
@@ -2504,10 +2651,13 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curToDisk = false;
     curExec = -1;
     codeEnabled = true;
+    codeLimit = -1;
+    limitErrorReported = false;
+    endHit = false;
     condStack.clear();
     segments.clear();
     counter = 0;
-    while (cur().t != Tk::End)
+    while (!endHit && cur().t != Tk::End)
     {
         parseLine();
         if (progress && (++counter % tickEvery) == 0)
