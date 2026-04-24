@@ -15,6 +15,7 @@ public:
     bool rsBackslash = true;
     int crtcType = 0;
     bool ram512kExpansion = false;
+    int phosphorPersistence = 0;
     QString system = "CPC6128";
     QString diskAPath;
     QString diskBPath;

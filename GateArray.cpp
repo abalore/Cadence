@@ -6,7 +6,6 @@ void GateArray::Reset()
 {
     Color = AbsoluteBlack;
     memset(INK, 0, sizeof(INK));
-    Monochrome = false;
     BORDER = 0;
     currentPen = 0;
     R52 = 0;
@@ -32,7 +31,7 @@ void GateArray::Reset()
     hsyncDelay = 0;
     vsyncDelay = 0;
     blankColor = nullptr;
-    currentPalette = Palette;
+    currentPalette = Monochrome ? GreenPalette : Palette;
     latchLo = 0;
     latchHi = 0;
     dispEnFF1 = false;

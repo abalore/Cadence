@@ -1,5 +1,6 @@
 #include "pboWidget.h"
 #include "CPC.h"
+#include <cstring>
 
 BYTE *pixels;
 
@@ -60,8 +61,23 @@ void PboWidget::paintGL()
 
 void PboWidget::updateTexture()
 {
+    const BYTE *src = CPC::screen.Pixels;
+    const BYTE *upload = src;
+    if (persistence > 0)
+    {
+        constexpr int N = imageWidth * imageHeight * 3;
+        const int a = persistence; // decay retention (0..90)
+        for (int i = 0; i < N; i++)
+        {
+            int decayed = (prev[i] * a) / 100;
+            int s = src[i];
+            blended[i] = (decayed > s) ? decayed : s;
+        }
+        memcpy(prev, blended, N);
+        upload = blended;
+    }
     glBindTexture(GL_TEXTURE_2D, ID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, CPC::screen.Pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 312, 0, GL_RGB, GL_UNSIGNED_BYTE, upload);
     update();
 }
 
@@ -73,4 +89,12 @@ void PboWidget::setSmoothing(bool enabled)
     glBindTexture(GL_TEXTURE_2D, ID);
     applySmoothing();
     doneCurrent();
+}
+
+void PboWidget::setPersistence(int level)
+{
+    if (level < 0) level = 0;
+    if (level > 90) level = 90;
+    persistence = level;
+    if (level == 0) memset(prev, 0, sizeof(prev));
 }

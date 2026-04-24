@@ -96,7 +96,7 @@ private:
     BYTE mode;
     BYTE pi;
     BYTE decodedPen[4][8][256];
-    bool Monochrome;
+    bool Monochrome = false;
     bool CCLK;
     bool VideoAccess;
     BYTE porch;

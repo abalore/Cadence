@@ -119,17 +119,7 @@
     <property name="title">
      <string>System</string>
     </property>
-    <addaction name="actionAmstrad_CPC464"/>
-    <addaction name="actionAmstrad_CPC664"/>
-    <addaction name="actionAmstrad_CPC6128"/>
-    <addaction name="separator"/>
-    <addaction name="actionReset"/>
-    <addaction name="separator"/>
-    <addaction name="menuSettings"/>
-    <addaction name="separator"/>
-    <addaction name="actionQuit"/>
-   </widget>
-   <widget class="QMenu" name="menuSettings">
+    <widget class="QMenu" name="menuSettings">
     <property name="title">
      <string>Options</string>
     </property>
@@ -137,8 +127,24 @@
      <property name="title">
       <string>Screen</string>
      </property>
+     <widget class="QMenu" name="menuPhosphor_persistence">
+      <property name="title">
+       <string>Phosphor persistence</string>
+      </property>
+      <addaction name="actionPersistence_0"/>
+      <addaction name="actionPersistence_10"/>
+      <addaction name="actionPersistence_20"/>
+      <addaction name="actionPersistence_30"/>
+      <addaction name="actionPersistence_40"/>
+      <addaction name="actionPersistence_50"/>
+      <addaction name="actionPersistence_60"/>
+      <addaction name="actionPersistence_70"/>
+      <addaction name="actionPersistence_80"/>
+      <addaction name="actionPersistence_90"/>
+     </widget>
      <addaction name="actionSmooth"/>
      <addaction name="actionGreen_monitor"/>
+     <addaction name="menuPhosphor_persistence"/>
      <addaction name="actionFull_screen"/>
     </widget>
     <widget class="QMenu" name="menuAudio">
@@ -165,7 +171,7 @@
      <addaction name="actionCRTC_3"/>
      <addaction name="actionCRTC_4"/>
     </widget>
-    <widget class="QMenu" name="menuMemory">
+    <widget class="QMenu" name="menuMemoryExpansion">
      <property name="title">
       <string>Memory</string>
      </property>
@@ -175,8 +181,18 @@
     <addaction name="menuAudio"/>
     <addaction name="menuKeyboard"/>
     <addaction name="menuCRTC"/>
-    <addaction name="menuMemory"/>
+    <addaction name="menuMemoryExpansion"/>
     <addaction name="actionROM_Box"/>
+   </widget>
+    <addaction name="actionAmstrad_CPC464"/>
+    <addaction name="actionAmstrad_CPC664"/>
+    <addaction name="actionAmstrad_CPC6128"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset"/>
+    <addaction name="separator"/>
+    <addaction name="menuSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuDevices">
     <property name="title">
@@ -470,6 +486,57 @@
    <property name="shortcut">
     <string>Shift+F11</string>
    </property>
+  </action>
+  <action name="actionPersistence_0">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="checked"><bool>true</bool></property>
+   <property name="text"><string>Off</string></property>
+   <property name="shortcut"><string>Ctrl+0</string></property>
+  </action>
+  <action name="actionPersistence_10">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>10%</string></property>
+   <property name="shortcut"><string>Ctrl+1</string></property>
+  </action>
+  <action name="actionPersistence_20">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>20%</string></property>
+   <property name="shortcut"><string>Ctrl+2</string></property>
+  </action>
+  <action name="actionPersistence_30">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>30%</string></property>
+   <property name="shortcut"><string>Ctrl+3</string></property>
+  </action>
+  <action name="actionPersistence_40">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>40%</string></property>
+   <property name="shortcut"><string>Ctrl+4</string></property>
+  </action>
+  <action name="actionPersistence_50">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>50%</string></property>
+   <property name="shortcut"><string>Ctrl+5</string></property>
+  </action>
+  <action name="actionPersistence_60">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>60%</string></property>
+   <property name="shortcut"><string>Ctrl+6</string></property>
+  </action>
+  <action name="actionPersistence_70">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>70%</string></property>
+   <property name="shortcut"><string>Ctrl+7</string></property>
+  </action>
+  <action name="actionPersistence_80">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>80%</string></property>
+   <property name="shortcut"><string>Ctrl+8</string></property>
+  </action>
+  <action name="actionPersistence_90">
+   <property name="checkable"><bool>true</bool></property>
+   <property name="text"><string>90%</string></property>
+   <property name="shortcut"><string>Ctrl+9</string></property>
   </action>
   <action name="actionNew_blank_disk">
    <property name="text">

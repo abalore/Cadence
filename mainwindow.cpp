@@ -106,6 +106,21 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
     connect(ui->actionInsert_blank_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertBlankCartridge);
     connect(ui->actionGreen_monitor, &QAction::changed, this, &MainWindow::onMenuScreenGreenMonitor);
+
+    QActionGroup *persistenceGroup = new QActionGroup(this);
+    persistenceGroup->setExclusive(true);
+    QAction *persistenceActions[10] = {
+        ui->actionPersistence_0,  ui->actionPersistence_10, ui->actionPersistence_20,
+        ui->actionPersistence_30, ui->actionPersistence_40, ui->actionPersistence_50,
+        ui->actionPersistence_60, ui->actionPersistence_70, ui->actionPersistence_80,
+        ui->actionPersistence_90
+    };
+    for (int i = 0; i < 10; i++)
+    {
+        persistenceActions[i]->setData(i * 10);
+        persistenceGroup->addAction(persistenceActions[i]);
+    }
+    connect(persistenceGroup, &QActionGroup::triggered, this, &MainWindow::onMenuScreenPhosphorPersistence);
     connect(ui->actionFull_screen, &QAction::changed, this, &MainWindow::onMenuViewFullScreen);
     connect(ui->actionAssembler, &QAction::triggered, this, &MainWindow::onMenuDebugAssembler);
 
@@ -361,8 +376,21 @@ void MainWindow::applySettingsToUi()
     ui->action512kExpansion->setChecked(settings.ram512kExpansion);
     CPC::has512kExpansion = settings.ram512kExpansion;
 
+    int pLevel = settings.phosphorPersistence;
+    if (pLevel < 0 || pLevel > 90 || (pLevel % 10) != 0) pLevel = 0;
+    QAction *persistenceActions[10] = {
+        ui->actionPersistence_0,  ui->actionPersistence_10, ui->actionPersistence_20,
+        ui->actionPersistence_30, ui->actionPersistence_40, ui->actionPersistence_50,
+        ui->actionPersistence_60, ui->actionPersistence_70, ui->actionPersistence_80,
+        ui->actionPersistence_90
+    };
+    persistenceActions[pLevel / 10]->setChecked(true);
+
     const bool smooth = settings.smooth;
-    QTimer::singleShot(0, this, [this, smooth]{ ui->openGLWidget->setSmoothing(smooth); });
+    QTimer::singleShot(0, this, [this, smooth, pLevel]{
+        ui->openGLWidget->setSmoothing(smooth);
+        ui->openGLWidget->setPersistence(pLevel);
+    });
     CPC::gateArray.SetMonochrome(settings.greenMonitor);
     SoundThread::enabled = settings.audioEnabled;
     SoundThread::sfxEnabled = settings.sfxEnabled;
@@ -696,6 +724,13 @@ void MainWindow::onMenuAbout()
 void MainWindow::onMenuScreenGreenMonitor()
 {
     CPC::gateArray.SetMonochrome(ui->actionGreen_monitor->isChecked());
+}
+
+void MainWindow::onMenuScreenPhosphorPersistence(QAction *action)
+{
+    int level = action->data().toInt();
+    ui->openGLWidget->setPersistence(level);
+    settings.phosphorPersistence = level;
 }
 
 void MainWindow::onMenuViewFullScreen()

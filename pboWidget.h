@@ -18,10 +18,14 @@ public:
     void updateTexture();
     void setSmoothing(bool enabled);
     void applySmoothing();
+    void setPersistence(int level);
 protected:
     void initializeGL() override;
     void paintGL() override;
 private:
     unsigned int ID = 0;
     bool smoothing = true;
+    int persistence = 0;
+    unsigned char prev[imageWidth * imageHeight * 3] = {};
+    unsigned char blended[imageWidth * imageHeight * 3];
 };

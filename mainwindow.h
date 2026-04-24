@@ -60,6 +60,7 @@ private slots:
     void onMenuMediaInsertCartridge();
     void onMenuMediaInsertBlankCartridge();
     void onMenuScreenGreenMonitor();
+    void onMenuScreenPhosphorPersistence(QAction *action);
     void onMenuViewFullScreen();
     void onMenuDebugAssembler();
     void onMenuAbout();
