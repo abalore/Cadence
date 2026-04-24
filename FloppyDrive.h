@@ -20,6 +20,9 @@ public:
     bool FormatTrack(int track, int side, BYTE sizeCode, BYTE sectorCount, BYTE filler, const BYTE *sectorHeaders);
     bool SetSectorMark(BYTE track, BYTE side, BYTE sectorId, bool deleted);
     SectorInfo GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE position);
+    BYTE *GetSectorDataById(BYTE track, BYTE side, BYTE sectorId, int *sizeOut = nullptr);
+    BYTE GetTracks() const;
+    BYTE GetSidesCount() const;
     bool DiskInserted;
 private:
     void FreeBuffer();

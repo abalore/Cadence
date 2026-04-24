@@ -17,6 +17,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QPlainTextEdit>
+#include <QSet>
 #include <QSplitter>
 #include <QTabWidget>
 #include <QTextDocument>
@@ -25,10 +26,313 @@
 #include <QThread>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <cstring>
 
 namespace {
 const char *kFilePropName = "asm_currentFile";
+
+struct AmsdosGeom
+{
+    bool valid = false;
+    int reservedTracks = 0;
+    int sectorBaseId = 0xC1;
+    int sectorsPerTrack = 9;
+    int sectorSize = 512;
+    int blockSize = 1024;
+    int dirSectors = 4;
+    int dirEntries = 64;
+    int maxBlock = 179;
+};
+
+static AmsdosGeom detectAmsdosGeom(FloppyDrive *drv)
+{
+    AmsdosGeom g;
+    if (!drv || !drv->DiskInserted) return g;
+    if (drv->GetSectorDataById(0, 0, 0xC1) != nullptr)
+    {
+        g.reservedTracks = 0;
+        g.sectorBaseId = 0xC1;
+        int tracks = drv->GetTracks();
+        g.maxBlock = tracks * g.sectorsPerTrack * g.sectorSize / g.blockSize - 1;
+        g.valid = true;
+        return g;
+    }
+    if (drv->GetTracks() > 2 && drv->GetSectorDataById(2, 0, 0x41) != nullptr)
+    {
+        g.reservedTracks = 2;
+        g.sectorBaseId = 0x41;
+        int usable = drv->GetTracks() - 2;
+        g.maxBlock = usable * g.sectorsPerTrack * g.sectorSize / g.blockSize - 1;
+        g.valid = true;
+        return g;
+    }
+    return g;
 }
+
+static void blockToSectors(const AmsdosGeom &g, int block,
+                           int &tA, int &idA, int &tB, int &idB)
+{
+    int logA = block * 2;
+    int logB = logA + 1;
+    tA = g.reservedTracks + logA / g.sectorsPerTrack;
+    idA = g.sectorBaseId + (logA % g.sectorsPerTrack);
+    tB = g.reservedTracks + logB / g.sectorsPerTrack;
+    idB = g.sectorBaseId + (logB % g.sectorsPerTrack);
+}
+
+static bool splitName83(const QString &input, QByteArray &name8,
+                        QByteArray &ext3, QString &errOut)
+{
+    QString base = QFileInfo(input).fileName();
+    if (base.isEmpty()) { errOut = "empty filename"; return false; }
+    QString up = base.toUpper();
+    int dot = up.lastIndexOf('.');
+    QString n = (dot >= 0) ? up.left(dot) : up;
+    QString e = (dot >= 0) ? up.mid(dot + 1) : QString();
+    if (n.isEmpty() || n.size() > 8)
+    {
+        errOut = QString("invalid name \"%1\" (1..8 chars before dot)").arg(base);
+        return false;
+    }
+    if (e.size() > 3)
+    {
+        errOut = QString("invalid extension in \"%1\" (0..3 chars)").arg(base);
+        return false;
+    }
+    auto validCh = [](QChar c) {
+        return c.isLetterOrNumber() || QString("!#$&@^_{}`~").contains(c);
+    };
+    for (QChar c : n)
+        if (!validCh(c))
+        {
+            errOut = QString("invalid character in filename \"%1\"").arg(base);
+            return false;
+        }
+    for (QChar c : e)
+        if (!validCh(c))
+        {
+            errOut = QString("invalid character in extension \"%1\"").arg(base);
+            return false;
+        }
+    name8 = n.leftJustified(8, ' ', true).toLatin1();
+    ext3 = e.leftJustified(3, ' ', true).toLatin1();
+    return true;
+}
+
+static QByteArray buildAmsdosHeader(const QByteArray &name8, const QByteArray &ext3,
+                                    int loadAddr, int execAddr, int dataLen)
+{
+    QByteArray h(128, char(0));
+    h[0x00] = 0;
+    for (int i = 0; i < 8; i++) h[1 + i] = name8[i];
+    for (int i = 0; i < 3; i++) h[9 + i] = ext3[i];
+    h[0x10] = 0;
+    h[0x11] = 0;
+    h[0x12] = char(2);
+    h[0x13] = char(dataLen & 0xFF);
+    h[0x14] = char((dataLen >> 8) & 0xFF);
+    h[0x15] = char(loadAddr & 0xFF);
+    h[0x16] = char((loadAddr >> 8) & 0xFF);
+    h[0x17] = char(0xFF);
+    h[0x18] = char(dataLen & 0xFF);
+    h[0x19] = char((dataLen >> 8) & 0xFF);
+    h[0x1A] = char(execAddr & 0xFF);
+    h[0x1B] = char((execAddr >> 8) & 0xFF);
+    h[0x40] = char(dataLen & 0xFF);
+    h[0x41] = char((dataLen >> 8) & 0xFF);
+    h[0x42] = char((dataLen >> 16) & 0xFF);
+    unsigned sum = 0;
+    for (int i = 0; i < 0x43; i++) sum += static_cast<unsigned char>(h[i]);
+    h[0x43] = char(sum & 0xFF);
+    h[0x44] = char((sum >> 8) & 0xFF);
+    return h;
+}
+
+static bool readDirectory(FloppyDrive *drv, const AmsdosGeom &g,
+                          QByteArray &dirOut, QString &errOut)
+{
+    dirOut.resize(g.dirSectors * g.sectorSize);
+    for (int i = 0; i < g.dirSectors; i++)
+    {
+        int track = g.reservedTracks;
+        int id = g.sectorBaseId + i;
+        int sz = 0;
+        BYTE *p = drv->GetSectorDataById(track, 0, id, &sz);
+        if (!p || sz < g.sectorSize)
+        {
+            errOut = QString("cannot read directory sector id &%1 on track %2")
+                     .arg(QString::number(id, 16).toUpper()).arg(track);
+            return false;
+        }
+        memcpy(dirOut.data() + i * g.sectorSize, p, g.sectorSize);
+    }
+    return true;
+}
+
+static bool writeDirectory(FloppyDrive *drv, const AmsdosGeom &g,
+                           const QByteArray &dir, QString &errOut)
+{
+    for (int i = 0; i < g.dirSectors; i++)
+    {
+        int track = g.reservedTracks;
+        int id = g.sectorBaseId + i;
+        int sz = 0;
+        BYTE *p = drv->GetSectorDataById(track, 0, id, &sz);
+        if (!p || sz < g.sectorSize)
+        {
+            errOut = QString("cannot write directory sector id &%1 on track %2")
+                     .arg(QString::number(id, 16).toUpper()).arg(track);
+            return false;
+        }
+        memcpy(p, dir.constData() + i * g.sectorSize, g.sectorSize);
+    }
+    return true;
+}
+
+static bool writeBlock(FloppyDrive *drv, const AmsdosGeom &g, int block,
+                       const char *data, int len, QString &errOut)
+{
+    int tA, idA, tB, idB;
+    blockToSectors(g, block, tA, idA, tB, idB);
+    int szA = 0, szB = 0;
+    BYTE *pA = drv->GetSectorDataById(tA, 0, idA, &szA);
+    BYTE *pB = drv->GetSectorDataById(tB, 0, idB, &szB);
+    if (!pA || szA < g.sectorSize || !pB || szB < g.sectorSize)
+    {
+        errOut = QString("block %1 maps to missing sector (t%2 id&%3 or t%4 id&%5)")
+                 .arg(block).arg(tA).arg(QString::number(idA, 16).toUpper())
+                 .arg(tB).arg(QString::number(idB, 16).toUpper());
+        return false;
+    }
+    QByteArray buf(g.blockSize, char(0xE5));
+    int n = qMin(len, g.blockSize);
+    if (n > 0) memcpy(buf.data(), data, n);
+    memcpy(pA, buf.constData(), g.sectorSize);
+    memcpy(pB, buf.constData() + g.sectorSize, g.sectorSize);
+    return true;
+}
+
+static bool amsdosNameEquals(const BYTE *entry, const QByteArray &name8,
+                             const QByteArray &ext3)
+{
+    for (int i = 0; i < 8; i++)
+        if ((entry[1 + i] & 0x7F) != static_cast<unsigned char>(name8[i])) return false;
+    for (int i = 0; i < 3; i++)
+        if ((entry[9 + i] & 0x7F) != static_cast<unsigned char>(ext3[i])) return false;
+    return true;
+}
+
+static bool writeAmsdosFile(FloppyDrive *drv, const QString &filename,
+                            int loadAddr, int execAddr,
+                            const QByteArray &bodyBytes,
+                            QStringList &log, QString &errOut)
+{
+    AmsdosGeom g = detectAmsdosGeom(drv);
+    if (!g.valid) { errOut = "disc in drive A does not appear to be AMSDOS-formatted (expected DATA or SYSTEM)"; return false; }
+
+    QByteArray name8, ext3;
+    if (!splitName83(filename, name8, ext3, errOut)) return false;
+
+    QByteArray header = buildAmsdosHeader(name8, ext3, loadAddr, execAddr, bodyBytes.size());
+    QByteArray payload = header + bodyBytes;
+    int totalRecords = (payload.size() + 127) / 128;
+    int totalBlocks = (payload.size() + g.blockSize - 1) / g.blockSize;
+    int extentsNeeded = (totalRecords + 127) / 128;
+    if (extentsNeeded < 1) extentsNeeded = 1;
+
+    QByteArray dir;
+    if (!readDirectory(drv, g, dir, errOut)) return false;
+
+    BYTE *de = reinterpret_cast<BYTE *>(dir.data());
+
+    for (int i = 0; i < g.dirEntries; i++)
+    {
+        BYTE *e = de + i * 32;
+        if (e[0] <= 15 && amsdosNameEquals(e, name8, ext3))
+            e[0] = 0xE5;
+    }
+
+    QSet<int> used;
+    for (int i = 0; i < g.dirEntries; i++)
+    {
+        BYTE *e = de + i * 32;
+        if (e[0] > 15) continue;
+        for (int k = 0; k < 16; k++)
+        {
+            int b = e[0x10 + k];
+            if (b != 0) used.insert(b);
+        }
+    }
+
+    QVector<int> freeBlocks;
+    for (int b = 2; b <= g.maxBlock; b++)
+        if (!used.contains(b)) freeBlocks.append(b);
+
+    if (totalBlocks > freeBlocks.size())
+    {
+        errOut = QString("disc full (%1 blocks needed, %2 free)")
+                 .arg(totalBlocks).arg(freeBlocks.size());
+        return false;
+    }
+
+    QVector<int> freeEntries;
+    for (int i = 0; i < g.dirEntries; i++)
+        if (de[i * 32] > 15) freeEntries.append(i);
+
+    if (extentsNeeded > freeEntries.size())
+    {
+        errOut = QString("directory full (%1 entries needed, %2 free)")
+                 .arg(extentsNeeded).arg(freeEntries.size());
+        return false;
+    }
+
+    QVector<int> chosenBlocks = freeBlocks.mid(0, totalBlocks);
+
+    for (int i = 0; i < totalBlocks; i++)
+    {
+        int blk = chosenBlocks[i];
+        int off = i * g.blockSize;
+        int remain = payload.size() - off;
+        if (!writeBlock(drv, g, blk, payload.constData() + off, remain, errOut))
+            return false;
+    }
+
+    int recordsRemaining = totalRecords;
+    int blockCursor = 0;
+    for (int ex = 0; ex < extentsNeeded; ex++)
+    {
+        int entryIdx = freeEntries[ex];
+        BYTE *e = de + entryIdx * 32;
+        memset(e, 0, 32);
+        e[0] = 0;
+        for (int i = 0; i < 8; i++) e[1 + i] = static_cast<unsigned char>(name8[i]);
+        for (int i = 0; i < 3; i++) e[9 + i] = static_cast<unsigned char>(ext3[i]);
+        e[0x0C] = ex & 0x1F;
+        e[0x0D] = 0;
+        e[0x0E] = (ex >> 5) & 0x3F;
+        int recThis = qMin(128, recordsRemaining);
+        e[0x0F] = recThis & 0xFF;
+        int blocksThis = (recThis + 7) / 8;
+        for (int k = 0; k < 16; k++)
+            e[0x10 + k] = (k < blocksThis) ? static_cast<BYTE>(chosenBlocks[blockCursor + k]) : 0;
+        blockCursor += blocksThis;
+        recordsRemaining -= recThis;
+    }
+
+    if (!writeDirectory(drv, g, dir, errOut)) return false;
+
+    log.append(QString("wrote %1 bytes (%2 + 128 header) as %3.%4 to drive A (non-persistent)")
+               .arg(payload.size()).arg(bodyBytes.size())
+               .arg(QString::fromLatin1(name8).trimmed())
+               .arg(QString::fromLatin1(ext3).trimmed()));
+    log.append(QString("  load=&%1 exec=&%2 blocks=%3 extents=%4 (%5)")
+               .arg(loadAddr, 4, 16, QChar('0')).arg(execAddr, 4, 16, QChar('0'))
+               .arg(totalBlocks).arg(extentsNeeded)
+               .arg(g.sectorBaseId == 0xC1 ? "DATA" : "SYSTEM"));
+    return true;
+}
+
+} // namespace
 
 AssemblerWindow::AssemblerWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -351,11 +655,30 @@ void AssemblerWindow::onAssemble()
 
     int total = 0;
     int fileTotal = 0;
+    int diskTotal = 0;
     bool anyFailed = false;
     QHash<QString, QByteArray> fileBuffers;
     QStringList fileOrder;
+    struct DiskFile { QByteArray bytes; int loadAddr; int execAddr; };
+    QHash<QString, DiskFile> diskBuffers;
+    QStringList diskOrder;
     for (const AssemblerSegment &s : r.segments)
     {
+        if (s.toDisk && !s.fileName.isEmpty())
+        {
+            if (!diskBuffers.contains(s.fileName))
+            {
+                DiskFile df;
+                df.loadAddr = s.writeOrigin & 0xFFFF;
+                df.execAddr = (s.execAddress >= 0) ? (s.execAddress & 0xFFFF) : df.loadAddr;
+                diskBuffers.insert(s.fileName, df);
+                diskOrder.append(s.fileName);
+            }
+            diskBuffers[s.fileName].bytes.append(s.bytes);
+            diskTotal += s.bytes.size();
+            appendOutput(QString("emitted %1 bytes to disc file \"%2\"").arg(s.bytes.size()).arg(s.fileName), false);
+            continue;
+        }
         if (!s.fileName.isEmpty())
         {
             if (!fileBuffers.contains(s.fileName))
@@ -445,10 +768,42 @@ void AssemblerWindow::onAssemble()
         else
             appendOutput(QString("wrote %1 bytes to %2").arg(buf.size()).arg(fullPath), false);
     }
-    if (fileTotal > 0)
-        appendOutput(tr("Assembled %1 bytes into emulator memory and %2 bytes to file(s). Emulator is paused.").arg(total).arg(fileTotal), false);
-    else
+    if (!diskOrder.isEmpty())
+    {
+        FloppyDrive *drv = CPC::fdc.GetDrive(0);
+        if (!drv || !drv->DiskInserted)
+        {
+            appendOutput(tr("WRITE DIRECT: no disc inserted in drive A; %1 file(s) not written").arg(diskOrder.size()), true);
+            anyFailed = true;
+        }
+        else
+        {
+            for (const QString &fname : diskOrder)
+            {
+                const DiskFile &df = diskBuffers[fname];
+                QStringList log;
+                QString err;
+                if (!writeAmsdosFile(drv, fname, df.loadAddr, df.execAddr, df.bytes, log, err))
+                {
+                    appendOutput(QString("WRITE DIRECT \"%1\": %2").arg(fname, err), true);
+                    anyFailed = true;
+                }
+                else
+                {
+                    for (const QString &line : log) appendOutput(line, false);
+                }
+            }
+        }
+    }
+
+    QStringList summaryBits;
+    if (fileTotal > 0) summaryBits.append(tr("%1 bytes to file(s)").arg(fileTotal));
+    if (diskTotal > 0) summaryBits.append(tr("%1 bytes to disc A").arg(diskTotal));
+    if (summaryBits.isEmpty())
         appendOutput(tr("Assembled %1 bytes into emulator memory. Emulator is paused.").arg(total), false);
+    else
+        appendOutput(tr("Assembled %1 bytes into emulator memory and %2. Emulator is paused.")
+                     .arg(total).arg(summaryBits.join(", ")), false);
     if (anyFailed)
         statusBar()->showMessage(tr("Assembled with skipped bytes (paused)"), 5000);
     else

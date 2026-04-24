@@ -120,3 +120,29 @@ SectorInfo FloppyDrive::GetPhysicalSectorInfo(BYTE track, BYTE side, BYTE positi
         si.SI_ID = 0xFF;
     return si;
 }
+
+BYTE *FloppyDrive::GetSectorDataById(BYTE track, BYTE side, BYTE sectorId, int *sizeOut)
+{
+    if (!DiskInserted) return nullptr;
+    for (BYTE pos = 0; pos < 64; pos++)
+    {
+        SectorInfo si = dsk.GetPhysicalSectorInfo(track, side, pos);
+        if (si.SI_ID == 0xFE || si.SI_ID == 0xFF) break;
+        if (si.SI_ID == sectorId)
+        {
+            if (sizeOut) *sizeOut = 128 << (si.SI_size & 0x07);
+            return si.SectorData[0];
+        }
+    }
+    return nullptr;
+}
+
+BYTE FloppyDrive::GetTracks() const
+{
+    return DiskInserted ? dsk.tracks : 0;
+}
+
+BYTE FloppyDrive::GetSidesCount() const
+{
+    return DiskInserted ? dsk.sides : 0;
+}

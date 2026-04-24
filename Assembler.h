@@ -21,6 +21,8 @@ struct AssemblerSegment
     int upperRom = -1;   // -1 disabled (RAM), 0..15 Upper ROM slot
     int ramBank  = 0xC0; // CPC RAM bank select (#C0..#FF, we support #C0..#C7)
     QString fileName;    // if non-empty, bytes go to this file instead of memory
+    bool toDisk = false; // if true, fileName targets the DSK in drive A (AMSDOS)
+    int execAddress = -1;// AMSDOS exec address (-1 = use load address)
     QByteArray bytes;
 };
 

@@ -483,6 +483,8 @@ struct Core
     int curUpperRom = -1;
     int curRamBank  = 0xC0;
     QString curFile;
+    bool curToDisk = false;
+    int curExec = -1;
     QString basePath;
     int includeDepth = 0;
     bool hadError = false;
@@ -527,6 +529,8 @@ struct Core
                 s.upperRom = curUpperRom;
                 s.ramBank  = curRamBank;
                 s.fileName = curFile;
+                s.toDisk = curToDisk;
+                s.execAddress = curExec;
                 segments.append(s);
             }
             segments.last().bytes.append(char(value & 0xFF));
@@ -546,6 +550,8 @@ struct Core
         s.upperRom = curUpperRom;
         s.ramBank  = curRamBank;
         s.fileName = curFile;
+        s.toDisk = curToDisk;
+        s.execAddress = curExec;
         segments.append(s);
     }
 
@@ -561,16 +567,20 @@ struct Core
             s.upperRom = curUpperRom;
             s.ramBank  = curRamBank;
             s.fileName = curFile;
+            s.toDisk = curToDisk;
+            s.execAddress = curExec;
             segments.append(s);
         }
         else
         {
-            segments.last().origin      = pc;
-            segments.last().writeOrigin = writePc;
-            segments.last().lowerRom    = curLowerRom;
-            segments.last().upperRom    = curUpperRom;
-            segments.last().ramBank     = curRamBank;
-            segments.last().fileName    = curFile;
+            segments.last().origin       = pc;
+            segments.last().writeOrigin  = writePc;
+            segments.last().lowerRom     = curLowerRom;
+            segments.last().upperRom     = curUpperRom;
+            segments.last().ramBank      = curRamBank;
+            segments.last().fileName     = curFile;
+            segments.last().toDisk       = curToDisk;
+            segments.last().execAddress  = curExec;
         }
     }
 
@@ -1853,6 +1863,8 @@ bool Core::parseDirective(const QString &name)
                 curLowerRom = -1;
                 curUpperRom = -1;
                 curRamBank  = 0xC0;
+                curToDisk = false;
+                curExec = -1;
                 retargetSegment();
             }
             return true;
@@ -1872,8 +1884,28 @@ bool Core::parseDirective(const QString &name)
         }
         if (cur().t == Tk::String)
         {
-            if (pass == 2) error(ln, "WRITE DIRECT to disc image file not yet supported");
-            skipToEndOfStatement();
+            QString fname = cur().text;
+            ti++;
+            i64 execAddr = 0;
+            bool haveExec = false;
+            if (cur().t == Tk::Comma)
+            {
+                ti++;
+                ExprResult er = parseExpr();
+                execAddr = er.value & 0xFFFF;
+                haveExec = true;
+            }
+            if (pass == 2)
+            {
+                if (fname.isEmpty()) { error(ln, "WRITE DIRECT: filename must not be empty"); return true; }
+                curFile = fname;
+                curLowerRom = -1;
+                curUpperRom = -1;
+                curRamBank  = 0xC0;
+                curToDisk = true;
+                curExec = haveExec ? int(execAddr) : -1;
+                retargetSegment();
+            }
             return true;
         }
         i64 lower = -1, upper = -1, bank = 0xC0;
@@ -1916,6 +1948,8 @@ bool Core::parseDirective(const QString &name)
             curUpperRom = int(upper);
             curRamBank  = int(bank);
             curFile.clear();
+            curToDisk = false;
+            curExec = -1;
             retargetSegment();
         }
         return true;
@@ -2027,6 +2061,8 @@ AssemblerResult Core::run(const QString &source, const QString &base)
     curUpperRom = -1;
     curRamBank  = 0xC0;
     curFile.clear();
+    curToDisk = false;
+    curExec = -1;
     while (cur().t != Tk::End) parseLine();
     if (hadError) { r.messages = messages; return r; }
 
@@ -2038,6 +2074,9 @@ AssemblerResult Core::run(const QString &source, const QString &base)
     curLowerRom = -1;
     curUpperRom = -1;
     curRamBank  = 0xC0;
+    curFile.clear();
+    curToDisk = false;
+    curExec = -1;
     segments.clear();
     while (cur().t != Tk::End) parseLine();
 
