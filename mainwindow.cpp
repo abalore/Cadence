@@ -44,6 +44,8 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QApplication>
+#include <QCursor>
+#include <QGuiApplication>
 #include <QScreen>
 
 using namespace std;
@@ -56,7 +58,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setAcceptDrops(true);
-    if (QScreen *screen = QApplication::primaryScreen())
+    QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
+    if (!screen) screen = QApplication::primaryScreen();
+    if (screen)
     {
         QRect avail = screen->availableGeometry();
         QSize hint = sizeHint();
@@ -345,6 +349,7 @@ void MainWindow::onMenuDebugAssembler()
         assemblerWindow = new AssemblerWindow(this);
         assemblerWindow->setAttribute(Qt::WA_DeleteOnClose);
         connect(assemblerWindow, &QObject::destroyed, this, [this]() { assemblerWindow = nullptr; });
+        assemblerWindow->move(pos() + QPoint(100, 100));
     }
     assemblerWindow->show();
     assemblerWindow->raise();
@@ -459,8 +464,9 @@ void MainWindow::onEmulatorPaused()
     ui->hLine->move(0, CPC::screen.vPos * 2 - 56);
     ui->vLine->move(CPC::screen.hPos + 240, 0);
     ui->vLine->pos().setX(CPC::screen.vPos);
-    if (debugger->isHidden())
+    if (!suppressNextPauseDebugger && debugger->isHidden())
         debugger->show();
+    suppressNextPauseDebugger = false;
     debugger->Update();
 }
 

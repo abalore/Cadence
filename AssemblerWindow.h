@@ -3,9 +3,11 @@
 
 #include "Assembler.h"
 #include <QFont>
+#include <QHash>
 #include <QList>
 #include <QMainWindow>
 #include <QMetaObject>
+#include <QPair>
 #include <QString>
 
 class QPlainTextEdit;
@@ -21,6 +23,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *ev) override;
 
 private slots:
     void onNew();
@@ -42,6 +45,10 @@ private:
     QPlainTextEdit *newEditorTab(const QString &path = QString());
     void updateTabLabel(QPlainTextEdit *ed);
     void appendOutput(const QString &text, bool isError);
+    void appendErrorOutput(const QString &text, bool isError, const QString &source, int line);
+    void navigateToSource(const QString &path, int line);
+    void saveSession();
+    void restoreSession();
     void clearOutput();
     void updateTitle();
     void wireEditorSignals(QPlainTextEdit *ed);
@@ -63,6 +70,7 @@ private:
     Assembler assembler;
     QList<QMetaObject::Connection> editorConnections;
     QFont monoFont;
+    QHash<int, QPair<QString, int>> outputLocations;
 };
 
 #endif // ASSEMBLERWINDOW_H

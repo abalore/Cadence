@@ -32,6 +32,7 @@ public:
     static MainWindow *Instance;
     void RefreshDebuggerIfOpen();
     void ResetEmulation();
+    bool suppressNextPauseDebugger = false;
 protected:
     void closeEvent(QCloseEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;

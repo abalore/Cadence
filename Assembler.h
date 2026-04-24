@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
+#include <functional>
 
 struct AssemblerMessage
 {
@@ -36,7 +37,9 @@ struct AssemblerResult
 class Assembler
 {
 public:
-    AssemblerResult Assemble(const QString &source, const QString &basePath = QString());
+    using ProgressFn = std::function<void(int /*pass*/, int /*percent*/, const QString &/*label*/)>;
+    AssemblerResult Assemble(const QString &source, const QString &basePath = QString(),
+                             const ProgressFn &progress = ProgressFn());
 };
 
 #endif // ASSEMBLER_H

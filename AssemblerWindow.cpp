@@ -16,7 +16,13 @@
 #include <QKeySequence>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QCoreApplication>
+#include <QMouseEvent>
 #include <QPlainTextEdit>
+#include <QSettings>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QProgressBar>
 #include <QSet>
 #include <QSplitter>
 #include <QTabWidget>
@@ -354,6 +360,8 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     output->setFont(monoFont);
     output->setReadOnly(true);
     output->setPlaceholderText(tr("Assembly output will appear here."));
+    output->viewport()->installEventFilter(this);
+    output->viewport()->setCursor(Qt::IBeamCursor);
 
     QSplitter *split = new QSplitter(Qt::Vertical, this);
     split->addWidget(tabs);
@@ -427,7 +435,8 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     connect(actPaste,     &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->paste(); });
     connect(actSelectAll, &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->selectAll(); });
 
-    newEditorTab();
+    restoreSession();
+    if (tabs->count() == 0) newEditorTab();
 
     statusBar()->showMessage(tr("Ready"));
     updateTitle();
@@ -529,7 +538,52 @@ void AssemblerWindow::closeEvent(QCloseEvent *event)
         tabs->setCurrentIndex(i);
         if (!maybeSaveEditor(ed)) { event->ignore(); return; }
     }
+    saveSession();
     event->accept();
+}
+
+void AssemblerWindow::saveSession()
+{
+    QDir().mkpath(QDir::homePath() + "/.config/cadence");
+    QSettings s(QDir::homePath() + "/.config/cadence/settings.cfg", QSettings::IniFormat);
+    QStringList paths;
+    for (int i = 0; i < tabs->count(); i++)
+    {
+        QPlainTextEdit *ed = qobject_cast<QPlainTextEdit *>(tabs->widget(i));
+        if (!ed) continue;
+        QString path = editorFile(ed);
+        if (!path.isEmpty()) paths << path;
+    }
+    s.setValue("assembler/open_files", paths);
+    int curIdx = -1;
+    if (QPlainTextEdit *cur = currentEditor())
+    {
+        QString curPath = editorFile(cur);
+        curIdx = curPath.isEmpty() ? -1 : paths.indexOf(curPath);
+    }
+    s.setValue("assembler/current_index", curIdx);
+}
+
+void AssemblerWindow::restoreSession()
+{
+    QSettings s(QDir::homePath() + "/.config/cadence/settings.cfg", QSettings::IniFormat);
+    QStringList paths = s.value("assembler/open_files").toStringList();
+    int curIdx = s.value("assembler/current_index", -1).toInt();
+    for (const QString &path : paths)
+    {
+        if (!QFileInfo::exists(path)) continue;
+        QPlainTextEdit *ed = newEditorTab();
+        if (readEditorFromFile(ed, path))
+            setEditorFile(ed, path);
+        else
+        {
+            int idx = tabs->indexOf(ed);
+            if (idx >= 0) tabs->removeTab(idx);
+            ed->deleteLater();
+        }
+    }
+    if (curIdx >= 0 && curIdx < tabs->count())
+        tabs->setCurrentIndex(curIdx);
 }
 
 void AssemblerWindow::onNew()
@@ -611,16 +665,51 @@ void AssemblerWindow::onAssemble()
     if (!ed) return;
     QString path = editorFile(ed);
     QString base = path.isEmpty() ? QString() : QFileInfo(path).absolutePath();
-    AssemblerResult r = assembler.Assemble(ed->toPlainText(), base);
+
+    QProgressBar *progressBar = new QProgressBar(statusBar());
+    progressBar->setRange(0, 100);
+    progressBar->setFixedWidth(540);
+    progressBar->setTextVisible(true);
+    statusBar()->addPermanentWidget(progressBar);
+    progressBar->setValue(0);
+    progressBar->setFormat(tr("Lexing..."));
+    statusBar()->showMessage(tr("Assembling..."));
+    actAssemble->setEnabled(false);
+    QElapsedTimer pulseTimer;
+    pulseTimer.start();
+    QString passLabel[3] = {tr("Lexing"), tr("Pass 1"), tr("Pass 2")};
+    Assembler::ProgressFn progress = [&](int pass, int percent, const QString &label) {
+        int idx = qBound(0, pass, 2);
+        if (label.startsWith(QStringLiteral("READ ")))
+            statusBar()->showMessage(tr("Reading %1...").arg(label.mid(5)));
+        progressBar->setValue(percent);
+        progressBar->setFormat(QString("%1 %2%").arg(passLabel[idx]).arg(percent));
+        if (pulseTimer.elapsed() >= 30)
+        {
+            QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+            pulseTimer.restart();
+        }
+    };
+    AssemblerResult r = assembler.Assemble(ed->toPlainText(), base, progress);
+    statusBar()->removeWidget(progressBar);
+    progressBar->deleteLater();
+    actAssemble->setEnabled(true);
     for (const AssemblerMessage &m : r.messages)
     {
         QString prefix = m.isError ? tr("error") : tr("info");
         QString loc;
+        QString navPath;
         if (!m.source.isEmpty())
+        {
             loc = QString("(%1:%2) ").arg(QFileInfo(m.source).fileName(), QString::number(m.line));
+            navPath = m.source;
+        }
         else if (m.line > 0)
+        {
             loc = QString("(%1) ").arg(m.line);
-        appendOutput(QString("%1%2: %3").arg(loc, prefix, m.text), m.isError);
+            navPath = path;
+        }
+        appendErrorOutput(QString("%1%2: %3").arg(loc, prefix, m.text), m.isError, navPath, m.line);
     }
     if (!r.ok)
     {
@@ -630,6 +719,8 @@ void AssemblerWindow::onAssemble()
 
     if (EmulatorThread::running)
     {
+        if (MainWindow::Instance)
+            MainWindow::Instance->suppressNextPauseDebugger = true;
         EmulatorThread::Pause();
         QElapsedTimer t;
         t.start();
@@ -689,6 +780,7 @@ void AssemblerWindow::onAssemble()
             continue;
         }
         int written = 0, skipped = 0;
+        bool hitLoRom = false, hitUpRom = false, hitRam = false;
         for (int i = 0; i < s.bytes.size(); i++)
         {
             word addr = word((s.writeOrigin + i) & 0xFFFF);
@@ -696,8 +788,12 @@ void AssemblerWindow::onAssemble()
             int off = addr & 0x3FFF;
             BYTE b = BYTE(uchar(s.bytes[i]));
             BYTE *dst = nullptr;
+            enum { HIT_NONE, HIT_LOROM, HIT_UPROM, HIT_RAM } hit = HIT_NONE;
             if (bankIdx == 0 && s.lowerRom == 0)
+            {
                 dst = CPC::LoROM;
+                hit = HIT_LOROM;
+            }
             else if (bankIdx == 3 && s.upperRom >= 0)
             {
                 if (s.upperRom >= 0x80 && s.upperRom <= 0x9F)
@@ -707,10 +803,21 @@ void AssemblerWindow::onAssemble()
                 }
                 else
                     dst = CPC::HiROMs[s.upperRom];
+                hit = HIT_UPROM;
             }
             else
+            {
                 dst = ramForBank(s.ramBank, bankIdx);
-            if (dst) { dst[off] = b; written++; }
+                hit = HIT_RAM;
+            }
+            if (dst)
+            {
+                dst[off] = b;
+                written++;
+                if (hit == HIT_LOROM) hitLoRom = true;
+                else if (hit == HIT_UPROM) hitUpRom = true;
+                else if (hit == HIT_RAM) hitRam = true;
+            }
             else { skipped++; }
         }
         QString addr = QString::number(s.writeOrigin, 16).rightJustified(4, '0').toUpper();
@@ -724,15 +831,11 @@ void AssemblerWindow::onAssemble()
                 return QString("CART#%1").arg(n - 0x80);
             return QString("UpROM#%1").arg(n);
         };
-        QString tgt;
-        if (s.lowerRom == 0 && s.upperRom >= 0)
-            tgt = QString("LoROM+%1").arg(upperLabel(s.upperRom));
-        else if (s.lowerRom == 0)
-            tgt = QString("LoROM+RAM&%1").arg(QString::number(s.ramBank, 16).toUpper());
-        else if (s.upperRom >= 0)
-            tgt = QString("%1+RAM&%2").arg(upperLabel(s.upperRom), QString::number(s.ramBank, 16).toUpper());
-        else
-            tgt = QString("RAM&%1").arg(QString::number(s.ramBank, 16).toUpper());
+        QStringList parts;
+        if (hitLoRom) parts << QStringLiteral("LoROM");
+        if (hitUpRom) parts << upperLabel(s.upperRom);
+        if (hitRam)   parts << QString("RAM&%1").arg(QString::number(s.ramBank, 16).toUpper());
+        QString tgt = parts.isEmpty() ? QStringLiteral("-") : parts.join('+');
         appendOutput(QString("poked %1 bytes at &%2 [%3]").arg(written).arg(addr).arg(tgt), false);
         if (skipped > 0)
         {
@@ -800,17 +903,19 @@ void AssemblerWindow::onAssemble()
     if (fileTotal > 0) summaryBits.append(tr("%1 bytes to file(s)").arg(fileTotal));
     if (diskTotal > 0) summaryBits.append(tr("%1 bytes to disc A").arg(diskTotal));
     if (summaryBits.isEmpty())
-        appendOutput(tr("Assembled %1 bytes into emulator memory. Emulator is paused.").arg(total), false);
+        appendOutput(tr("Assembled %1 bytes into emulator memory.").arg(total), false);
     else
-        appendOutput(tr("Assembled %1 bytes into emulator memory and %2. Emulator is paused.")
+        appendOutput(tr("Assembled %1 bytes into emulator memory and %2.")
                      .arg(total).arg(summaryBits.join(", ")), false);
     if (anyFailed)
-        statusBar()->showMessage(tr("Assembled with skipped bytes (paused)"), 5000);
+        statusBar()->showMessage(tr("Assembled with skipped bytes"), 5000);
     else
-        statusBar()->showMessage(tr("Assembled to memory (paused)"), 5000);
+        statusBar()->showMessage(tr("Assembled"), 5000);
 
     if (MainWindow::Instance)
         MainWindow::Instance->RefreshDebuggerIfOpen();
+
+    EmulatorThread::Run();
 }
 
 bool AssemblerWindow::maybeSaveEditor(QPlainTextEdit *ed)
@@ -891,7 +996,70 @@ void AssemblerWindow::appendOutput(const QString &text, bool isError)
     output->appendPlainText(text);
 }
 
+void AssemblerWindow::appendErrorOutput(const QString &text, bool isError,
+                                        const QString &source, int line)
+{
+    (void)isError;
+    output->appendPlainText(text);
+    if (!source.isEmpty() && line > 0)
+    {
+        int blockNum = output->document()->blockCount() - 1;
+        outputLocations.insert(blockNum, qMakePair(source, line));
+    }
+}
+
 void AssemblerWindow::clearOutput()
 {
     output->clear();
+    outputLocations.clear();
+}
+
+void AssemblerWindow::navigateToSource(const QString &path, int line)
+{
+    QPlainTextEdit *target = nullptr;
+    for (int i = 0; i < tabs->count(); i++)
+    {
+        QPlainTextEdit *e = qobject_cast<QPlainTextEdit *>(tabs->widget(i));
+        if (e && editorFile(e) == path)
+        {
+            tabs->setCurrentIndex(i);
+            target = e;
+            break;
+        }
+    }
+    if (!target)
+    {
+        QPlainTextEdit *ed = currentEditor();
+        bool reuse = ed && editorFile(ed).isEmpty() &&
+                     !ed->document()->isModified() && ed->document()->isEmpty();
+        if (!reuse) ed = newEditorTab();
+        if (!readEditorFromFile(ed, path)) return;
+        setEditorFile(ed, path);
+        target = ed;
+    }
+    if (!target) return;
+
+    QTextBlock block = target->document()->findBlockByNumber(line - 1);
+    if (!block.isValid()) block = target->document()->lastBlock();
+    QTextCursor cursor(block);
+    target->setTextCursor(cursor);
+    target->centerCursor();
+    target->setFocus();
+}
+
+bool AssemblerWindow::eventFilter(QObject *obj, QEvent *ev)
+{
+    if (obj == output->viewport() && ev->type() == QEvent::MouseButtonDblClick)
+    {
+        QMouseEvent *me = static_cast<QMouseEvent *>(ev);
+        QTextCursor cursor = output->cursorForPosition(me->pos());
+        int blockNum = cursor.blockNumber();
+        auto it = outputLocations.constFind(blockNum);
+        if (it != outputLocations.constEnd())
+        {
+            navigateToSource(it.value().first, it.value().second);
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(obj, ev);
 }

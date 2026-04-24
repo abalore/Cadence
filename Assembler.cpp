@@ -394,6 +394,8 @@ QVector<Token> Lexer::all(QString *errorText, int *errorLine)
         if (isIdStart(c))
         {
             QString name;
+            name += peek();
+            advance();
             while (!atEnd() && isIdCont(peek()))
             {
                 name += peek();
@@ -467,7 +469,8 @@ QVector<Token> Lexer::all(QString *errorText, int *errorLine)
 
 struct Core
 {
-    AssemblerResult run(const QString &source, const QString &basePath);
+    AssemblerResult run(const QString &source, const QString &basePath,
+                        const Assembler::ProgressFn &progress);
 
     QVector<Token> toks;
     int ti = 0;
@@ -487,12 +490,32 @@ struct Core
     int curExec = -1;
     QString basePath;
     int includeDepth = 0;
+    int estimatedTokens = 0;
     bool hadError = false;
     QVector<AssemblerMessage> messages;
+    Assembler::ProgressFn progressFn;
+
+    struct CondFrame { bool parentActive; bool active; bool takenThisIf; };
+    QVector<CondFrame> condStack;
+
+    bool condActive() const
+    {
+        for (const CondFrame &f : condStack) if (!f.active) return false;
+        return true;
+    }
+
+    void handleConditional(const QString &id);
+
+    struct Macro { QString name; QVector<QString> params; QVector<Token> body; };
+    QHash<QString, Macro> macros;
+    int totalMacroExpansions = 0;
+
+    void handleMacroDefinition();
+    void handleMacroInvocation(const Macro &m);
 
     const Token &cur() const { return toks[ti]; }
     const Token &peekTok(int o = 0) const { return toks[ti + o]; }
-    void skipEols() { while (cur().t == Tk::Eol) ti++; }
+    void skipEols() { while (cur().t == Tk::Eol || cur().t == Tk::Colon) ti++; }
 
     void error(int line, const QString &text)
     {
@@ -505,13 +528,23 @@ struct Core
 
     QString resolveIncludePath(const QString &name) const
     {
+        QFileInfo fi(name);
+        if (fi.isAbsolute()) return fi.absoluteFilePath();
         QString ctxDir;
         if (!cur().source.isEmpty())
             ctxDir = QFileInfo(cur().source).absolutePath();
         else
             ctxDir = basePath;
-        QFileInfo fi(name);
-        if (fi.isAbsolute()) return fi.absoluteFilePath();
+        if (!ctxDir.isEmpty())
+        {
+            QString candidate = QDir(ctxDir).absoluteFilePath(name);
+            if (QFileInfo::exists(candidate)) return candidate;
+        }
+        if (!basePath.isEmpty() && basePath != ctxDir)
+        {
+            QString candidate = QDir(basePath).absoluteFilePath(name);
+            if (QFileInfo::exists(candidate)) return candidate;
+        }
         if (ctxDir.isEmpty()) return QFileInfo(name).absoluteFilePath();
         return QDir(ctxDir).absoluteFilePath(name);
     }
@@ -891,6 +924,7 @@ Core::ExprResult Core::parsePrimary()
     if (t.t == Tk::Ident)
     {
         ti++;
+        if (t.text == "@") { ExprResult r; r.value = writePc; return r; }
         auto it = symbols.find(t.text);
         if (it == symbols.end())
         {
@@ -912,7 +946,7 @@ Core::ExprResult Core::parsePrimary()
 
 void Core::skipToEndOfStatement()
 {
-    while (cur().t != Tk::Eol && cur().t != Tk::End) ti++;
+    while (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon) ti++;
 }
 
 // ============================================================
@@ -984,6 +1018,14 @@ Core::Operand Core::parseOperand()
 
     if (cur().t == Tk::String)
     {
+        if (cur().text.size() == 1)
+        {
+            o.kind = Operand::Immediate;
+            o.value = cur().text[0].unicode();
+            o.valueDefined = true;
+            ti++;
+            return o;
+        }
         o.kind = Operand::String;
         o.strText = cur().text;
         ti++;
@@ -1004,7 +1046,7 @@ Core::Operand Core::parseOperand()
         if (rc16 >= 0)
         {
             Tk nxt = peekTok(1).t;
-            if (nxt == Tk::Comma || nxt == Tk::Eol || nxt == Tk::End || nxt == Tk::RP)
+            if (nxt == Tk::Comma || nxt == Tk::Eol || nxt == Tk::End || nxt == Tk::RP || nxt == Tk::Colon)
             {
                 ti++;
                 o.kind = Operand::Reg16;
@@ -1016,7 +1058,7 @@ Core::Operand Core::parseOperand()
         if (rc8 != -99)
         {
             Tk nxt = peekTok(1).t;
-            bool isRegContext = (nxt == Tk::Comma || nxt == Tk::Eol || nxt == Tk::End || nxt == Tk::RP);
+            bool isRegContext = (nxt == Tk::Comma || nxt == Tk::Eol || nxt == Tk::End || nxt == Tk::RP || nxt == Tk::Colon);
             if (isRegContext)
             {
                 ti++;
@@ -1029,7 +1071,8 @@ Core::Operand Core::parseOperand()
         if (flag >= 0)
         {
             Tk nxt = peekTok(1).t;
-            if (nxt == Tk::Comma)
+            if (nxt == Tk::Comma || nxt == Tk::Eol || nxt == Tk::End ||
+                nxt == Tk::Colon || nxt == Tk::RP)
             {
                 ti++;
                 o.kind = Operand::Flag;
@@ -1245,6 +1288,11 @@ void Core::encPUSHPOP(bool isPush, const QVector<Operand> &ops, int ln)
 
 void Core::encJP(const QVector<Operand> &ops, int ln)
 {
+    auto asFlag = [](const Operand &o, int &f) -> bool {
+        if (o.kind == Operand::Flag) { f = o.flag; return true; }
+        if (o.kind == Operand::Reg8 && o.r8 == 1) { f = 3; return true; }
+        return false;
+    };
     if (ops.size() == 1)
     {
         const Operand &o = ops[0];
@@ -1259,9 +1307,11 @@ void Core::encJP(const QVector<Operand> &ops, int ln)
         }
         error(ln, "Invalid JP operand"); return;
     }
-    if (ops.size() == 2 && ops[0].kind == Operand::Flag && ops[1].kind == Operand::Immediate)
+    int f;
+    if (ops.size() == 2 && asFlag(ops[0], f) &&
+        (ops[1].kind == Operand::Immediate || ops[1].kind == Operand::IndImm))
     {
-        emitByte(0xC2 | (ops[0].flag << 3));
+        emitByte(0xC2 | (f << 3));
         emitWord(int(ops[1].value) & 0xFFFF);
         return;
     }
@@ -1279,6 +1329,11 @@ void Core::encJR(const QVector<Operand> &ops, int ln)
         if (flag > 3) { error(ln, "JR only supports NZ/Z/NC/C"); return; }
         target = &ops[1];
     }
+    else if (ops.size() == 2 && ops[0].kind == Operand::Reg8 && ops[0].r8 == 1)
+    {
+        flag = 3;
+        target = &ops[1];
+    }
     else { error(ln, "Invalid JR operands"); return; }
 
     if (target->kind != Operand::Immediate) { error(ln, "JR requires an address"); return; }
@@ -1293,15 +1348,22 @@ void Core::encJR(const QVector<Operand> &ops, int ln)
 
 void Core::encCALL(const QVector<Operand> &ops, int ln)
 {
-    if (ops.size() == 1 && ops[0].kind == Operand::Immediate)
+    auto asFlag = [](const Operand &o, int &f) -> bool {
+        if (o.kind == Operand::Flag) { f = o.flag; return true; }
+        if (o.kind == Operand::Reg8 && o.r8 == 1) { f = 3; return true; }
+        return false;
+    };
+    if (ops.size() == 1 && (ops[0].kind == Operand::Immediate || ops[0].kind == Operand::IndImm))
     {
         emitByte(0xCD);
         emitWord(int(ops[0].value) & 0xFFFF);
         return;
     }
-    if (ops.size() == 2 && ops[0].kind == Operand::Flag && ops[1].kind == Operand::Immediate)
+    int f;
+    if (ops.size() == 2 && asFlag(ops[0], f) &&
+        (ops[1].kind == Operand::Immediate || ops[1].kind == Operand::IndImm))
     {
-        emitByte(0xC4 | (ops[0].flag << 3));
+        emitByte(0xC4 | (f << 3));
         emitWord(int(ops[1].value) & 0xFFFF);
         return;
     }
@@ -1313,6 +1375,8 @@ void Core::encRET(const QVector<Operand> &ops, int ln)
     if (ops.isEmpty()) { emitByte(0xC9); return; }
     if (ops.size() == 1 && ops[0].kind == Operand::Flag)
     { emitByte(0xC0 | (ops[0].flag << 3)); return; }
+    if (ops.size() == 1 && ops[0].kind == Operand::Reg8 && ops[0].r8 == 1)
+    { emitByte(0xC0 | (3 << 3)); return; }
     error(ln, "Invalid RET operands");
 }
 
@@ -1513,6 +1577,8 @@ void Core::encEX(const QVector<Operand> &ops, int ln)
     { emitByte(0x08); return; }
     if (a.kind == Operand::Reg16 && a.r16 == 1 && b.kind == Operand::Reg16 && b.r16 == 2)
     { emitByte(0xEB); return; }
+    if (a.kind == Operand::Reg16 && a.r16 == 2 && b.kind == Operand::Reg16 && b.r16 == 1)
+    { emitByte(0xEB); return; }
     if (a.kind == Operand::IndReg16 && a.r16 == 3 && b.kind == Operand::Reg16)
     {
         if (b.r16 == 2) { emitByte(0xE3); return; }
@@ -1615,7 +1681,7 @@ void Core::parseInstruction(const QString &m)
 {
     QVector<Operand> ops;
     int ln = cur().line;
-    if (cur().t != Tk::Eol && cur().t != Tk::End)
+    if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon)
     {
         ops.append(parseOperand());
         while (cur().t == Tk::Comma)
@@ -1694,6 +1760,18 @@ void Core::parseInstruction(const QString &m)
 bool Core::parseDirective(const QString &name)
 {
     int ln = cur().line;
+    (void)ln;
+
+    if (name == "nolist" || name == "list")
+    {
+        skipToEndOfStatement();
+        return true;
+    }
+    if (name == "limit")
+    {
+        if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon) parseExpr();
+        return true;
+    }
 
     if (name == "org")
     {
@@ -1726,8 +1804,19 @@ bool Core::parseDirective(const QString &name)
         {
             if (cur().t == Tk::String)
             {
-                QString s = cur().text; ti++;
-                for (QChar c : s) emitByte(c.unicode() & 0xFF);
+                Tk nxt = peekTok(1).t;
+                bool standalone = (nxt == Tk::Comma || nxt == Tk::Eol ||
+                                   nxt == Tk::End || nxt == Tk::Colon);
+                if (standalone)
+                {
+                    QString s = cur().text; ti++;
+                    for (QChar c : s) emitByte(c.unicode() & 0xFF);
+                }
+                else
+                {
+                    ExprResult er = parseExpr();
+                    emitByte(int(er.value) & 0xFF);
+                }
             }
             else
             {
@@ -1760,6 +1849,11 @@ bool Core::parseDirective(const QString &name)
             ti++;
             ExprResult er = parseExpr();
             fill = er.value & 0xFF;
+        }
+        if (count.value < 0 || count.value > 0x10000)
+        {
+            error(ln, QString("DS count out of range: %1 (pc=&%2)").arg(qint64(count.value)).arg(QString::number(pc, 16).toUpper()));
+            return true;
         }
         for (i64 i = 0; i < count.value; i++) emitByte(int(fill) & 0xFF);
         return true;
@@ -1817,8 +1911,18 @@ bool Core::parseDirective(const QString &name)
                 incToks.removeLast();
             Token eol; eol.t = Tk::Eol; eol.line = 1; eol.col = 1; eol.source = resolved;
             incToks.prepend(eol);
-            for (int i = incToks.size() - 1; i >= 0; i--)
-                toks.insert(ti, incToks[i]);
+            QVector<Token> tail = toks.mid(ti);
+            toks.resize(ti);
+            toks.append(incToks);
+            toks.append(tail);
+            if (progressFn)
+            {
+                int total = estimatedTokens > 0 ? estimatedTokens
+                           : (toks.size() ? toks.size() : 1);
+                int pct = int((qint64(ti) * 100) / total);
+                if (pct > 100) pct = 100;
+                progressFn(1, pct, QString("READ %1").arg(QFileInfo(fname).fileName()));
+            }
         }
         return true;
     }
@@ -1909,7 +2013,7 @@ bool Core::parseDirective(const QString &name)
             return true;
         }
         i64 lower = -1, upper = -1, bank = 0xC0;
-        if (cur().t != Tk::Eol && cur().t != Tk::End)
+        if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon)
         {
             ExprResult er = parseExpr();
             lower = er.value;
@@ -1961,10 +2065,211 @@ bool Core::parseDirective(const QString &name)
 // Line parsing
 // ============================================================
 
+void Core::handleMacroDefinition()
+{
+    int ln = cur().line;
+    int defStart = ti;
+    ti++;
+    if (cur().t != Tk::Ident)
+    {
+        error(ln, "MACRO: expected name");
+        skipToEndOfStatement();
+        return;
+    }
+    Macro m;
+    m.name = cur().text;
+    ti++;
+    while (cur().t == Tk::Ident && cur().text != "mend")
+    {
+        m.params.append(cur().text);
+        ti++;
+        if (cur().t == Tk::Comma) { ti++; continue; }
+        break;
+    }
+    while (cur().t == Tk::Eol || cur().t == Tk::Colon) ti++;
+    int bodyScanStart = ti;
+    bool closed = false;
+    while (cur().t != Tk::End)
+    {
+        if (cur().t == Tk::Ident && cur().text == "mend")
+        {
+            ti++;
+            closed = true;
+            break;
+        }
+        m.body.append(cur());
+        ti++;
+    }
+    if (!closed)
+        error(ln, QString("MACRO '%1': missing MEND").arg(m.name));
+    if (macros.contains(m.name))
+        error(ln, QString("MACRO '%1': duplicate definition").arg(m.name));
+    macros.insert(m.name, m);
+    int defEnd = ti;
+    toks.remove(defStart, defEnd - defStart);
+    ti = defStart;
+    (void)bodyScanStart;
+}
+
+void Core::handleMacroInvocation(const Macro &m)
+{
+    int invocStart = ti;
+    int ln = cur().line;
+    ti++;
+    QVector<QVector<Token>> args;
+    QVector<Token> current;
+    int parenDepth = 0;
+    while (cur().t != Tk::Eol && cur().t != Tk::Colon && cur().t != Tk::End)
+    {
+        if (cur().t == Tk::LP) parenDepth++;
+        else if (cur().t == Tk::RP && parenDepth > 0) parenDepth--;
+        if (cur().t == Tk::Comma && parenDepth == 0)
+        {
+            args.append(current);
+            current.clear();
+            ti++;
+            continue;
+        }
+        current.append(cur());
+        ti++;
+    }
+    if (!current.isEmpty() || !args.isEmpty()) args.append(current);
+
+    if (args.size() > m.params.size())
+        error(ln, QString("MACRO '%1': too many arguments (%2 given, %3 expected)")
+              .arg(m.name).arg(args.size()).arg(m.params.size()));
+
+    if (totalMacroExpansions >= 100000 || toks.size() > 10000000)
+    {
+        error(ln, QString("MACRO '%1': expansion limit exceeded (recursive or runaway macro?)").arg(m.name));
+        return;
+    }
+    totalMacroExpansions++;
+
+    QVector<Token> expanded;
+    expanded.reserve(m.body.size());
+    for (const Token &tk : m.body)
+    {
+        if (tk.t == Tk::Ident)
+        {
+            int idx = m.params.indexOf(tk.text);
+            if (idx >= 0 && idx < args.size())
+            {
+                for (const Token &at : args[idx]) expanded.append(at);
+                continue;
+            }
+        }
+        expanded.append(tk);
+    }
+
+    int invocEnd = ti;
+    QVector<Token> tail = toks.mid(invocEnd);
+    toks.resize(invocStart);
+    toks.append(expanded);
+    toks.append(tail);
+    ti = invocStart;
+}
+
+void Core::handleConditional(const QString &id)
+{
+    int ln = cur().line;
+    bool parentActive = condActive();
+
+    if (id == "ifdef" || id == "ifndef")
+    {
+        if (cur().t != Tk::Ident)
+        {
+            error(ln, QString("%1: expected symbol name").arg(id.toUpper()));
+            skipToEndOfStatement();
+            CondFrame f; f.parentActive = parentActive; f.active = false; f.takenThisIf = true;
+            condStack.append(f);
+            return;
+        }
+        QString name = cur().text;
+        ti++;
+        bool defined = symbols.contains(name);
+        bool cond = (id == "ifdef") ? defined : !defined;
+        CondFrame f;
+        f.parentActive = parentActive;
+        f.active = parentActive && cond;
+        f.takenThisIf = f.active;
+        condStack.append(f);
+        return;
+    }
+    if (id == "if")
+    {
+        ExprResult er = parseExpr();
+        CondFrame f;
+        f.parentActive = parentActive;
+        f.active = parentActive && (er.value != 0);
+        f.takenThisIf = f.active;
+        condStack.append(f);
+        return;
+    }
+    if (id == "else")
+    {
+        if (condStack.isEmpty())
+        {
+            error(ln, "ELSE without matching IF/IFDEF");
+            return;
+        }
+        CondFrame &top = condStack.last();
+        if (top.parentActive)
+        {
+            top.active = !top.takenThisIf;
+            if (top.active) top.takenThisIf = true;
+        }
+        else
+        {
+            top.active = false;
+        }
+        return;
+    }
+    if (id == "endif")
+    {
+        if (condStack.isEmpty())
+        {
+            error(ln, "ENDIF without matching IF/IFDEF");
+            return;
+        }
+        condStack.removeLast();
+        return;
+    }
+}
+
 void Core::parseLine()
 {
     skipEols();
     if (cur().t == Tk::End) return;
+
+    if (cur().t == Tk::Ident)
+    {
+        QString id = cur().text;
+        if (id == "ifdef" || id == "ifndef" || id == "if" ||
+            id == "else" || id == "endif")
+        {
+            ti++;
+            handleConditional(id);
+            return;
+        }
+    }
+
+    if (!condActive())
+    {
+        skipToEndOfStatement();
+        return;
+    }
+
+    if (cur().t == Tk::Ident && cur().text == "macro" && peekTok(1).t == Tk::Ident)
+    {
+        handleMacroDefinition();
+        return;
+    }
+    if (cur().t == Tk::Ident && macros.contains(cur().text))
+    {
+        handleMacroInvocation(macros.value(cur().text));
+        return;
+    }
 
     int startLine = cur().line;
 
@@ -1982,11 +2287,12 @@ void Core::parseLine()
         };
         static QSet<QString> directives = {
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
-            "read","incbin"
+            "read","incbin","limit","nolist","list"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
+        (void)hasColon;
 
-        if (hasColon || !isMnem)
+        if (!isMnem)
         {
             ti++;
             if (cur().t == Tk::Colon) ti++;
@@ -2014,7 +2320,7 @@ void Core::parseLine()
                 error(startLine, QString("Duplicate symbol '%1'").arg(id));
             symbols.insert(id, pc);
 
-            if (cur().t == Tk::Eol || cur().t == Tk::End) return;
+            if (cur().t == Tk::Eol || cur().t == Tk::End || cur().t == Tk::Colon) return;
 
             if (cur().t != Tk::Ident)
             {
@@ -2032,6 +2338,12 @@ void Core::parseLine()
         return;
     }
 
+    if (cur().t == Tk::Ident && macros.contains(cur().text))
+    {
+        handleMacroInvocation(macros.value(cur().text));
+        return;
+    }
+
     QString word = cur().text;
     ti++;
 
@@ -2039,10 +2351,13 @@ void Core::parseLine()
     parseInstruction(word);
 }
 
-AssemblerResult Core::run(const QString &source, const QString &base)
+AssemblerResult Core::run(const QString &source, const QString &base,
+                          const Assembler::ProgressFn &progress)
 {
     AssemblerResult r;
     basePath = base;
+    progressFn = progress;
+    if (progress) progress(0, 0, QStringLiteral("Lexing..."));
     Lexer lx(source);
     QString lxErr; int lxLn = 0;
     toks = lx.all(&lxErr, &lxLn);
@@ -2051,6 +2366,47 @@ AssemblerResult Core::run(const QString &source, const QString &base)
         AssemblerMessage m; m.line = lxLn; m.text = lxErr; m.isError = true;
         r.messages.append(m);
         return r;
+    }
+
+    const int tickEvery = 64;
+
+    estimatedTokens = 0;
+    if (progress)
+    {
+        std::function<int(const QVector<Token>&, const QString&, int)> walk;
+        walk = [&](const QVector<Token> &ts, const QString &ctxDir, int depth) -> int {
+            int sum = ts.size();
+            if (depth >= 32) return sum;
+            for (int i = 0; i + 1 < ts.size(); i++)
+            {
+                if (ts[i].t != Tk::Ident || ts[i].text != QStringLiteral("read")) continue;
+                if (ts[i+1].t != Tk::String) continue;
+                QString name = ts[i+1].text;
+                QFileInfo fi(name);
+                QString resolved;
+                if (fi.isAbsolute()) resolved = fi.absoluteFilePath();
+                else
+                {
+                    QString tokDir = ts[i].source.isEmpty() ? ctxDir
+                                   : QFileInfo(ts[i].source).absolutePath();
+                    QString cand = QDir(tokDir).absoluteFilePath(name);
+                    if (!QFileInfo::exists(cand) && !basePath.isEmpty())
+                        cand = QDir(basePath).absoluteFilePath(name);
+                    resolved = cand;
+                }
+                QFile f(resolved);
+                if (!f.open(QFile::ReadOnly | QFile::Text)) continue;
+                QString text = QString::fromUtf8(f.readAll());
+                f.close();
+                Lexer slx(text, resolved);
+                QString sErr; int sLn = 0;
+                QVector<Token> sub = slx.all(&sErr, &sLn);
+                if (!sErr.isEmpty()) continue;
+                sum += walk(sub, QFileInfo(resolved).absolutePath(), depth + 1);
+            }
+            return sum;
+        };
+        estimatedTokens = walk(toks, basePath, 0);
     }
 
     pass = 1;
@@ -2063,7 +2419,24 @@ AssemblerResult Core::run(const QString &source, const QString &base)
     curFile.clear();
     curToDisk = false;
     curExec = -1;
-    while (cur().t != Tk::End) parseLine();
+    condStack.clear();
+    int counter = 0;
+    while (cur().t != Tk::End)
+    {
+        int startTi = ti;
+        int startToksSize = toks.size();
+        parseLine();
+        if (ti == startTi && toks.size() == startToksSize) { ti++; }
+        if (progress && (++counter % tickEvery) == 0)
+        {
+            int total = estimatedTokens > 0 ? estimatedTokens
+                       : (toks.size() ? toks.size() : 1);
+            int pct = int((qint64(ti) * 100) / total);
+            if (pct > 100) pct = 100;
+            progress(1, pct, QStringLiteral("Pass 1"));
+        }
+    }
+    if (progress) progress(1, 100, QStringLiteral("Pass 1"));
     if (hadError) { r.messages = messages; return r; }
 
     messages.clear();
@@ -2077,8 +2450,21 @@ AssemblerResult Core::run(const QString &source, const QString &base)
     curFile.clear();
     curToDisk = false;
     curExec = -1;
+    condStack.clear();
     segments.clear();
-    while (cur().t != Tk::End) parseLine();
+    counter = 0;
+    while (cur().t != Tk::End)
+    {
+        parseLine();
+        if (progress && (++counter % tickEvery) == 0)
+        {
+            int total = toks.size() ? toks.size() : 1;
+            int pct = int((qint64(ti) * 100) / total);
+            if (pct > 100) pct = 100;
+            progress(2, pct, QStringLiteral("Pass 2"));
+        }
+    }
+    if (progress) progress(2, 100, QStringLiteral("Pass 2"));
 
     r.messages = messages;
     r.segments = segments;
@@ -2088,8 +2474,9 @@ AssemblerResult Core::run(const QString &source, const QString &base)
 
 } // namespace
 
-AssemblerResult Assembler::Assemble(const QString &source, const QString &basePath)
+AssemblerResult Assembler::Assemble(const QString &source, const QString &basePath,
+                                    const ProgressFn &progress)
 {
     Core c;
-    return c.run(source, basePath);
+    return c.run(source, basePath, progress);
 }
