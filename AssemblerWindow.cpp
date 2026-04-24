@@ -10,8 +10,6 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QFont>
-#include <QHash>
 #include <QFontMetrics>
 #include <QFontDatabase>
 #include <QKeySequence>
@@ -19,6 +17,7 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QSplitter>
+#include <QTabWidget>
 #include <QTextDocument>
 #include <QStatusBar>
 #include <QTextStream>
@@ -26,28 +25,33 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+namespace {
+const char *kFilePropName = "asm_currentFile";
+}
+
 AssemblerWindow::AssemblerWindow(QWidget *parent)
     : QMainWindow(parent)
-    , dirty(false)
 {
     setWindowTitle(tr("Assembler"));
     resize(900, 700);
 
-    QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-    mono.setPointSize(11);
+    monoFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    monoFont.setPointSize(11);
 
-    source = new QPlainTextEdit(this);
-    source->setFont(mono);
-    source->setTabStopDistance(QFontMetrics(mono).horizontalAdvance(' ') * 8);
-    source->setPlaceholderText(tr("; Type Z80 assembly here\n; Example:\n;   ORG &8000\n;   LD A,42\n;   RET\n"));
+    tabs = new QTabWidget(this);
+    tabs->setDocumentMode(true);
+    tabs->setTabsClosable(true);
+    tabs->setMovable(true);
+    connect(tabs, &QTabWidget::tabCloseRequested, this, &AssemblerWindow::onTabCloseRequested);
+    connect(tabs, &QTabWidget::currentChanged, this, &AssemblerWindow::onTabChanged);
 
     output = new QPlainTextEdit(this);
-    output->setFont(mono);
+    output->setFont(monoFont);
     output->setReadOnly(true);
     output->setPlaceholderText(tr("Assembly output will appear here."));
 
     QSplitter *split = new QSplitter(Qt::Vertical, this);
-    split->addWidget(source);
+    split->addWidget(tabs);
     split->addWidget(output);
     split->setStretchFactor(0, 3);
     split->setStretchFactor(1, 1);
@@ -57,6 +61,7 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     actOpen      = new QAction(tr("&Open..."), this);
     actSave      = new QAction(tr("&Save"), this);
     actSaveAs    = new QAction(tr("Save &As..."), this);
+    actCloseTab  = new QAction(tr("&Close Tab"), this);
     actUndo      = new QAction(tr("&Undo"), this);
     actRedo      = new QAction(tr("&Redo"), this);
     actCut       = new QAction(tr("Cu&t"), this);
@@ -65,6 +70,11 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     actSelectAll = new QAction(tr("Select &All"), this);
     actAssemble  = new QAction(tr("&Assemble"), this);
 
+    actNew->setShortcuts(QKeySequence::New);
+    actOpen->setShortcuts(QKeySequence::Open);
+    actSave->setShortcuts(QKeySequence::Save);
+    actSaveAs->setShortcuts(QKeySequence::SaveAs);
+    actCloseTab->setShortcuts(QKeySequence::Close);
     actUndo->setShortcuts(QKeySequence::Undo);
     actRedo->setShortcuts(QKeySequence::Redo);
     actCut->setShortcuts(QKeySequence::Cut);
@@ -84,6 +94,8 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     fileMenu->addSeparator();
     fileMenu->addAction(actSave);
     fileMenu->addAction(actSaveAs);
+    fileMenu->addSeparator();
+    fileMenu->addAction(actCloseTab);
     QMenu *editMenu = mb->addMenu(tr("&Edit"));
     editMenu->addAction(actUndo);
     editMenu->addAction(actRedo);
@@ -100,19 +112,17 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
     connect(actOpen,     &QAction::triggered, this, &AssemblerWindow::onOpen);
     connect(actSave,     &QAction::triggered, this, &AssemblerWindow::onSave);
     connect(actSaveAs,   &QAction::triggered, this, &AssemblerWindow::onSaveAs);
+    connect(actCloseTab, &QAction::triggered, this, &AssemblerWindow::onCloseTab);
     connect(actAssemble, &QAction::triggered, this, &AssemblerWindow::onAssemble);
-    connect(source->document(), &QTextDocument::modificationChanged, this, &AssemblerWindow::onSourceModified);
 
-    connect(actUndo,      &QAction::triggered, source, &QPlainTextEdit::undo);
-    connect(actRedo,      &QAction::triggered, source, &QPlainTextEdit::redo);
-    connect(actCut,       &QAction::triggered, source, &QPlainTextEdit::cut);
-    connect(actCopy,      &QAction::triggered, source, &QPlainTextEdit::copy);
-    connect(actPaste,     &QAction::triggered, source, &QPlainTextEdit::paste);
-    connect(actSelectAll, &QAction::triggered, source, &QPlainTextEdit::selectAll);
-    connect(source, &QPlainTextEdit::undoAvailable, actUndo, &QAction::setEnabled);
-    connect(source, &QPlainTextEdit::redoAvailable, actRedo, &QAction::setEnabled);
-    connect(source, &QPlainTextEdit::copyAvailable, actCut,  &QAction::setEnabled);
-    connect(source, &QPlainTextEdit::copyAvailable, actCopy, &QAction::setEnabled);
+    connect(actUndo,      &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->undo(); });
+    connect(actRedo,      &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->redo(); });
+    connect(actCut,       &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->cut(); });
+    connect(actCopy,      &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->copy(); });
+    connect(actPaste,     &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->paste(); });
+    connect(actSelectAll, &QAction::triggered, this, [this]() { if (auto *e = currentEditor()) e->selectAll(); });
+
+    newEditorTab();
 
     statusBar()->showMessage(tr("Ready"));
     updateTitle();
@@ -120,72 +130,191 @@ AssemblerWindow::AssemblerWindow(QWidget *parent)
 
 AssemblerWindow::~AssemblerWindow() = default;
 
-void AssemblerWindow::closeEvent(QCloseEvent *event)
+QPlainTextEdit *AssemblerWindow::currentEditor() const
 {
-    if (maybeSave())
-        event->accept();
-    else
-        event->ignore();
+    return qobject_cast<QPlainTextEdit *>(tabs->currentWidget());
 }
 
-void AssemblerWindow::onSourceModified(bool modified)
+QString AssemblerWindow::editorFile(QPlainTextEdit *ed) const
 {
-    dirty = modified;
+    if (!ed) return QString();
+    return ed->property(kFilePropName).toString();
+}
+
+void AssemblerWindow::setEditorFile(QPlainTextEdit *ed, const QString &path)
+{
+    if (!ed) return;
+    ed->setProperty(kFilePropName, path);
+    ed->document()->setModified(false);
+    updateTabLabel(ed);
+    if (ed == currentEditor()) updateTitle();
+}
+
+void AssemblerWindow::updateTabLabel(QPlainTextEdit *ed)
+{
+    if (!ed) return;
+    int idx = tabs->indexOf(ed);
+    if (idx < 0) return;
+    QString path = editorFile(ed);
+    QString name = path.isEmpty() ? tr("Untitled") : QFileInfo(path).fileName();
+    bool dirty = ed->document()->isModified();
+    tabs->setTabText(idx, dirty ? QString("*") + name : name);
+    if (!path.isEmpty())
+        tabs->setTabToolTip(idx, path);
+    else
+        tabs->setTabToolTip(idx, QString());
+}
+
+QPlainTextEdit *AssemblerWindow::newEditorTab(const QString &path)
+{
+    QPlainTextEdit *ed = new QPlainTextEdit;
+    ed->setFont(monoFont);
+    ed->setTabStopDistance(QFontMetrics(monoFont).horizontalAdvance(' ') * 8);
+    ed->setPlaceholderText(tr("; Type Z80 assembly here\n; Example:\n;   ORG &8000\n;   LD A,42\n;   RET\n"));
+    ed->setProperty(kFilePropName, path);
+
+    connect(ed->document(), &QTextDocument::modificationChanged, this, [this, ed]() {
+        updateTabLabel(ed);
+        if (ed == currentEditor()) updateTitle();
+    });
+
+    int idx = tabs->addTab(ed, QString());
+    updateTabLabel(ed);
+    tabs->setCurrentIndex(idx);
+    ed->setFocus();
+    return ed;
+}
+
+void AssemblerWindow::wireEditorSignals(QPlainTextEdit *ed)
+{
+    for (const auto &c : editorConnections) QObject::disconnect(c);
+    editorConnections.clear();
+    if (!ed)
+    {
+        actUndo->setEnabled(false);
+        actRedo->setEnabled(false);
+        actCut->setEnabled(false);
+        actCopy->setEnabled(false);
+        return;
+    }
+    editorConnections << connect(ed, &QPlainTextEdit::undoAvailable, actUndo, &QAction::setEnabled);
+    editorConnections << connect(ed, &QPlainTextEdit::redoAvailable, actRedo, &QAction::setEnabled);
+    editorConnections << connect(ed, &QPlainTextEdit::copyAvailable, actCut,  &QAction::setEnabled);
+    editorConnections << connect(ed, &QPlainTextEdit::copyAvailable, actCopy, &QAction::setEnabled);
+    actUndo->setEnabled(ed->document()->isUndoAvailable());
+    actRedo->setEnabled(ed->document()->isRedoAvailable());
+    actCut->setEnabled(ed->textCursor().hasSelection());
+    actCopy->setEnabled(ed->textCursor().hasSelection());
+}
+
+void AssemblerWindow::onTabChanged(int index)
+{
+    Q_UNUSED(index);
+    wireEditorSignals(currentEditor());
     updateTitle();
+}
+
+void AssemblerWindow::closeEvent(QCloseEvent *event)
+{
+    for (int i = 0; i < tabs->count(); i++)
+    {
+        QPlainTextEdit *ed = qobject_cast<QPlainTextEdit *>(tabs->widget(i));
+        if (!ed) continue;
+        tabs->setCurrentIndex(i);
+        if (!maybeSaveEditor(ed)) { event->ignore(); return; }
+    }
+    event->accept();
 }
 
 void AssemblerWindow::onNew()
 {
-    if (!maybeSave()) return;
-    source->clear();
-    source->document()->setModified(false);
-    setCurrentFile(QString());
+    newEditorTab();
     clearOutput();
 }
 
 void AssemblerWindow::onOpen()
 {
-    if (!maybeSave()) return;
     QString path = QFileDialog::getOpenFileName(this, tr("Open Source"), QString(),
                                                 tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
                                                 nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
-    if (readFromFile(path))
+
+    for (int i = 0; i < tabs->count(); i++)
     {
-        setCurrentFile(path);
+        QPlainTextEdit *e = qobject_cast<QPlainTextEdit *>(tabs->widget(i));
+        if (e && editorFile(e) == path)
+        {
+            tabs->setCurrentIndex(i);
+            return;
+        }
+    }
+
+    QPlainTextEdit *ed = currentEditor();
+    bool reuse = ed && editorFile(ed).isEmpty() && !ed->document()->isModified() && ed->document()->isEmpty();
+    if (!reuse) ed = newEditorTab();
+
+    if (readEditorFromFile(ed, path))
+    {
+        setEditorFile(ed, path);
         clearOutput();
     }
 }
 
 void AssemblerWindow::onSave()
 {
-    if (currentFile.isEmpty())
-    {
-        onSaveAs();
-        return;
-    }
-    writeToFile(currentFile);
+    QPlainTextEdit *ed = currentEditor();
+    if (!ed) return;
+    QString path = editorFile(ed);
+    if (path.isEmpty()) { onSaveAs(); return; }
+    writeEditorToFile(ed, path);
 }
 
 void AssemblerWindow::onSaveAs()
 {
-    QString path = QFileDialog::getSaveFileName(this, tr("Save Source"), currentFile,
+    QPlainTextEdit *ed = currentEditor();
+    if (!ed) return;
+    QString path = QFileDialog::getSaveFileName(this, tr("Save Source"), editorFile(ed),
                                                 tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
                                                 nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
-    if (writeToFile(path))
-        setCurrentFile(path);
+    if (writeEditorToFile(ed, path))
+        setEditorFile(ed, path);
+}
+
+void AssemblerWindow::onCloseTab()
+{
+    int idx = tabs->currentIndex();
+    if (idx >= 0) onTabCloseRequested(idx);
+}
+
+void AssemblerWindow::onTabCloseRequested(int index)
+{
+    QPlainTextEdit *ed = qobject_cast<QPlainTextEdit *>(tabs->widget(index));
+    if (!ed) return;
+    tabs->setCurrentIndex(index);
+    if (!maybeSaveEditor(ed)) return;
+    tabs->removeTab(index);
+    ed->deleteLater();
+    if (tabs->count() == 0) newEditorTab();
 }
 
 void AssemblerWindow::onAssemble()
 {
     clearOutput();
-    AssemblerResult r = assembler.Assemble(source->toPlainText());
+    QPlainTextEdit *ed = currentEditor();
+    if (!ed) return;
+    QString path = editorFile(ed);
+    QString base = path.isEmpty() ? QString() : QFileInfo(path).absolutePath();
+    AssemblerResult r = assembler.Assemble(ed->toPlainText(), base);
     for (const AssemblerMessage &m : r.messages)
     {
         QString prefix = m.isError ? tr("error") : tr("info");
-        QString line = m.line > 0 ? QString("(%1) ").arg(m.line) : QString();
-        appendOutput(QString("%1%2: %3").arg(line, prefix, m.text), m.isError);
+        QString loc;
+        if (!m.source.isEmpty())
+            loc = QString("(%1:%2) ").arg(QFileInfo(m.source).fileName(), QString::number(m.line));
+        else if (m.line > 0)
+            loc = QString("(%1) ").arg(m.line);
+        appendOutput(QString("%1%2: %3").arg(loc, prefix, m.text), m.isError);
     }
     if (!r.ok)
     {
@@ -327,27 +456,38 @@ void AssemblerWindow::onAssemble()
         MainWindow::Instance->RefreshDebuggerIfOpen();
 }
 
-bool AssemblerWindow::maybeSave()
+bool AssemblerWindow::maybeSaveEditor(QPlainTextEdit *ed)
 {
-    if (!dirty) return true;
+    if (!ed || !ed->document()->isModified()) return true;
+    QString path = editorFile(ed);
+    QString name = path.isEmpty() ? tr("Untitled") : QFileInfo(path).fileName();
     QMessageBox::StandardButton ret = QMessageBox::warning(
         this, tr("Assembler"),
-        tr("The source has been modified.\nDo you want to save your changes?"),
+        tr("The file \"%1\" has been modified.\nDo you want to save your changes?").arg(name),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
     if (ret == QMessageBox::Save)
     {
-        onSave();
-        return !dirty;
+        QString target = path;
+        if (target.isEmpty())
+        {
+            target = QFileDialog::getSaveFileName(this, tr("Save Source"), QString(),
+                                                  tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
+                                                  nullptr, QFileDialog::DontUseNativeDialog);
+            if (target.isEmpty()) return false;
+        }
+        if (!writeEditorToFile(ed, target)) return false;
+        setEditorFile(ed, target);
+        return true;
     }
     if (ret == QMessageBox::Discard)
     {
-        source->document()->setModified(false);
+        ed->document()->setModified(false);
         return true;
     }
     return false;
 }
 
-bool AssemblerWindow::writeToFile(const QString &path)
+bool AssemblerWindow::writeEditorToFile(QPlainTextEdit *ed, const QString &path)
 {
     QFile f(path);
     if (!f.open(QFile::WriteOnly | QFile::Text))
@@ -357,13 +497,14 @@ bool AssemblerWindow::writeToFile(const QString &path)
         return false;
     }
     QTextStream out(&f);
-    out << source->toPlainText();
-    source->document()->setModified(false);
+    out << ed->toPlainText();
+    ed->document()->setModified(false);
+    updateTabLabel(ed);
     statusBar()->showMessage(tr("Saved %1").arg(QFileInfo(path).fileName()), 3000);
     return true;
 }
 
-bool AssemblerWindow::readFromFile(const QString &path)
+bool AssemblerWindow::readEditorFromFile(QPlainTextEdit *ed, const QString &path)
 {
     QFile f(path);
     if (!f.open(QFile::ReadOnly | QFile::Text))
@@ -373,21 +514,17 @@ bool AssemblerWindow::readFromFile(const QString &path)
         return false;
     }
     QTextStream in(&f);
-    source->setPlainText(in.readAll());
-    source->document()->setModified(false);
+    ed->setPlainText(in.readAll());
+    ed->document()->setModified(false);
     return true;
-}
-
-void AssemblerWindow::setCurrentFile(const QString &path)
-{
-    currentFile = path;
-    dirty = false;
-    updateTitle();
 }
 
 void AssemblerWindow::updateTitle()
 {
-    QString name = currentFile.isEmpty() ? tr("Untitled") : QFileInfo(currentFile).fileName();
+    QPlainTextEdit *ed = currentEditor();
+    QString path = editorFile(ed);
+    QString name = path.isEmpty() ? tr("Untitled") : QFileInfo(path).fileName();
+    bool dirty = ed && ed->document()->isModified();
     setWindowTitle(tr("%1%2 — Assembler").arg(dirty ? "*" : "", name));
 }
 

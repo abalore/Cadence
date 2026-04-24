@@ -2,11 +2,15 @@
 #define ASSEMBLERWINDOW_H
 
 #include "Assembler.h"
+#include <QFont>
+#include <QList>
 #include <QMainWindow>
+#include <QMetaObject>
 #include <QString>
 
 class QPlainTextEdit;
 class QAction;
+class QTabWidget;
 
 class AssemblerWindow : public QMainWindow
 {
@@ -24,23 +28,31 @@ private slots:
     void onSave();
     void onSaveAs();
     void onAssemble();
-    void onSourceModified(bool modified);
+    void onCloseTab();
+    void onTabCloseRequested(int index);
+    void onTabChanged(int index);
 
 private:
-    bool maybeSave();
-    bool writeToFile(const QString &path);
-    bool readFromFile(const QString &path);
-    void setCurrentFile(const QString &path);
+    bool maybeSaveEditor(QPlainTextEdit *ed);
+    bool writeEditorToFile(QPlainTextEdit *ed, const QString &path);
+    bool readEditorFromFile(QPlainTextEdit *ed, const QString &path);
+    void setEditorFile(QPlainTextEdit *ed, const QString &path);
+    QString editorFile(QPlainTextEdit *ed) const;
+    QPlainTextEdit *currentEditor() const;
+    QPlainTextEdit *newEditorTab(const QString &path = QString());
+    void updateTabLabel(QPlainTextEdit *ed);
     void appendOutput(const QString &text, bool isError);
     void clearOutput();
     void updateTitle();
+    void wireEditorSignals(QPlainTextEdit *ed);
 
-    QPlainTextEdit *source;
+    QTabWidget *tabs;
     QPlainTextEdit *output;
     QAction *actNew;
     QAction *actOpen;
     QAction *actSave;
     QAction *actSaveAs;
+    QAction *actCloseTab;
     QAction *actUndo;
     QAction *actRedo;
     QAction *actCut;
@@ -48,9 +60,9 @@ private:
     QAction *actPaste;
     QAction *actSelectAll;
     QAction *actAssemble;
-    QString currentFile;
-    bool dirty;
     Assembler assembler;
+    QList<QMetaObject::Connection> editorConnections;
+    QFont monoFont;
 };
 
 #endif // ASSEMBLERWINDOW_H

@@ -5,6 +5,9 @@
 #include <QSet>
 #include <QStringList>
 #include <QtGlobal>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 namespace {
 
@@ -30,6 +33,7 @@ struct Token
     i64 n = 0;
     int line = 1;
     int col = 1;
+    QString source;
 };
 
 // ============================================================
@@ -39,7 +43,7 @@ struct Token
 class Lexer
 {
 public:
-    Lexer(const QString &src) : s(src) {}
+    Lexer(const QString &src, const QString &sourceName = QString()) : s(src), src(sourceName) {}
     QVector<Token> all(QString *errorText, int *errorLine);
 
 private:
@@ -54,6 +58,7 @@ private:
     bool readDec(i64 &out);
 
     QString s;
+    QString src;
     int p = 0;
     int line = 1;
     int col = 1;
@@ -451,6 +456,8 @@ QVector<Token> Lexer::all(QString *errorText, int *errorLine)
 
     Token end; end.t = Tk::End; end.line = line; end.col = col;
     out.append(end);
+    if (!src.isEmpty())
+        for (Token &t : out) t.source = src;
     return out;
 }
 
@@ -460,7 +467,7 @@ QVector<Token> Lexer::all(QString *errorText, int *errorLine)
 
 struct Core
 {
-    AssemblerResult run(const QString &source);
+    AssemblerResult run(const QString &source, const QString &basePath);
 
     QVector<Token> toks;
     int ti = 0;
@@ -476,6 +483,8 @@ struct Core
     int curUpperRom = -1;
     int curRamBank  = 0xC0;
     QString curFile;
+    QString basePath;
+    int includeDepth = 0;
     bool hadError = false;
     QVector<AssemblerMessage> messages;
 
@@ -486,10 +495,24 @@ struct Core
     void error(int line, const QString &text)
     {
         AssemblerMessage m; m.line = line; m.text = text; m.isError = true;
+        m.source = cur().source;
         messages.append(m);
         hadError = true;
     }
     void errorHere(const QString &text) { error(cur().line, text); }
+
+    QString resolveIncludePath(const QString &name) const
+    {
+        QString ctxDir;
+        if (!cur().source.isEmpty())
+            ctxDir = QFileInfo(cur().source).absolutePath();
+        else
+            ctxDir = basePath;
+        QFileInfo fi(name);
+        if (fi.isAbsolute()) return fi.absoluteFilePath();
+        if (ctxDir.isEmpty()) return QFileInfo(name).absoluteFilePath();
+        return QDir(ctxDir).absoluteFilePath(name);
+    }
 
     void emitByte(int value)
     {
@@ -1747,6 +1770,70 @@ bool Core::parseDirective(const QString &name)
             error(ln, "ASSERT failed");
         return true;
     }
+    if (name == "read")
+    {
+        if (cur().t != Tk::String)
+        {
+            error(ln, "READ: expected \"filename\"");
+            skipToEndOfStatement();
+            return true;
+        }
+        QString fname = cur().text;
+        ti++;
+        if (pass == 1)
+        {
+            if (includeDepth >= 32)
+            {
+                error(ln, "READ: include depth exceeds 32 (circular READ?)");
+                return true;
+            }
+            QString resolved = resolveIncludePath(fname);
+            QFile f(resolved);
+            if (!f.open(QFile::ReadOnly | QFile::Text))
+            {
+                error(ln, QString("READ: cannot open \"%1\"").arg(fname));
+                return true;
+            }
+            QString text = QString::fromUtf8(f.readAll());
+            Lexer lx(text, resolved);
+            QString lxErr; int lxLn = 0;
+            QVector<Token> incToks = lx.all(&lxErr, &lxLn);
+            if (!lxErr.isEmpty())
+            {
+                error(ln, QString("READ \"%1\": %2 (line %3)").arg(fname, lxErr, QString::number(lxLn)));
+                return true;
+            }
+            if (!incToks.isEmpty() && incToks.last().t == Tk::End)
+                incToks.removeLast();
+            Token eol; eol.t = Tk::Eol; eol.line = 1; eol.col = 1; eol.source = resolved;
+            incToks.prepend(eol);
+            for (int i = incToks.size() - 1; i >= 0; i--)
+                toks.insert(ti, incToks[i]);
+        }
+        return true;
+    }
+    if (name == "incbin")
+    {
+        if (cur().t != Tk::String)
+        {
+            error(ln, "INCBIN: expected \"filename\"");
+            skipToEndOfStatement();
+            return true;
+        }
+        QString fname = cur().text;
+        ti++;
+        QString resolved = resolveIncludePath(fname);
+        QFile f(resolved);
+        if (!f.open(QFile::ReadOnly))
+        {
+            if (pass == 1)
+                error(ln, QString("INCBIN: cannot open \"%1\"").arg(fname));
+            return true;
+        }
+        QByteArray data = f.readAll();
+        for (char b : data) emitByte(static_cast<unsigned char>(b));
+        return true;
+    }
     if (name == "write")
     {
         if (cur().t == Tk::String)
@@ -1860,7 +1947,8 @@ void Core::parseLine()
             "rlc","rrc","rl","rr","sla","sra","sll","srl","bit","res","set"
         };
         static QSet<QString> directives = {
-            "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write"
+            "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
+            "read","incbin"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
 
@@ -1917,9 +2005,10 @@ void Core::parseLine()
     parseInstruction(word);
 }
 
-AssemblerResult Core::run(const QString &source)
+AssemblerResult Core::run(const QString &source, const QString &base)
 {
     AssemblerResult r;
+    basePath = base;
     Lexer lx(source);
     QString lxErr; int lxLn = 0;
     toks = lx.all(&lxErr, &lxLn);
@@ -1960,8 +2049,8 @@ AssemblerResult Core::run(const QString &source)
 
 } // namespace
 
-AssemblerResult Assembler::Assemble(const QString &source)
+AssemblerResult Assembler::Assemble(const QString &source, const QString &basePath)
 {
     Core c;
-    return c.run(source);
+    return c.run(source, basePath);
 }

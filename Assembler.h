@@ -10,6 +10,7 @@ struct AssemblerMessage
     int line;
     QString text;
     bool isError;
+    QString source;
 };
 
 struct AssemblerSegment
@@ -33,7 +34,7 @@ struct AssemblerResult
 class Assembler
 {
 public:
-    AssemblerResult Assemble(const QString &source);
+    AssemblerResult Assemble(const QString &source, const QString &basePath = QString());
 };
 
 #endif // ASSEMBLER_H
