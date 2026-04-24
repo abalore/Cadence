@@ -40,6 +40,7 @@ public:
 private:
     bool willAdjust = false;
     bool vccWrapped = false; // set when VCC wraps 0x7F→0x00 during a frame; cleared on frame reset
+    bool vsyncFiredThisFrame = false; // once-per-frame VSYNC latch; cleared on frame reset
     void RunHorizontalChar();
     void RunAdj();
     void EndOfLine();

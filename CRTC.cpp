@@ -34,6 +34,7 @@ void CRTC::Reset()
     VSW = 8;
     VLC = 0;
     vccWrapped = false;
+    vsyncFiredThisFrame = false;
 
 }
 
@@ -219,7 +220,7 @@ void CRTC::RunHorizontalChar()
         if (RA == MRA)
             baseMA = MA;
     }
-    if (!VSYNC && VCC == VSP)
+    if (!vsyncFiredThisFrame && VCC == VSP)
     {
         if (crtcType == 3 || crtcType == 4)
         {
@@ -228,6 +229,7 @@ void CRTC::RunHorizontalChar()
             {
                 VSYNC = true;
                 VSC = 0;
+                vsyncFiredThisFrame = true;
             }
         }
         else
@@ -235,6 +237,7 @@ void CRTC::RunHorizontalChar()
             VSYNC = true;
             // Types 1/2 triggered mid-line start VSC at 1 (shortens pulse by 1 line); Type 0 always 0.
             VSC = (HCC > 0 && (crtcType == 1 || crtcType == 2)) ? 1 : 0;
+            vsyncFiredThisFrame = true;
         }
     }
 
@@ -298,6 +301,13 @@ void CRTC::EndOfLine()
         VCC = 0;
         VLC = 0;
         vccWrapped = false;
+        vsyncFiredThisFrame = false;
+        // Types 3/4: frame reset cancels any in-progress VSYNC pulse.
+        if (crtcType == 3 || crtcType == 4)
+        {
+            VSYNC = false;
+            VSC = 0;
+        }
     }
     else
     {
