@@ -517,6 +517,17 @@ struct Core
     void handleMacroDefinition();
     void handleMacroInvocation(const Macro &m);
 
+    struct LoopInfo { QVector<Token> condTokens; QVector<Token> body; int iterCounter = 0; };
+    QHash<int, LoopInfo> activeLoops;
+    int loopIdCounter = 0;
+    int atLabelCounter = 0;
+
+    void handleRepeat();
+    void handleWhile();
+    void handleLoopContinue(int id);
+    bool collectLoopBody(QVector<Token> &body, int ln, const char *endName);
+    void uniquifyAtLabels(QVector<Token> &v, int suffix);
+
     const Token &cur() const { return toks[ti]; }
     const Token &peekTok(int o = 0) const { return toks[ti + o]; }
     void skipEols() { while (cur().t == Tk::Eol || cur().t == Tk::Colon) ti++; }
@@ -691,6 +702,7 @@ struct Core
     ExprResult parseMul();
     ExprResult parseUnary();
     ExprResult parsePrimary();
+    ExprResult evalCondTokens(const QVector<Token> &ct);
 
     void skipToEndOfStatement();
 
@@ -1893,6 +1905,27 @@ bool Core::parseDirective(const QString &name)
         endHit = true;
         return true;
     }
+    if (name == "let")
+    {
+        if (cur().t != Tk::Ident)
+        {
+            error(ln, "LET: expected symbol name");
+            skipToEndOfStatement();
+            return true;
+        }
+        QString id = cur().text;
+        ti++;
+        if (cur().t != Tk::Eq)
+        {
+            error(ln, "LET: expected '='");
+            skipToEndOfStatement();
+            return true;
+        }
+        ti++;
+        ExprResult er = parseExpr();
+        symbols.insert(id, er.value);
+        return true;
+    }
     if (name == "print")
     {
         do
@@ -2344,6 +2377,163 @@ void Core::handleMacroInvocation(const Macro &m)
     ti = invocStart;
 }
 
+void Core::uniquifyAtLabels(QVector<Token> &v, int suffix)
+{
+    for (Token &tk : v)
+    {
+        if (tk.t == Tk::Ident && tk.text.startsWith(QLatin1Char('@')))
+            tk.text = tk.text + QString("__%1").arg(suffix);
+    }
+}
+
+bool Core::collectLoopBody(QVector<Token> &body, int ln, const char *endName)
+{
+    int depth = 1;
+    while (cur().t != Tk::End)
+    {
+        if (cur().t == Tk::Ident)
+        {
+            const QString &w = cur().text;
+            if (w == QLatin1String("repeat") || w == QLatin1String("while")) depth++;
+            else if (w == QLatin1String("rend") || w == QLatin1String("wend"))
+            {
+                depth--;
+                if (depth == 0) { ti++; return true; }
+            }
+        }
+        body.append(cur());
+        ti++;
+    }
+    error(ln, QString("missing %1").arg(QLatin1String(endName)));
+    return false;
+}
+
+Core::ExprResult Core::evalCondTokens(const QVector<Token> &ct)
+{
+    QVector<Token> swap;
+    swap.reserve(ct.size() + 1);
+    for (const Token &t : ct) swap.append(t);
+    Token end; end.t = Tk::End; swap.append(end);
+    toks.swap(swap);
+    int savedTi = ti;
+    ti = 0;
+    ExprResult r = parseExpr();
+    toks.swap(swap);
+    ti = savedTi;
+    return r;
+}
+
+void Core::handleRepeat()
+{
+    int ln = cur().line;
+    int repeatStart = ti;
+    ti++;
+    ExprResult er = parseExpr();
+    int count = int(er.value);
+    while (cur().t == Tk::Eol || cur().t == Tk::Colon) ti++;
+    QVector<Token> body;
+    if (!collectLoopBody(body, ln, "REND")) return;
+    int repeatEnd = ti;
+
+    QVector<Token> expanded;
+    if (count > 0)
+    {
+        expanded.reserve(body.size() * count);
+        for (int i = 0; i < count; i++)
+        {
+            atLabelCounter++;
+            QVector<Token> iter = body;
+            uniquifyAtLabels(iter, atLabelCounter);
+            for (const Token &t : iter) expanded.append(t);
+        }
+    }
+
+    QVector<Token> tail = toks.mid(repeatEnd);
+    toks.resize(repeatStart);
+    toks.append(expanded);
+    toks.append(tail);
+    ti = repeatStart;
+}
+
+void Core::handleWhile()
+{
+    int ln = cur().line;
+    int whileStart = ti;
+    ti++;
+    int condStart = ti;
+    parseExpr();
+    int condEnd = ti;
+    QVector<Token> condTokens;
+    condTokens.reserve(condEnd - condStart);
+    for (int i = condStart; i < condEnd; i++) condTokens.append(toks[i]);
+
+    while (cur().t == Tk::Eol || cur().t == Tk::Colon) ti++;
+    QVector<Token> body;
+    if (!collectLoopBody(body, ln, "WEND")) return;
+    int invocEnd = ti;
+
+    ExprResult first = evalCondTokens(condTokens);
+
+    if (first.value == 0)
+    {
+        QVector<Token> tail = toks.mid(invocEnd);
+        toks.resize(whileStart);
+        toks.append(tail);
+        ti = whileStart;
+        return;
+    }
+
+    int id = loopIdCounter++;
+    LoopInfo info;
+    info.condTokens = condTokens;
+    info.body = body;
+    info.iterCounter = ++atLabelCounter;
+    activeLoops.insert(id, info);
+
+    QVector<Token> iter = body;
+    uniquifyAtLabels(iter, info.iterCounter);
+    Token marker;
+    marker.t = Tk::Ident;
+    marker.text = QString("@@wc@@%1").arg(id);
+    marker.line = ln;
+    iter.append(marker);
+
+    QVector<Token> tail = toks.mid(invocEnd);
+    toks.resize(whileStart);
+    toks.append(iter);
+    toks.append(tail);
+    ti = whileStart;
+}
+
+void Core::handleLoopContinue(int id)
+{
+    ti++;
+    auto it = activeLoops.find(id);
+    if (it == activeLoops.end()) return;
+    LoopInfo &info = it.value();
+    ExprResult cond = evalCondTokens(info.condTokens);
+    if (cond.value == 0)
+    {
+        activeLoops.erase(it);
+        return;
+    }
+    info.iterCounter = ++atLabelCounter;
+    QVector<Token> iter = info.body;
+    uniquifyAtLabels(iter, info.iterCounter);
+    Token marker;
+    marker.t = Tk::Ident;
+    marker.text = QString("@@wc@@%1").arg(id);
+    marker.line = cur().line;
+    iter.append(marker);
+
+    int insertAt = ti;
+    QVector<Token> tail = toks.mid(insertAt);
+    toks.resize(insertAt);
+    toks.append(iter);
+    toks.append(tail);
+    ti = insertAt;
+}
+
 void Core::handleConditional(const QString &id)
 {
     int ln = cur().line;
@@ -2460,6 +2650,22 @@ void Core::parseLine()
         handleMacroDefinition();
         return;
     }
+    if (cur().t == Tk::Ident && cur().text == QLatin1String("repeat"))
+    {
+        handleRepeat();
+        return;
+    }
+    if (cur().t == Tk::Ident && cur().text == QLatin1String("while"))
+    {
+        handleWhile();
+        return;
+    }
+    if (cur().t == Tk::Ident && cur().text.startsWith(QLatin1String("@@wc@@")))
+    {
+        bool ok = false;
+        int id = cur().text.mid(6).toInt(&ok);
+        if (ok) { handleLoopContinue(id); return; }
+    }
     if (cur().t == Tk::Ident && macros.contains(cur().text))
     {
         handleMacroInvocation(macros.value(cur().text));
@@ -2483,7 +2689,8 @@ void Core::parseLine()
         static QSet<QString> directives = {
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
             "read","incbin","limit","nolist","list","text","brk","code","nocode",
-            "byte","word","rmem","close","str","end","print"
+            "byte","word","rmem","close","str","end","print",
+            "repeat","rend","while","wend","let"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
         (void)hasColon;
@@ -2619,6 +2826,9 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     codeLimit = -1;
     limitErrorReported = false;
     endHit = false;
+    activeLoops.clear();
+    loopIdCounter = 0;
+    atLabelCounter = 0;
     condStack.clear();
     int counter = 0;
     while (!endHit && cur().t != Tk::End)
@@ -2654,6 +2864,9 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     codeLimit = -1;
     limitErrorReported = false;
     endHit = false;
+    activeLoops.clear();
+    loopIdCounter = 0;
+    atLabelCounter = 0;
     condStack.clear();
     segments.clear();
     counter = 0;
