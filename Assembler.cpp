@@ -491,6 +491,7 @@ struct Core
     QString basePath;
     int includeDepth = 0;
     int estimatedTokens = 0;
+    bool codeEnabled = true;
     bool hadError = false;
     QVector<AssemblerMessage> messages;
     Assembler::ProgressFn progressFn;
@@ -551,7 +552,7 @@ struct Core
 
     void emitByte(int value)
     {
-        if (pass == 2)
+        if (pass == 2 && codeEnabled)
         {
             if (segments.isEmpty())
             {
@@ -1772,6 +1773,23 @@ bool Core::parseDirective(const QString &name)
         if (cur().t != Tk::Eol && cur().t != Tk::End && cur().t != Tk::Colon) parseExpr();
         return true;
     }
+    if (name == "brk")
+    {
+        emitByte(0xF7);
+        return true;
+    }
+    if (name == "nocode")
+    {
+        codeEnabled = false;
+        return true;
+    }
+    if (name == "code")
+    {
+        bool wasDisabled = !codeEnabled;
+        codeEnabled = true;
+        if (wasDisabled) retargetSegment();
+        return true;
+    }
 
     if (name == "org")
     {
@@ -1798,7 +1816,7 @@ bool Core::parseDirective(const QString &name)
         }
         return true;
     }
-    if (name == "db" || name == "defb" || name == "dm" || name == "defm")
+    if (name == "db" || name == "defb" || name == "dm" || name == "defm" || name == "text")
     {
         do
         {
@@ -2196,12 +2214,13 @@ void Core::handleConditional(const QString &id)
         condStack.append(f);
         return;
     }
-    if (id == "if")
+    if (id == "if" || id == "ifnot")
     {
         ExprResult er = parseExpr();
+        bool cond = (id == "if") ? (er.value != 0) : (er.value == 0);
         CondFrame f;
         f.parentActive = parentActive;
-        f.active = parentActive && (er.value != 0);
+        f.active = parentActive && cond;
         f.takenThisIf = f.active;
         condStack.append(f);
         return;
@@ -2245,7 +2264,7 @@ void Core::parseLine()
     if (cur().t == Tk::Ident)
     {
         QString id = cur().text;
-        if (id == "ifdef" || id == "ifndef" || id == "if" ||
+        if (id == "ifdef" || id == "ifndef" || id == "if" || id == "ifnot" ||
             id == "else" || id == "endif")
         {
             ti++;
@@ -2287,7 +2306,7 @@ void Core::parseLine()
         };
         static QSet<QString> directives = {
             "org","equ","db","dw","dm","ds","defb","defw","defm","defs","align","assert","write",
-            "read","incbin","limit","nolist","list"
+            "read","incbin","limit","nolist","list","text","brk","code","nocode"
         };
         bool isMnem = mnemonics.contains(id) || directives.contains(id);
         (void)hasColon;
@@ -2297,7 +2316,7 @@ void Core::parseLine()
             ti++;
             if (cur().t == Tk::Colon) ti++;
 
-            if (cur().t == Tk::Ident && cur().text == "equ")
+            if (cur().t == Tk::Ident && (cur().text == "equ" || cur().text == "defl"))
             {
                 ti++;
                 ExprResult er = parseExpr();
@@ -2419,6 +2438,7 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curFile.clear();
     curToDisk = false;
     curExec = -1;
+    codeEnabled = true;
     condStack.clear();
     int counter = 0;
     while (cur().t != Tk::End)
@@ -2450,6 +2470,7 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     curFile.clear();
     curToDisk = false;
     curExec = -1;
+    codeEnabled = true;
     condStack.clear();
     segments.clear();
     counter = 0;
