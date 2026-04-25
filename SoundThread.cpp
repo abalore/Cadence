@@ -17,6 +17,30 @@ BYTE SoundThread::ringBuffer[RING_SIZE];
 std::atomic<int> SoundThread::ringHead{0};
 std::atomic<int> SoundThread::ringTail{0};
 
+// Saturated-mix lookup table for two U8 PCM samples biased at 128.
+// Uses Viktor T. Toth additive mixing (no hard clipping).
+static BYTE g_mixTable[256][256];
+
+static void buildMixTable()
+{
+    for (int a = 0; a < 256; a++)
+    {
+        const float fa = (a - 128) / 128.0f;
+        for (int b = 0; b < 256; b++)
+        {
+            const float fb = (b - 128) / 128.0f;
+            float s;
+            if (fa >= 0.0f && fb >= 0.0f)      s = fa + fb - fa * fb;
+            else if (fa < 0.0f && fb < 0.0f)   s = fa + fb + fa * fb;
+            else                                s = fa + fb;
+            int out = int(s * 128.0f + 128.5f);
+            if (out < 0) out = 0;
+            else if (out > 255) out = 255;
+            g_mixTable[a][b] = BYTE(out);
+        }
+    }
+}
+
 static void loadWavU8(const char *path, BYTE *&buffer, int &length)
 {
     buffer = nullptr;
@@ -36,9 +60,18 @@ static void loadWavU8(const char *path, BYTE *&buffer, int &length)
 
 SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), paInitialized(false)
 {
+    buildMixTable();
+
     loadWavU8(":/images/step.wav", stepBuffer, stepBufferLen);
     stepPos = stepBufferLen;
     loadWavU8(":/images/spin.wav", spinBuffer, spinBufferLen);
+    // Fold the spin gain into the spin samples so the hot loop can use the same mix table.
+    // ((b - 128) * 51) >> 8 ≈ (b - 128) * 0.199
+    if (spinBuffer)
+    {
+        for (int i = 0; i < spinBufferLen; i++)
+            spinBuffer[i] = BYTE((((int(spinBuffer[i]) - 128) * 51) >> 8) + 128);
+    }
     spinPos = 0;
 
     PaError err = Pa_Initialize();
@@ -125,34 +158,27 @@ void SoundThread::run()
         waitCondition.wait(&mutex);
         if (!enabled)
             memset(CPC::psg.buffer, 0x80, CPC::psg.bufferIndex);
-        if (CPC::fdc.stepPulses > 0) {
-            CPC::fdc.stepPulses = 0;
-            if (sfxEnabled)
+        if (sfxEnabled)
+        {
+            if (CPC::fdc.stepPulses > 0) {
+                CPC::fdc.stepPulses = 0;
                 stepPos = 0;
-        }
-        if (sfxEnabled && stepBuffer && stepPos < stepBufferLen) {
-            int len = std::min(CPC::psg.bufferIndex, stepBufferLen - stepPos);
-            for (int i = 0; i < len; i++) {
-                int mixed = (int)CPC::psg.buffer[i] + (int)stepBuffer[stepPos + i] - 128;
-                if (mixed < 0) mixed = 0;
-                else if (mixed > 255) mixed = 255;
-                CPC::psg.buffer[i] = (BYTE)mixed;
             }
-            stepPos += len;
-        }
-        if (sfxEnabled && spinBuffer && CPC::fdc.GetMotor()) {
-            constexpr float spinGain = 0.2f;
-            for (int i = 0; i < CPC::psg.bufferIndex; i++) {
-                int delta = (int)spinBuffer[spinPos] - 128;
-                int mixed = (int)CPC::psg.buffer[i] + (int)(delta * spinGain);
-                if (mixed < 0) mixed = 0;
-                else if (mixed > 255) mixed = 255;
-                CPC::psg.buffer[i] = (BYTE)mixed;
-                spinPos++;
-                if (spinPos >= spinBufferLen) spinPos = 0;
+            if (stepBuffer && stepPos < stepBufferLen) {
+                int len = std::min(CPC::psg.bufferIndex, stepBufferLen - stepPos);
+                for (int i = 0; i < len; i++)
+                    CPC::psg.buffer[i] = g_mixTable[CPC::psg.buffer[i]][stepBuffer[stepPos + i]];
+                stepPos += len;
             }
-        } else {
-            spinPos = 0;
+            if (spinBuffer && CPC::fdc.GetMotor()) {
+                const int n = CPC::psg.bufferIndex;
+                for (int i = 0; i < n; i++) {
+                    CPC::psg.buffer[i] = g_mixTable[CPC::psg.buffer[i]][spinBuffer[spinPos]];
+                    if (++spinPos >= spinBufferLen) spinPos = 0;
+                }
+            } else {
+                spinPos = 0;
+            }
         }
 
         int head = ringHead.load(std::memory_order_relaxed);
