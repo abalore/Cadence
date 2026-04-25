@@ -16,10 +16,7 @@ GraphicsInspector::GraphicsInspector(QWidget *parent)
 
     connect(ui->inputWidth, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->inputHeight, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
-    connect(ui->radioButton, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
-    connect(ui->radioButton_2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
-    connect(ui->radioButton_3, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
-    connect(ui->radioButton_4, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
+    connect(ui->inputAddress, &QLineEdit::editingFinished, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->rbMode0, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->rbMode1, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
     connect(ui->rbMode2, &QRadioButton::toggled, this, &GraphicsInspector::UpdateGraphics);
@@ -53,10 +50,9 @@ void GraphicsInspector::UpdateGraphics()
     BYTE xSize = ui->inputWidth->text().toInt(nullptr, 10);
     BYTE ySize = ui->inputHeight->text().toInt(nullptr, 10);
     int byteSize = xSize * 16 * ySize * 16 * 3;
-    word baseAddress = 0xC000;
-    if (ui->radioButton->isChecked()) baseAddress = 0x0000;
-    if (ui->radioButton_2->isChecked()) baseAddress = 0x4000;
-    if (ui->radioButton_3->isChecked()) baseAddress = 0x8000;
+    word baseAddress = ui->inputAddress->text().toUInt(nullptr, 16);
+    BYTE bank = baseAddress >> 14;
+    word offset = baseAddress & 0x3FFF;
     int mode = CPC::gateArray.GetMode();
     if (ui->rbMode0->isChecked()) mode = 0;
     else if (ui->rbMode1->isChecked()) mode = 1;
@@ -83,8 +79,7 @@ void GraphicsInspector::UpdateGraphics()
         for  (int j = 0; j < ySize; j++)
             for (int k = 0; k < 8; k++)
             {
-                word address =  ((k * 0x0800 + j * xSize * 2 + i) % 0x4000);
-                BYTE bank = baseAddress >> 14;
+                word address = ((offset + k * 0x0800 + j * xSize * 2 + i) % 0x4000);
                 BYTE b = CPC::RAM[bank][address];
                 int line = j * 8 + k;
                 for (int l = 0; l < 8; l++)

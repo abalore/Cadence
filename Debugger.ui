@@ -30,7 +30,7 @@
 QFrame#pnlZ80 QLabel, QFrame#pnlCRTC QLabel, QFrame#pnlGateArray QLabel { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QListView#listDisassembly, QListView#listMemory, QLabel#lblStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QListView#listDisassembly, QListView#listMemory { border: 1px solid black; }
-QLabel#lblStack { background-color: white; color: black; }</string>
+QLabel#lblStack { background-color: black; color: white; }</string>
   </property>
   <property name="modal">
    <bool>false</bool>
