@@ -2815,9 +2815,21 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
   </widget>
   <widget class="QLabel" name="lblDisHiRomSel">
    <property name="geometry">
-    <rect><x>335</x><y>280</y><width>120</width><height>20</height></rect>
+    <rect>
+     <x>335</x>
+     <y>280</y>
+     <width>91</width>
+     <height>20</height>
+    </rect>
    </property>
-   <property name="text"><string>Selected: 0</string></property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Selected: 0</string>
+   </property>
   </widget>
   <widget class="QListView" name="listMemory">
    <property name="geometry">

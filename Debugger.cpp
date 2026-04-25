@@ -50,16 +50,26 @@ Debugger::Debugger(QWidget *parent)
     ui->listStack->setModel(modelStack);
     connect(ui->listStack, &QListView::clicked, this, &Debugger::onStackClicked);
 
-    auto onDisViewChanged = [this]{
+    auto refreshKeepScroll = [this]{
+        QModelIndex topIdx = ui->listDisassembly->indexAt(QPoint(0, 0));
+        word topAddr = (topIdx.isValid() && topIdx.row() < disassemblyAddresses.size())
+                       ? disassemblyAddresses[topIdx.row()] : 0;
+        Update();
+        int newRow = disassemblyAddresses.indexOf(topAddr);
+        if (newRow >= 0)
+            ui->listDisassembly->scrollTo(modelDisassembly->index(newRow),
+                                          QAbstractItemView::PositionAtTop);
+    };
+    auto onDisViewChanged = [this, refreshKeepScroll]{
         bool custom = ui->rbDisCustom->isChecked();
         ui->chkDisLoRom->setEnabled(custom);
         ui->chkDisHiRom->setEnabled(custom);
-        Update();
+        refreshKeepScroll();
     };
     connect(ui->rbDisCpu,    &QRadioButton::toggled, this, onDisViewChanged);
     connect(ui->rbDisCustom, &QRadioButton::toggled, this, onDisViewChanged);
-    connect(ui->chkDisLoRom, &QCheckBox::toggled,    this, [this]{ Update(); });
-    connect(ui->chkDisHiRom, &QCheckBox::toggled,    this, [this]{ Update(); });
+    connect(ui->chkDisLoRom, &QCheckBox::toggled,    this, refreshKeepScroll);
+    connect(ui->chkDisHiRom, &QCheckBox::toggled,    this, refreshKeepScroll);
     PopulateMemorySources();
     PopulateMemoryDetail();
     connect(ui->cmbMemorySource, QOverload<int>::of(&QComboBox::currentIndexChanged),
