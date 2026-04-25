@@ -1006,9 +1006,20 @@ Core::ExprResult Core::parseAdd()
 Core::ExprResult Core::parseMul()
 {
     ExprResult l = parseUnary();
-    while (cur().t == Tk::Star || cur().t == Tk::Slash || cur().t == Tk::Percent)
+    auto isWordOp = [&]() {
+        if (cur().t != Tk::Ident) return false;
+        const QString &w = cur().text;
+        return w == QLatin1String("and") || w == QLatin1String("or") ||
+               w == QLatin1String("xor") || w == QLatin1String("mod") ||
+               w == QLatin1String("shl") || w == QLatin1String("shr");
+    };
+    while (cur().t == Tk::Star || cur().t == Tk::Slash || cur().t == Tk::Percent ||
+           isWordOp())
     {
-        Tk op = cur().t; ti++;
+        QString opStr;
+        Tk op = Tk::Ident;
+        if (cur().t == Tk::Ident) { opStr = cur().text; ti++; }
+        else { op = cur().t; ti++; }
         ExprResult r = parseUnary();
         if (op == Tk::Star) l.value *= r.value;
         else if (op == Tk::Slash)
@@ -1016,11 +1027,21 @@ Core::ExprResult Core::parseMul()
             if (r.value == 0) { errorHere("Division by zero"); l.value = 0; }
             else l.value /= r.value;
         }
-        else
+        else if (op == Tk::Percent)
         {
             if (r.value == 0) { errorHere("Modulo by zero"); l.value = 0; }
             else l.value %= r.value;
         }
+        else if (opStr == QLatin1String("and")) l.value = l.value & r.value;
+        else if (opStr == QLatin1String("or"))  l.value = l.value | r.value;
+        else if (opStr == QLatin1String("xor")) l.value = l.value ^ r.value;
+        else if (opStr == QLatin1String("mod"))
+        {
+            if (r.value == 0) { errorHere("Modulo by zero"); l.value = 0; }
+            else l.value %= r.value;
+        }
+        else if (opStr == QLatin1String("shl")) l.value = l.value << (r.value & 63);
+        else if (opStr == QLatin1String("shr")) l.value = l.value >> (r.value & 63);
         l.defined = l.defined && r.defined;
     }
     return l;
@@ -1032,6 +1053,8 @@ Core::ExprResult Core::parseUnary()
     if (cur().t == Tk::Minus) { ti++; ExprResult r = parseUnary(); r.value = -r.value; return r; }
     if (cur().t == Tk::Tilde) { ti++; ExprResult r = parseUnary(); r.value = ~r.value; return r; }
     if (cur().t == Tk::Bang)  { ti++; ExprResult r = parseUnary(); r.value = (r.value == 0) ? 1 : 0; return r; }
+    if (cur().t == Tk::Ident && cur().text == QLatin1String("not"))
+    { ti++; ExprResult r = parseUnary(); r.value = ~r.value; return r; }
     return parsePrimary();
 }
 

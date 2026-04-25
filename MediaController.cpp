@@ -45,9 +45,11 @@ bool MediaController::LoadTape(const QString &path)
 
 bool MediaController::LoadCartridge(const QString &path)
 {
+    SaveCartridgeIfDirty();
     CPC::ReadCartridge((char *)path.toUtf8().data());
     cartridgePath = path;
     CPC::cartridgeEnabled = true;
+    CPC::cartridgeDirty = false;
     notify(MediaSlot::Cartridge, path);
     CPC::Reset();
     return true;
@@ -61,6 +63,24 @@ void MediaController::InsertBlankCartridge()
     emit mediaChanged(MediaSlot::Cartridge, "<Blank>");
     if (MainWindow::Instance)
         MainWindow::Instance->ResetEmulation();
+}
+
+bool MediaController::NewBlankCartridge(const QString &path)
+{
+    CPC::InsertBlankCartridge();
+    CPC::SaveCartridge(path.toUtf8().constData());
+    cartridgePath = path;
+    CPC::cartridgeEnabled = true;
+    notify(MediaSlot::Cartridge, path);
+    if (MainWindow::Instance)
+        MainWindow::Instance->ResetEmulation();
+    return true;
+}
+
+void MediaController::SaveCartridgeIfDirty()
+{
+    if (CPC::cartridgeEnabled && CPC::cartridgeDirty && !cartridgePath.isEmpty())
+        CPC::SaveCartridge(cartridgePath.toUtf8().constData());
 }
 
 void MediaController::EjectDiskA()
@@ -90,6 +110,8 @@ void MediaController::EjectTape()
 
 void MediaController::EjectCartridge()
 {
+    SaveCartridgeIfDirty();
+    CPC::cartridgeDirty = false;
     CPC::cartridgeEnabled = false;
     cartridgePath.clear();
     notify(MediaSlot::Cartridge, "");

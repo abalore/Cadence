@@ -32,6 +32,7 @@ BYTE *CPC::RAMs[36];
 bool CPC::has512kExpansion = false;
 BYTE *CPC::Cartridge;
 bool CPC::cartridgeEnabled;
+bool CPC::cartridgeDirty = false;
 CPCType CPC::cpcType = CPCType::CPC6128;
 BYTE CPC::tick = 0;
 
@@ -79,13 +80,79 @@ void CPC::ReadCartridge(char *filename)
 {
     if (Cartridge != nullptr) free(Cartridge);
     Cartridge = (BYTE *)malloc(524288);
-    FILE *file = fopen(filename, "r");
-    if (file)
+    memset(Cartridge, 0, 524288);
+    cartridgeDirty = false;
+    FILE *file = fopen(filename, "rb");
+    if (!file) return;
+
+    unsigned char hdr[12];
+    size_t hdrN = fread(hdr, 1, 12, file);
+    bool isRiff = (hdrN == 12 &&
+                   hdr[0] == 'R' && hdr[1] == 'I' && hdr[2] == 'F' && hdr[3] == 'F' &&
+                   hdr[8] == 'A' && hdr[9] == 'M' && hdr[10] == 'S' && hdr[11] == '!');
+
+    if (isRiff)
     {
+        while (true)
+        {
+            char id[4];
+            unsigned char szb[4];
+            if (fread(id, 1, 4, file) != 4) break;
+            if (fread(szb, 1, 4, file) != 4) break;
+            unsigned int size = szb[0] | (szb[1] << 8) | (szb[2] << 16) | (szb[3] << 24);
+            // CPR bank chunks are "cbNN" with decimal NN (00..31).
+            if (id[0] == 'c' && id[1] == 'b' &&
+                id[2] >= '0' && id[2] <= '9' && id[3] >= '0' && id[3] <= '9')
+            {
+                int bank = (id[2] - '0') * 10 + (id[3] - '0');
+                if (bank >= 0 && bank < 32)
+                {
+                    unsigned int n = size < 0x4000u ? size : 0x4000u;
+                    if (fread(Cartridge + bank * 0x4000, 1, n, file) != n) break;
+                    if (size > n) fseek(file, size - n, SEEK_CUR);
+                }
+                else
+                    fseek(file, size, SEEK_CUR);
+            }
+            else
+                fseek(file, size, SEEK_CUR);
+            if (size & 1u) fseek(file, 1, SEEK_CUR);  // RIFF 2-byte alignment
+        }
+    }
+    else
+    {
+        fseek(file, 0, SEEK_SET);
         size_t n = fread(Cartridge, 1, 524288, file);
         (void)n;
-        fclose(file);
     }
+    fclose(file);
+}
+
+void CPC::SaveCartridge(const char *filename)
+{
+    if (Cartridge == nullptr) return;
+    FILE *f = fopen(filename, "wb");
+    if (!f) return;
+    const unsigned int riffTotal = 4 + 32 * (8 + 0x4000);  // "AMS!" + 32 chunks
+    fwrite("RIFF", 1, 4, f);
+    fputc(riffTotal & 0xFF, f);
+    fputc((riffTotal >> 8) & 0xFF, f);
+    fputc((riffTotal >> 16) & 0xFF, f);
+    fputc((riffTotal >> 24) & 0xFF, f);
+    fwrite("AMS!", 1, 4, f);
+    for (int bank = 0; bank < 32; bank++)
+    {
+        char id[4];
+        // CPR bank chunks: decimal NN (00..31).
+        id[0] = 'c'; id[1] = 'b';
+        id[2] = char('0' + (bank / 10));
+        id[3] = char('0' + (bank % 10));
+        fwrite(id, 1, 4, f);
+        fputc(0x00, f); fputc(0x40, f); fputc(0x00, f); fputc(0x00, f);
+        fwrite(Cartridge + bank * 0x4000, 1, 0x4000, f);
+    }
+    fclose(f);
+    cartridgeDirty = false;
 }
 
 void CPC::InsertBlankCartridge()
@@ -93,6 +160,7 @@ void CPC::InsertBlankCartridge()
     if (Cartridge != nullptr) free(Cartridge);
     Cartridge = (BYTE *)malloc(524288);
     memset(Cartridge, 0, 524288);
+    cartridgeDirty = false;
 }
 
 void CPC::Init()

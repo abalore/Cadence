@@ -34,6 +34,7 @@ public:
     static void ReadROM(char *filename, int number);
     static void ClearROM(int number);
     static void ReadCartridge(char *filename);
+    static void SaveCartridge(const char *filename);
     static void InsertBlankCartridge();
     static void SelectRAM(BYTE mmr);
     static void UpdateMemoryMap();
@@ -52,6 +53,7 @@ public:
     static BYTE *Cartridge;
     static BYTE zeroPage[0x4000];
     static bool cartridgeEnabled;
+    static bool cartridgeDirty;
     static CPCType cpcType;
     static BYTE tick;
     static BYTE baseVMA;

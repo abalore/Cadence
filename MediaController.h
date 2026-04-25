@@ -17,6 +17,8 @@ public:
     bool LoadTape(const QString &path);
     bool LoadCartridge(const QString &path);
     void InsertBlankCartridge();
+    bool NewBlankCartridge(const QString &path);
+    void SaveCartridgeIfDirty();
 
     void EjectDiskA();
     void EjectDiskB();

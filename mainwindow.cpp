@@ -307,6 +307,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+    if (media) media->SaveCartridgeIfDirty();
     event->accept();
 }
 
@@ -719,7 +720,17 @@ void MainWindow::onMenuMediaInsertCartridge()
 
 void MainWindow::onMenuMediaInsertBlankCartridge()
 {
-    media->InsertBlankCartridge();
+    QString fileName = QFileDialog::getSaveFileName(
+        this, tr("New blank cartridge"),
+        QDir::homePath() + "/.cadence/CPR",
+        tr("Cartridge Files (*.cpr)"),
+        nullptr, QFileDialog::DontUseNativeDialog);
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".cpr", Qt::CaseInsensitive)) fileName += ".cpr";
+    QDir().mkpath(QFileInfo(fileName).absolutePath());
+    if (!media->NewBlankCartridge(fileName))
+        QMessageBox::warning(this, tr("New blank cartridge"),
+                             tr("Could not create %1").arg(fileName));
 }
 
 void MainWindow::onMenuAbout()

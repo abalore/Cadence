@@ -879,7 +879,10 @@ void AssemblerWindow::onAssemble()
                 if (s.upperRom >= 0x80 && s.upperRom <= 0x9F)
                 {
                     if (CPC::cartridgeEnabled && CPC::Cartridge)
+                    {
                         dst = CPC::Cartridge + (s.upperRom - 0x80) * 0x4000;
+                        CPC::cartridgeDirty = true;
+                    }
                 }
                 else
                     dst = CPC::HiROMs[s.upperRom];
