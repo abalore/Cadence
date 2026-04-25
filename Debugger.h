@@ -17,6 +17,13 @@ QT_END_NAMESPACE
 
 using namespace std;
 
+class DisassemblyModel : public QStringListModel
+{
+public:
+    int pcRow = -1;
+    QVariant data(const QModelIndex &index, int role) const override;
+};
+
 class Debugger : public QDialog
 {
     Q_OBJECT
@@ -24,6 +31,9 @@ public:
     Debugger(QWidget *parent = nullptr);
     ~Debugger();
     void Update();
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override;
+    void reject() override;
 private slots:
     void onRunClicked();
     void onStepInClicked();
@@ -35,6 +45,7 @@ private slots:
     void onGoToClicked();
     void onMemorySourceChanged(int index);
     void onMemoryDetailChanged(int index);
+    void onZ80FieldEdited();
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
@@ -49,7 +60,7 @@ private:
     QStringList listDisassembly;
     QVector<word> disassemblyAddresses;
     std::set<word> manualAnchors;
-    QStringListModel *modelDisassembly;
+    DisassemblyModel *modelDisassembly;
     QModelIndex modelDisassemblyIndex;
     QStringList listMemory;
     QStringListModel *modelMemory;

@@ -17,7 +17,19 @@
 #include <QScrollBar>
 #include <QShortcut>
 #include <QInputDialog>
+#include <QBrush>
+#include <QColor>
 #include <algorithm>
+
+QVariant DisassemblyModel::data(const QModelIndex &index, int role) const
+{
+    if (index.row() == pcRow)
+    {
+        if (role == Qt::BackgroundRole) return QBrush(QColor(255, 240, 180));
+        if (role == Qt::ForegroundRole) return QBrush(Qt::black);
+    }
+    return QStringListModel::data(index, role);
+}
 
 Debugger::Debugger(QWidget *parent)
     : QDialog(parent)
@@ -33,7 +45,7 @@ Debugger::Debugger(QWidget *parent)
     connect(ui->btnToggleBreakpoint, &QPushButton::clicked, this, &Debugger::onToggleBreakpointClicked);
     connect(ui->btnGoTo, &QPushButton::clicked, this, &Debugger::onGoToClicked);
 
-    modelDisassembly = new QStringListModel();
+    modelDisassembly = new DisassemblyModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
     ui->listMemory->setModel(modelMemory);
@@ -43,12 +55,25 @@ Debugger::Debugger(QWidget *parent)
             this, &Debugger::onMemorySourceChanged);
     connect(ui->cmbMemoryDetail, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &Debugger::onMemoryDetailChanged);
+    QLineEdit *z80Fields[] = {
+        ui->txtAF, ui->txtBC, ui->txtDE, ui->txtHL,
+        ui->txtAF_, ui->txtBC_, ui->txtDE_, ui->txtHL_,
+        ui->txtIX, ui->txtIY, ui->txtPC, ui->txtSP,
+        ui->txtI, ui->txtR,
+        ui->txtIM, ui->txtIRQ, ui->txtIFF1, ui->txtIFF2
+    };
+    for (QLineEdit *f : z80Fields)
+        connect(f, &QLineEdit::editingFinished, this, &Debugger::onZ80FieldEdited);
+
     connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
     connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
     connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
     connect(new QShortcut(Qt::Key_F7, this), &QShortcut::activated, this, &Debugger::onStepInClicked);
     connect(new QShortcut(Qt::Key_F4, this), &QShortcut::activated, this, &Debugger::onRunToClicked);
     connect(new QShortcut(Qt::Key_F9, this), &QShortcut::activated, this, &Debugger::onToggleBreakpointClicked);
+
+    for (QObject *child : findChildren<QObject*>())
+        child->installEventFilter(this);
 }
 
 Debugger::~Debugger()
@@ -65,8 +90,30 @@ void Debugger::closeEvent(QCloseEvent *event)
     event->ignore();
 }
 
+void Debugger::reject()
+{
+    if (auto *le = qobject_cast<QLineEdit*>(focusWidget()))
+    {
+        UpdateZ80Panel();
+        le->clearFocus();
+    }
+}
+
+bool Debugger::eventFilter(QObject *o, QEvent *e)
+{
+    QEvent::Type t = e->type();
+    if (t == QEvent::Shortcut
+        || (t == QEvent::MouseButtonPress && o != focusWidget()))
+        if (QWidget *fw = focusWidget()) fw->clearFocus();
+    return QDialog::eventFilter(o, e);
+}
+
 void Debugger::Update()
 {
+    int prevRow = ui->listDisassembly->currentIndex().row();
+    bool hadCursor = (prevRow >= 0 && prevRow < disassemblyAddresses.size());
+    word prevAddr = hadCursor ? disassemblyAddresses[prevRow] : 0;
+
     int pcPosition = 0;
     int instrCount = 0;
     listDisassembly.clear();
@@ -106,9 +153,15 @@ void Debugger::Update()
         instrCount++;
     }
     modelDisassembly -> setStringList(listDisassembly);
-    modelDisassemblyIndex = modelDisassembly->index(pcPosition);
-    ui->listDisassembly->scrollTo(modelDisassemblyIndex, QAbstractItemView::PositionAtCenter);
+    modelDisassembly->pcRow = pcPosition;
+
+    int cursorRow = hadCursor ? disassemblyAddresses.indexOf(prevAddr) : pcPosition;
+    if (cursorRow < 0) cursorRow = pcPosition;
+    modelDisassemblyIndex = modelDisassembly->index(cursorRow);
     ui->listDisassembly->setCurrentIndex(modelDisassemblyIndex);
+
+    QModelIndex pcIndex = modelDisassembly->index(pcPosition);
+    ui->listDisassembly->scrollTo(pcIndex, QAbstractItemView::PositionAtCenter);
 
     int memoryIndex = ui->listMemory->currentIndex().row();
     listMemory.clear();
@@ -311,6 +364,43 @@ void Debugger::UpdateZ80Panel()
     ui->txtIFF1->setText(s.IFF1 ? "1" : "0");
     ui->txtIFF2->setText(s.IFF2 ? "1" : "0");
     ui->txtNOPS->setText(QString::number(s.nops));
+}
+
+void Debugger::onZ80FieldEdited()
+{
+    Z80DebugState s = CPC::z80.GetDebugState();
+    auto hex = [](QLineEdit *f, word fallback, unsigned mask) -> word {
+        bool ok;
+        unsigned v = f->text().toUInt(&ok, 16);
+        return ok ? (word)(v & mask) : fallback;
+    };
+    auto bit = [](QLineEdit *f, bool fallback) -> bool {
+        bool ok;
+        unsigned v = f->text().toUInt(&ok, 10);
+        return ok ? (v != 0) : fallback;
+    };
+    s.AF  = hex(ui->txtAF,  s.AF,  0xFFFF);
+    s.BC  = hex(ui->txtBC,  s.BC,  0xFFFF);
+    s.DE  = hex(ui->txtDE,  s.DE,  0xFFFF);
+    s.HL  = hex(ui->txtHL,  s.HL,  0xFFFF);
+    s.AF_ = hex(ui->txtAF_, s.AF_, 0xFFFF);
+    s.BC_ = hex(ui->txtBC_, s.BC_, 0xFFFF);
+    s.DE_ = hex(ui->txtDE_, s.DE_, 0xFFFF);
+    s.HL_ = hex(ui->txtHL_, s.HL_, 0xFFFF);
+    s.IX  = hex(ui->txtIX,  s.IX,  0xFFFF);
+    s.IY  = hex(ui->txtIY,  s.IY,  0xFFFF);
+    s.PC  = hex(ui->txtPC,  s.PC,  0xFFFF);
+    s.SP  = hex(ui->txtSP,  s.SP,  0xFFFF);
+    s.I   = (BYTE)hex(ui->txtI, s.I, 0xFF);
+    s.R   = (BYTE)hex(ui->txtR, s.R, 0xFF);
+    bool ok;
+    unsigned imVal = ui->txtIM->text().toUInt(&ok, 10);
+    if (ok && imVal <= 2) s.im = (BYTE)imVal;
+    s.InterruptRequest = bit(ui->txtIRQ,  s.InterruptRequest);
+    s.IFF1             = bit(ui->txtIFF1, s.IFF1);
+    s.IFF2             = bit(ui->txtIFF2, s.IFF2);
+    CPC::z80.SetDebugState(s);
+    UpdateZ80Panel();
 }
 
 string Debugger::GetZ80StackDebugLine()

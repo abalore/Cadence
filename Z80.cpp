@@ -494,7 +494,19 @@ Z80DebugState Z80::GetDebugState()
     s.InterruptRequest = InterruptRequest;
     s.IFF1 = IFF1; s.IFF2 = IFF2;
     s.R = R; s.I = I; s.im = im;
-    s.nops = nops;
+    s.nops = (nops + 3) >> 2;
     return s;
+}
+
+void Z80::SetDebugState(const Z80DebugState &s)
+{
+    AF.Set(s.AF); BC.Set(s.BC); DE.Set(s.DE); HL.Set(s.HL);
+    AF_.Set(s.AF_); BC_.Set(s.BC_); DE_.Set(s.DE_); HL_.Set(s.HL_);
+    IX.Set(s.IX); IY.Set(s.IY);
+    PC = s.PC; SP = s.SP;
+    DecodeF();
+    InterruptRequest = s.InterruptRequest;
+    IFF1 = s.IFF1; IFF2 = s.IFF2;
+    R = s.R; I = s.I; im = s.im;
 }
 

@@ -6,9 +6,9 @@
 #include "SoundThread.h"
 #include "speedcontroller.h"
 
-std::atomic<ushort> EmulatorThread::stopPoint{0x1CB3}; //0x4921;
+std::atomic<ushort> EmulatorThread::stopPoint{0x0000};
 std::atomic<bool> EmulatorThread::running{true};
-std::atomic<RunMode> EmulatorThread::runMode{RunMode::StopPoint};
+std::atomic<RunMode> EmulatorThread::runMode{RunMode::Run};
 std::atomic<bool> EmulatorThread::end{false};
 QMutex EmulatorThread::frameMutex;
 

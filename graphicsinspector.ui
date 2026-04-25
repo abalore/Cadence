@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>Address</string>
+    <string>Address (hex)</string>
    </property>
    <widget class="QLineEdit" name="inputAddress">
     <property name="geometry">

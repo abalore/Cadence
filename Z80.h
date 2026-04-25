@@ -62,6 +62,7 @@ public:
     inline word GetSP() const { return SP; }
     void ResetNopCounter() { nops = 0; }
     Z80DebugState GetDebugState();
+    void SetDebugState(const Z80DebugState &s);
 
 private:
     BYTE tCycle;
