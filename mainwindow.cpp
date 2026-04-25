@@ -78,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
     if (settings.system == "CPC464")       CPC::cpcType = CPCType::CPC464;
     else if (settings.system == "CPC664")  CPC::cpcType = CPCType::CPC664;
     else                                   CPC::cpcType = CPCType::CPC6128;
+    CPC::has512kExpansion = settings.ram512kExpansion;
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
