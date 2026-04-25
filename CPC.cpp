@@ -27,6 +27,7 @@ BYTE *CPC::memPage[4];
 BYTE CPC::zeroPage[0x4000] = {};
 BYTE *CPC::LoROM;
 BYTE *CPC::HiROM;
+BYTE CPC::selectedROM = 0;
 BYTE *CPC::HiROMs[ROM_SLOTS];
 BYTE *CPC::RAMs[36];
 bool CPC::has512kExpansion = false;
@@ -351,6 +352,7 @@ void CPC::SetByteAt(word address, BYTE b)
 
 void CPC::SelectROM(BYTE number)
 {
+    selectedROM = number;
     if (cartridgeEnabled)
     {
         HiROM = nullptr;

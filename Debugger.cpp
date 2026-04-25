@@ -19,6 +19,8 @@
 #include <QInputDialog>
 #include <QBrush>
 #include <QColor>
+#include <QMenuBar>
+#include <QMenu>
 #include <algorithm>
 
 QVariant DisassemblyModel::data(const QModelIndex &index, int role) const
@@ -28,6 +30,10 @@ QVariant DisassemblyModel::data(const QModelIndex &index, int role) const
         if (role == Qt::BackgroundRole) return QBrush(QColor(255, 240, 180));
         if (role == Qt::ForegroundRole) return QBrush(Qt::black);
     }
+    else if (bpRows.contains(index.row()))
+    {
+        if (role == Qt::ForegroundRole) return QBrush(QColor(220, 50, 50));
+    }
     return QStringListModel::data(index, role);
 }
 
@@ -36,19 +42,24 @@ Debugger::Debugger(QWidget *parent)
     , ui(new Ui::Debugger)
 {
     ui->setupUi(this);
-    connect(ui->btnStepOut, &QPushButton::clicked, this, &Debugger::onStepOutClicked);
-    connect(ui->btnRun, &QPushButton::clicked, this, &Debugger::onRunClicked);
-    connect(ui->btnStepOver, &QPushButton::clicked, this, &Debugger::onStepOverClicked);
-    connect(ui->btnStepIn, &QPushButton::clicked, this, &Debugger::onStepInClicked);
-    connect(ui->btnRunTo, &QPushButton::clicked, this, &Debugger::onRunToClicked);
-    connect(ui->btnResetNops, &QPushButton::clicked, this, &Debugger::onResetNopsClicked);
-    connect(ui->btnToggleBreakpoint, &QPushButton::clicked, this, &Debugger::onToggleBreakpointClicked);
-    connect(ui->btnGoTo, &QPushButton::clicked, this, &Debugger::onGoToClicked);
-
     modelDisassembly = new DisassemblyModel();
     ui->listDisassembly->setModel(modelDisassembly);
     modelMemory = new QStringListModel();
     ui->listMemory->setModel(modelMemory);
+    modelStack = new QStringListModel();
+    ui->listStack->setModel(modelStack);
+    connect(ui->listStack, &QListView::clicked, this, &Debugger::onStackClicked);
+
+    auto onDisViewChanged = [this]{
+        bool custom = ui->rbDisCustom->isChecked();
+        ui->chkDisLoRom->setEnabled(custom);
+        ui->chkDisHiRom->setEnabled(custom);
+        Update();
+    };
+    connect(ui->rbDisCpu,    &QRadioButton::toggled, this, onDisViewChanged);
+    connect(ui->rbDisCustom, &QRadioButton::toggled, this, onDisViewChanged);
+    connect(ui->chkDisLoRom, &QCheckBox::toggled,    this, [this]{ Update(); });
+    connect(ui->chkDisHiRom, &QCheckBox::toggled,    this, [this]{ Update(); });
     PopulateMemorySources();
     PopulateMemoryDetail();
     connect(ui->cmbMemorySource, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -82,12 +93,17 @@ Debugger::Debugger(QWidget *parent)
     for (QWidget *w : gaWidgets)
         w->setEnabled(false);
 
-    connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
-    connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
-    connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
-    connect(new QShortcut(Qt::Key_F7, this), &QShortcut::activated, this, &Debugger::onStepInClicked);
-    connect(new QShortcut(Qt::Key_F4, this), &QShortcut::activated, this, &Debugger::onRunToClicked);
-    connect(new QShortcut(Qt::Key_F9, this), &QShortcut::activated, this, &Debugger::onToggleBreakpointClicked);
+    QMenuBar *bar = new QMenuBar(this);
+    bar->setGeometry(0, 0, width(), 24);
+    QMenu *debugMenu = bar->addMenu("&Debug");
+    debugMenu->addAction("Run",               QKeySequence(Qt::Key_F5), this, &Debugger::onRunClicked);
+    debugMenu->addAction("Step In",           QKeySequence(Qt::Key_F7), this, &Debugger::onStepInClicked);
+    debugMenu->addAction("Step Over",         QKeySequence(Qt::Key_F8), this, &Debugger::onStepOverClicked);
+    debugMenu->addAction("Step Out",          QKeySequence(Qt::Key_F6), this, &Debugger::onStepOutClicked);
+    debugMenu->addAction("Run To",            QKeySequence(Qt::Key_F4), this, &Debugger::onRunToClicked);
+    debugMenu->addAction("Toggle Breakpoint", QKeySequence(Qt::Key_F9), this, &Debugger::onToggleBreakpointClicked);
+    debugMenu->addAction("Go To...",          QKeySequence(Qt::Key_F3),  this, &Debugger::onGoToClicked);
+    debugMenu->addAction("Reset NOPS",        QKeySequence(Qt::Key_F12), this, &Debugger::onResetNopsClicked);
 
     for (QObject *child : findChildren<QObject*>())
         child->installEventFilter(this);
@@ -96,6 +112,7 @@ Debugger::Debugger(QWidget *parent)
 Debugger::~Debugger()
 {
     delete modelMemory;
+    delete modelStack;
     delete modelDisassembly;
     delete ui;
 }
@@ -135,6 +152,7 @@ void Debugger::Update()
     int instrCount = 0;
     listDisassembly.clear();
     disassemblyAddresses.clear();
+    modelDisassembly->bpRows.clear();
 
     // Build the sorted anchor list: manual anchors + current PC + breakpoints.
     std::vector<int> anchors(manualAnchors.begin(), manualAnchors.end());
@@ -144,6 +162,14 @@ void Debugger::Update()
     anchors.push_back(0x10000);
     std::sort(anchors.begin(), anchors.end());
     anchors.erase(std::unique(anchors.begin(), anchors.end()), anchors.end());
+
+    BYTE *origPage0 = CPC::memPage[0];
+    BYTE *origPage3 = CPC::memPage[3];
+    if (ui->rbDisCustom->isChecked())
+    {
+        CPC::memPage[0] = ui->chkDisLoRom->isChecked() && CPC::LoROM ? CPC::LoROM : CPC::RAM[0];
+        CPC::memPage[3] = ui->chkDisHiRom->isChecked() && CPC::HiROM ? CPC::HiROM : CPC::RAM[3];
+    }
 
     char buff[200];
     bool pcFound = false;
@@ -157,9 +183,10 @@ void Debugger::Update()
         auto it = std::upper_bound(anchors.begin(), anchors.end(), (int)position);
         int boundary = *it;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction, boundary);
-        sprintf(buff, "%s %14s  %4s  %12s  %s", CPC::Breakpoint[position] ? "* " : "  ", label.data(), address.data(), bytes.data(), instruction.data());
+        sprintf(buff, "%14s %s %4s  %12s  %s", label.data(), CPC::Breakpoint[position] ? "● " : "  ", address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
         disassemblyAddresses.append(position);
+        if (CPC::Breakpoint[position]) modelDisassembly->bpRows.insert(instrCount);
         if (!pcFound && position >= CPC::z80.GetPC())
         {
             pcPosition = instrCount;
@@ -169,6 +196,9 @@ void Debugger::Update()
         }
         instrCount++;
     }
+    CPC::memPage[0] = origPage0;
+    CPC::memPage[3] = origPage3;
+
     modelDisassembly -> setStringList(listDisassembly);
     modelDisassembly->pcRow = pcPosition;
 
@@ -209,7 +239,8 @@ void Debugger::Update()
         break;
     case Cartridge:
         if (!CPC::Cartridge) { unavailable = true; unavailableMsg = "(no cartridge inserted)"; }
-        else { base = CPC::Cartridge; startAddr = 0x00000; endAddr = 0x7FFF0; addrDigits = 5; }
+        else if (memDetail < 0 || memDetail >= 32) { unavailable = true; unavailableMsg = "(invalid cartridge bank)"; }
+        else { base = CPC::Cartridge + memDetail * 0x4000; startAddr = 0xC000; endAddr = 0xFFF0; baseAddr = 0xC000; }
         break;
     }
 
@@ -254,7 +285,8 @@ void Debugger::Update()
     UpdateZ80Panel();
     UpdateCRTCPanel();
     UpdateGateArrayPanel();
-    ui->lblStack->setText(GetZ80StackDebugLine().data());
+    UpdateStackPanel();
+    ui->lblDisHiRomSel->setText(QString("Selected: #%1").arg(QString("%1").arg(CPC::selectedROM, 2, 16, QChar('0')).toUpper()));
 
     setEnabled(true);
 }
@@ -454,20 +486,42 @@ void Debugger::onCRTCFieldEdited()
     UpdateCRTCPanel();
 }
 
-string Debugger::GetZ80StackDebugLine()
+void Debugger::UpdateStackPanel()
 {
-    string d;
-    char buff[100];
+    QStringList entries;
+    char buff[32];
     word sp = CPC::z80.GetSP();
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 256; i++)
     {
         BYTE L = CPC::GetByteAt(sp);
         BYTE H = CPC::GetByteAt(sp + 1);
-        sprintf(buff, "%04X:%04X\n", sp, L + H * 256);
-        d.append(buff);
+        snprintf(buff, sizeof(buff), "%04X:%04X", sp, L + H * 256);
+        entries.append(buff);
         sp += 2;
     }
-    return d;
+    modelStack->setStringList(entries);
+}
+
+void Debugger::onStackClicked(const QModelIndex &index)
+{
+    word sp = (word)(CPC::z80.GetSP() + 2 * index.row());
+    BYTE L = CPC::GetByteAt(sp);
+    BYTE H = CPC::GetByteAt(sp + 1);
+    word target = L + H * 256;
+
+    int row = disassemblyAddresses.indexOf(target);
+    if (row < 0)
+    {
+        manualAnchors.insert(target);
+        Update();
+        row = disassemblyAddresses.indexOf(target);
+    }
+    if (row >= 0)
+    {
+        QModelIndex mi = modelDisassembly->index(row);
+        ui->listDisassembly->setCurrentIndex(mi);
+        ui->listDisassembly->scrollTo(mi, QAbstractItemView::PositionAtCenter);
+    }
 }
 
 void Debugger::UpdateCRTCPanel()
@@ -593,6 +647,12 @@ void Debugger::PopulateMemoryDetail()
     case UpperRomSlot: {
         for (int i = 0; i < ROM_SLOTS; i++)
             ui->cmbMemoryDetail->addItem(QString("Slot %1%2").arg(i).arg(CPC::HiROMs[i] ? "" : " (empty)"), i);
+        ui->cmbMemoryDetail->setEnabled(true);
+        break;
+    }
+    case Cartridge: {
+        for (int i = 0; i < 32; i++)
+            ui->cmbMemoryDetail->addItem(QString("Bank #%1").arg(0x80 + i, 2, 16, QChar('0')).toUpper(), i);
         ui->cmbMemoryDetail->setEnabled(true);
         break;
     }

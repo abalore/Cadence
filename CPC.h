@@ -47,6 +47,7 @@ public:
     static BYTE *RAM[4];
     static BYTE *LoROM;
     static BYTE *HiROM;
+    static BYTE selectedROM;
     static BYTE *HiROMs[ROM_SLOTS];
     static BYTE *RAMs[36];
     static bool has512kExpansion;

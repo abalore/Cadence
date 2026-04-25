@@ -5,6 +5,7 @@
 #include <QStringListModel>
 #include <QEvent>
 #include <QVector>
+#include <QSet>
 #include <set>
 #include <string.h>
 #include "defs.h"
@@ -21,6 +22,7 @@ class DisassemblyModel : public QStringListModel
 {
 public:
     int pcRow = -1;
+    QSet<int> bpRows;
     QVariant data(const QModelIndex &index, int role) const override;
 };
 
@@ -47,6 +49,7 @@ private slots:
     void onMemoryDetailChanged(int index);
     void onZ80FieldEdited();
     void onCRTCFieldEdited();
+    void onStackClicked(const QModelIndex &index);
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
@@ -55,13 +58,14 @@ private:
     void UpdateZ80Panel();
     void UpdateCRTCPanel();
     void UpdateGateArrayPanel();
-    string GetZ80StackDebugLine();
+    void UpdateStackPanel();
 
     Ui::Debugger *ui;
     QStringList listDisassembly;
     QVector<word> disassemblyAddresses;
     std::set<word> manualAnchors;
     DisassemblyModel *modelDisassembly;
+    QStringListModel *modelStack;
     QModelIndex modelDisassemblyIndex;
     QStringList listMemory;
     QStringListModel *modelMemory;

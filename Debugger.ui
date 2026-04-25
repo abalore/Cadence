@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>860</width>
-    <height>540</height>
+    <width>815</width>
+    <height>530</height>
    </rect>
   </property>
   <property name="contextMenuPolicy">
@@ -28,10 +28,9 @@
   <property name="styleSheet">
    <string notr="true">QFrame#pnlZ80 QLineEdit, QFrame#pnlCRTC QLineEdit, QFrame#pnlGateArray QLineEdit { padding: 0px 2px; font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QFrame#pnlZ80 QLabel, QFrame#pnlCRTC QLabel, QFrame#pnlGateArray QLabel { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
-QListView#listDisassembly, QListView#listMemory, QLabel#lblStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
-QListView#listDisassembly, QListView#listMemory { border: 1px solid black; }
-QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }
-QLabel#lblStack { background-color: black; color: white; border: 1px solid black; }</string>
+QListView#listDisassembly, QListView#listMemory, QListView#listStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
+QListView#listDisassembly, QListView#listMemory, QListView#listStack { border: 1px solid black; }
+QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }</string>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -39,9 +38,9 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QFrame" name="pnlZ80">
    <property name="geometry">
     <rect>
-     <x>490</x>
+     <x>500</x>
      <y>30</y>
-     <width>140</width>
+     <width>141</width>
      <height>240</height>
     </rect>
    </property>
@@ -832,8 +831,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QLabel" name="lblGateArrayHdr">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>280</y>
+     <x>500</x>
+     <y>310</y>
      <width>300</width>
      <height>20</height>
     </rect>
@@ -852,9 +851,9 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QFrame" name="pnlGateArray">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>300</y>
-     <width>360</width>
+     <x>500</x>
+     <y>330</y>
+     <width>301</width>
      <height>160</height>
     </rect>
    </property>
@@ -921,8 +920,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
-          <height>20</height>
+          <width>10</width>
+          <height>10</height>
          </size>
         </property>
        </spacer>
@@ -966,8 +965,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
-          <height>20</height>
+          <width>10</width>
+          <height>10</height>
          </size>
         </property>
        </spacer>
@@ -1011,8 +1010,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
-          <height>20</height>
+          <width>10</width>
+          <height>10</height>
          </size>
         </property>
        </spacer>
@@ -1654,7 +1653,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>
@@ -1681,7 +1680,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>
@@ -1696,11 +1695,11 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
       </item>
       <item>
        <widget class="QCheckBox" name="chkCartridge">
-        <property name="text">
-         <string/>
-        </property>
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
@@ -1711,7 +1710,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>
@@ -1734,7 +1733,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="maximumSize">
          <size>
-          <width>36</width>
+          <width>30</width>
           <height>17</height>
          </size>
         </property>
@@ -1756,7 +1755,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>10</width>
           <height>20</height>
          </size>
         </property>
@@ -1798,12 +1797,12 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
     </item>
    </layout>
   </widget>
-  <widget class="QLabel" name="lblStack">
+  <widget class="QListView" name="listStack">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>300</y>
-     <width>70</width>
+     <x>400</x>
+     <y>330</y>
+     <width>91</width>
      <height>160</height>
     </rect>
    </property>
@@ -1813,23 +1812,14 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
      <pointsize>9</pointsize>
     </font>
    </property>
-   <property name="autoFillBackground">
-    <bool>false</bool>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::Box</enum>
-   </property>
-   <property name="text">
-    <string>Stack</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
    </property>
   </widget>
   <widget class="QLabel" name="lblCRTCHdr">
    <property name="geometry">
     <rect>
-     <x>700</x>
+     <x>650</x>
      <y>10</y>
      <width>150</width>
      <height>20</height>
@@ -1849,7 +1839,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QFrame" name="pnlCRTC">
    <property name="geometry">
     <rect>
-     <x>700</x>
+     <x>650</x>
      <y>30</y>
      <width>150</width>
      <height>240</height>
@@ -2699,94 +2689,6 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="btnStepIn">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Step in (F7)</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnStepOut">
-   <property name="geometry">
-    <rect>
-     <x>210</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Step out (F6)</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnRun">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Run (F5)</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnStepOver">
-   <property name="geometry">
-    <rect>
-     <x>410</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Step over (F8)</string>
-   </property>
-  </widget>
   <widget class="QListView" name="listDisassembly">
    <property name="enabled">
     <bool>true</bool>
@@ -2795,8 +2697,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
     <rect>
      <x>10</x>
      <y>30</y>
-     <width>470</width>
-     <height>240</height>
+     <width>481</width>
+     <height>241</height>
     </rect>
    </property>
    <property name="font">
@@ -2830,12 +2732,99 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
     <number>12</number>
    </property>
   </widget>
+  <widget class="QRadioButton" name="rbDisCpu">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>280</y>
+     <width>90</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>CPU view</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbDisCustom">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>280</y>
+     <width>80</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Custom</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="chkDisLoRom">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>280</y>
+     <width>80</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Lo ROM</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="chkDisHiRom">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>280</y>
+     <width>80</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Hi ROM</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lblDisHiRomSel">
+   <property name="geometry">
+    <rect><x>335</x><y>280</y><width>120</width><height>20</height></rect>
+   </property>
+   <property name="text"><string>Selected: 0</string></property>
+  </widget>
   <widget class="QListView" name="listMemory">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>300</y>
-     <width>390</width>
+     <y>330</y>
+     <width>381</width>
      <height>160</height>
     </rect>
    </property>
@@ -2847,6 +2836,9 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
    </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
    </property>
    <property name="selectionBehavior">
     <enum>QAbstractItemView::SelectRows</enum>
@@ -2865,7 +2857,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>467</y>
+     <y>497</y>
      <width>60</width>
      <height>25</height>
     </rect>
@@ -2885,7 +2877,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>467</y>
+     <y>497</y>
      <width>150</width>
      <height>25</height>
     </rect>
@@ -2904,7 +2896,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>467</y>
+     <y>497</y>
      <width>150</width>
      <height>25</height>
     </rect>
@@ -2919,33 +2911,11 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
     <enum>Qt::NoFocus</enum>
    </property>
   </widget>
-  <widget class="QPushButton" name="btnRunTo">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Run To (F4)</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>280</y>
+     <y>310</y>
      <width>470</width>
      <height>20</height>
     </rect>
@@ -2984,7 +2954,7 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>490</x>
+     <x>500</x>
      <y>10</y>
      <width>200</width>
      <height>20</height>
@@ -3004,8 +2974,8 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>280</y>
+     <x>400</x>
+     <y>310</y>
      <width>70</width>
      <height>20</height>
     </rect>
@@ -3019,72 +2989,6 @@ QLabel#lblStack { background-color: black; color: white; border: 1px solid black
    </property>
    <property name="text">
     <string>Stack</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnToggleBreakpoint">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Breakpoint (F9)</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnResetNops">
-   <property name="geometry">
-    <rect>
-     <x>610</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Reset nops</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="btnGoTo">
-   <property name="geometry">
-    <rect>
-     <x>710</x>
-     <y>505</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Ubuntu</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
-   <property name="text">
-    <string>Go to...</string>
    </property>
   </widget>
  </widget>
