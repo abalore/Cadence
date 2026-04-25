@@ -30,7 +30,8 @@
 QFrame#pnlZ80 QLabel, QFrame#pnlCRTC QLabel, QFrame#pnlGateArray QLabel { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QListView#listDisassembly, QListView#listMemory, QLabel#lblStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QListView#listDisassembly, QListView#listMemory { border: 1px solid black; }
-QLabel#lblStack { background-color: black; color: white; }</string>
+QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }
+QLabel#lblStack { background-color: black; color: white; border: 1px solid black; }</string>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -845,7 +846,7 @@ QLabel#lblStack { background-color: black; color: white; }</string>
     </font>
    </property>
    <property name="text">
-    <string>GateArray</string>
+    <string>Gate Array</string>
    </property>
   </widget>
   <widget class="QFrame" name="pnlGateArray">

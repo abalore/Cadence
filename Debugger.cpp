@@ -74,6 +74,14 @@ Debugger::Debugger(QWidget *parent)
     for (QLineEdit *f : crtcFields)
         connect(f, &QLineEdit::editingFinished, this, &Debugger::onCRTCFieldEdited);
 
+    QWidget *gaWidgets[] = {
+        ui->txtPen, ui->txtBorder, ui->txtMode, ui->txtVideoAddr,
+        ui->txtR52, ui->txtPPI,
+        ui->chkLoR, ui->chkHiR, ui->chkCartridge
+    };
+    for (QWidget *w : gaWidgets)
+        w->setEnabled(false);
+
     connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
     connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
     connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
@@ -500,7 +508,7 @@ void Debugger::UpdateCRTCPanel()
     setDec(ui->txtVPos, CPC::screen.vPos);
 
     auto hilite = [](QWidget *w, bool on) {
-        w->setStyleSheet(on ? "background-color: #FFF0B4; color: black;" : "");
+        w->setStyleSheet(on ? "background-color: #505010; color: white;" : "");
     };
     hilite(ui->txtHT,  c.Index == 0);
     hilite(ui->txtHD,  c.Index == 1);
