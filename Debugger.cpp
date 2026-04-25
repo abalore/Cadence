@@ -193,7 +193,7 @@ void Debugger::Update()
         auto it = std::upper_bound(anchors.begin(), anchors.end(), (int)position);
         int boundary = *it;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction, boundary);
-        sprintf(buff, "%14s %s %4s  %12s  %s", label.data(), CPC::Breakpoint[position] ? "● " : "  ", address.data(), bytes.data(), instruction.data());
+        sprintf(buff, "%14.14s %s %4s  %12s  %s", label.data(), CPC::Breakpoint[position] ? "● " : "  ", address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
         disassemblyAddresses.append(position);
         if (CPC::Breakpoint[position]) modelDisassembly->bpRows.insert(instrCount);

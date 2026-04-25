@@ -2,6 +2,7 @@
 
 #include "AsmHighlighter.h"
 #include "CPC.h"
+#include "Disassembler.h"
 #include "EmulatorThread.h"
 #include "mainwindow.h"
 
@@ -744,6 +745,14 @@ void AssemblerWindow::onAssemble()
     {
         statusBar()->showMessage(tr("Assembly failed"), 5000);
         return;
+    }
+
+    Disassembler::ClearUserLabels();
+    for (auto it = r.symbols.cbegin(); it != r.symbols.cend(); ++it)
+    {
+        int v = it.value();
+        if (v >= 0 && v <= 0xFFFF)
+            Disassembler::AddUserLabel((word)v, it.key().toStdString());
     }
 
     if (EmulatorThread::running)

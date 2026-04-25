@@ -12,6 +12,7 @@ namespace {
 
 // Labels map + helpers to add entries from Disassembler::Init.
 std::map<word, string> labels;
+std::map<word, string> userLabels;
 
 void addLabel(word a, const char *text)
 {
@@ -67,6 +68,8 @@ string readHex16(State &s)
     int lo = readNext(s);
     int hi = readNext(s);
     word w = (word)(lo + hi * 256);
+    auto upos = userLabels.find(w);
+    if (upos != userLabels.end()) return upos->second;
     auto pos = labels.find(w);
     if (pos != labels.end()) return pos->second;
     char buf[8];
@@ -386,6 +389,16 @@ void Disassembler::Init()
     addLabel(0xC95C, "FDC_SendByte");
 }
 
+void Disassembler::AddUserLabel(word a, const std::string &name)
+{
+    userLabels[a] = name;
+}
+
+void Disassembler::ClearUserLabels()
+{
+    userLabels.clear();
+}
+
 void Disassembler::SetPoint(word address)
 {
     addr = address;
@@ -396,8 +409,12 @@ void Disassembler::GetNextInstruction(BYTE &instrLength, BYTE &opCode,
                                       string *bytesOut, string *instrOut,
                                       int boundary)
 {
-    auto pos = labels.find((word)addr);
-    *label = (pos != labels.end()) ? pos->second : string();
+    auto upos = userLabels.find((word)addr);
+    if (upos != userLabels.end()) *label = upos->second;
+    else {
+        auto pos = labels.find((word)addr);
+        *label = (pos != labels.end()) ? pos->second : string();
+    }
 
     char buf[16];
     int start = addr;

@@ -3157,6 +3157,8 @@ AssemblerResult Core::run(const QString &source, const QString &base,
     r.saves = saves;
     r.run = runReq;
     r.ok = !hadError;
+    for (auto it = symbols.cbegin(); it != symbols.cend(); ++it)
+        r.symbols.insert(it.key(), int(it.value()));
     return r;
 }
 

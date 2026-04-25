@@ -8,6 +8,8 @@ class Disassembler
 {
 public:
     static void Init();
+    static void AddUserLabel(word address, const std::string &name);
+    static void ClearUserLabels();
     static void SetPoint(word address);
     static void GetNextInstruction(BYTE &instrLength, BYTE &opCode,
                                    std::string *label, std::string *address,

@@ -2,6 +2,7 @@
 #define ASSEMBLER_H
 
 #include <QByteArray>
+#include <QHash>
 #include <QString>
 #include <QVector>
 #include <functional>
@@ -63,6 +64,7 @@ struct AssemblerResult
     QVector<AssemblerSegment> segments;
     QVector<AssemblerSaveRequest> saves;
     AssemblerRunRequest run;
+    QHash<QString, int> symbols;
 };
 
 class Assembler
