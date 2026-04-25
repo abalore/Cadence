@@ -1915,9 +1915,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="0" column="2">
@@ -1953,9 +1950,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="1" column="0">
@@ -1990,9 +1984,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2052,9 +2043,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="2" column="2">
@@ -2113,9 +2101,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="3" column="2">
@@ -2150,9 +2135,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2189,9 +2171,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="4" column="2">
@@ -2226,9 +2205,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2265,9 +2241,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="5" column="2">
@@ -2303,9 +2276,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="6" column="0">
@@ -2340,9 +2310,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2402,9 +2369,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="7" column="2">
@@ -2463,9 +2427,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="8" column="2">
@@ -2500,9 +2461,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2539,9 +2497,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="9" column="2">
@@ -2576,9 +2531,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -2615,9 +2567,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="10" column="2">
@@ -2652,9 +2601,6 @@ QLabel#lblStack { background-color: black; color: white; }</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
       </property>
      </widget>
     </item>

@@ -65,6 +65,15 @@ Debugger::Debugger(QWidget *parent)
     for (QLineEdit *f : z80Fields)
         connect(f, &QLineEdit::editingFinished, this, &Debugger::onZ80FieldEdited);
 
+    QLineEdit *crtcFields[] = {
+        ui->txtHT, ui->txtHCC, ui->txtHD, ui->txtHSP, ui->txtHSW, ui->txtHSC,
+        ui->txtVSW, ui->txtVSC, ui->txtVT, ui->txtVCC, ui->txtVD, ui->txtVSP,
+        ui->txtMRA, ui->txtRA, ui->txtVTA, ui->txtVTAC,
+        ui->txtDSA, ui->txtMA
+    };
+    for (QLineEdit *f : crtcFields)
+        connect(f, &QLineEdit::editingFinished, this, &Debugger::onCRTCFieldEdited);
+
     connect(new QShortcut(Qt::Key_F6, this), &QShortcut::activated, this, &Debugger::onStepOutClicked);
     connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, this, &Debugger::onRunClicked);
     connect(new QShortcut(Qt::Key_F8, this), &QShortcut::activated, this, &Debugger::onStepOverClicked);
@@ -403,6 +412,40 @@ void Debugger::onZ80FieldEdited()
     UpdateZ80Panel();
 }
 
+void Debugger::onCRTCFieldEdited()
+{
+    CRTC &c = CPC::crtc;
+    auto dec = [](QLineEdit *f, BYTE fallback) -> BYTE {
+        bool ok;
+        unsigned v = f->text().toUInt(&ok, 10);
+        return ok ? (BYTE)(v & 0xFF) : fallback;
+    };
+    auto hex16 = [](QLineEdit *f, word fallback) -> word {
+        bool ok;
+        unsigned v = f->text().toUInt(&ok, 16);
+        return ok ? (word)(v & 0xFFFF) : fallback;
+    };
+    c.HT   = dec(ui->txtHT,   c.HT);
+    c.HCC  = dec(ui->txtHCC,  c.HCC);
+    c.HD   = dec(ui->txtHD,   c.HD);
+    c.HSP  = dec(ui->txtHSP,  c.HSP);
+    c.HSW  = dec(ui->txtHSW,  c.HSW);
+    c.HSC  = dec(ui->txtHSC,  c.HSC);
+    c.VSW  = dec(ui->txtVSW,  c.VSW);
+    c.VSC  = dec(ui->txtVSC,  c.VSC);
+    c.VT   = dec(ui->txtVT,   c.VT);
+    c.VCC  = dec(ui->txtVCC,  c.VCC);
+    c.VD   = dec(ui->txtVD,   c.VD);
+    c.VSP  = dec(ui->txtVSP,  c.VSP);
+    c.MRA  = dec(ui->txtMRA,  c.MRA);
+    c.RA   = dec(ui->txtRA,   c.RA);
+    c.VTA  = dec(ui->txtVTA,  c.VTA);
+    c.VTAC = dec(ui->txtVTAC, c.VTAC);
+    c.DSA  = hex16(ui->txtDSA, c.DSA);
+    c.MA   = hex16(ui->txtMA,  c.MA);
+    UpdateCRTCPanel();
+}
+
 string Debugger::GetZ80StackDebugLine()
 {
     string d;
@@ -455,6 +498,21 @@ void Debugger::UpdateCRTCPanel()
     setHex4(ui->txtMA, c.MA);
     setDec(ui->txtHPos, CPC::screen.hPos);
     setDec(ui->txtVPos, CPC::screen.vPos);
+
+    auto hilite = [](QWidget *w, bool on) {
+        w->setStyleSheet(on ? "background-color: #FFF0B4; color: black;" : "");
+    };
+    hilite(ui->txtHT,  c.Index == 0);
+    hilite(ui->txtHD,  c.Index == 1);
+    hilite(ui->txtHSP, c.Index == 2);
+    hilite(ui->txtHSW, c.Index == 3);
+    hilite(ui->txtVSW, c.Index == 3);
+    hilite(ui->txtVT,  c.Index == 4);
+    hilite(ui->txtVTA, c.Index == 5);
+    hilite(ui->txtVD,  c.Index == 6);
+    hilite(ui->txtVSP, c.Index == 7);
+    hilite(ui->txtMRA, c.Index == 9);
+    hilite(ui->txtDSA, c.Index == 12 || c.Index == 13);
 }
 
 void Debugger::UpdateGateArrayPanel()

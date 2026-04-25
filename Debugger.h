@@ -46,6 +46,7 @@ private slots:
     void onMemorySourceChanged(int index);
     void onMemoryDetailChanged(int index);
     void onZ80FieldEdited();
+    void onCRTCFieldEdited();
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
