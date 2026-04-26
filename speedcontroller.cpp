@@ -20,12 +20,12 @@ void SpeedController::Run()
     switch(speedMode)
     {
     case SpeedMode::Keep:
-        if (frames > 48)
+        if (frames > 4000)
         {
             speedMode = SpeedMode::Slowdown;
             targetTime = 20100;
         }
-        else if (frames < 16)
+        else if (frames < 3000)
         {
             speedMode = SpeedMode::Speedup;
             targetTime = 19900;
@@ -33,7 +33,7 @@ void SpeedController::Run()
         break;
     case SpeedMode::Slowdown:
     case SpeedMode::Speedup:
-        if (frames == 32)
+        if (frames > 3400 && frames < 3600)
         {
             targetTime = 20000;
             speedMode = SpeedMode::Keep;
