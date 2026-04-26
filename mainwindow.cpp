@@ -79,6 +79,9 @@ MainWindow::MainWindow(QWidget *parent)
     else if (settings.system == "CPC664")  CPC::cpcType = CPCType::CPC664;
     else                                   CPC::cpcType = CPCType::CPC6128;
     CPC::has512kExpansion = settings.ram512kExpansion;
+    EmulatorThread::breakpointsEnabled = settings.breakpointsEnabled;
+    ui->actionEnable_breakpoints->setChecked(settings.breakpointsEnabled);
+    connect(ui->actionEnable_breakpoints, &QAction::toggled, this, [](bool on){ EmulatorThread::breakpointsEnabled = on; });
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -419,6 +422,7 @@ void MainWindow::collectSettingsFromUi()
     settings.rsBackslash  = ui->actionRight_shift_as_backslash->isChecked();
     settings.crtcType     = CPC::crtc.crtcType;
     settings.ram512kExpansion = ui->action512kExpansion->isChecked();
+    settings.breakpointsEnabled = EmulatorThread::breakpointsEnabled;
 }
 
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)

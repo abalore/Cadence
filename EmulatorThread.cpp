@@ -9,6 +9,7 @@
 std::atomic<ushort> EmulatorThread::stopPoint{0x0000};
 std::atomic<bool> EmulatorThread::running{true};
 std::atomic<RunMode> EmulatorThread::runMode{RunMode::Run};
+std::atomic<bool> EmulatorThread::breakpointsEnabled{true};
 std::atomic<bool> EmulatorThread::end{false};
 QMutex EmulatorThread::frameMutex;
 
@@ -70,7 +71,7 @@ void EmulatorThread::run()
     paused = false;
     running = true;
     CPC::Reset();
-    if (runMode == RunMode::Run && CPC::Breakpoint[CPC::z80.GetPC()])
+    if (runMode == RunMode::Run && breakpointsEnabled && CPC::Breakpoint[CPC::z80.GetPC()])
         Stop();
     while (!end)
     {
@@ -91,7 +92,7 @@ void EmulatorThread::run()
                             Stop();
                         break;
                     case RunMode::Run:
-                        if (CPC::Breakpoint[CPC::z80.GetPC()])
+                        if (breakpointsEnabled && CPC::Breakpoint[CPC::z80.GetPC()])
                             Stop();
                         break;
                     }

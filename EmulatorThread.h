@@ -25,6 +25,7 @@ public:
     static std::atomic<ushort> stopPoint;
     static std::atomic<bool> end;
     static std::atomic<RunMode> runMode;
+    static std::atomic<bool> breakpointsEnabled;
     static QMutex frameMutex;
 public slots:
     static void Run();

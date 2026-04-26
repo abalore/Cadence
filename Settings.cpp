@@ -4,7 +4,7 @@
 
 QString Settings::ConfigDir()
 {
-    return QDir::homePath() + "/.config/cadence";
+    return QDir::homePath() + "/.cadence";
 }
 
 QString Settings::ConfigFile()
@@ -24,6 +24,7 @@ void Settings::Load()
     rsBackslash   = s.value("keyboard/right_shift_as_backslash", true).toBool();
     crtcType      = s.value("machine/crtc_type", 0).toInt();
     ram512kExpansion = s.value("memory/ram_512k_expansion", false).toBool();
+    breakpointsEnabled = s.value("debugger/breakpoints_enabled", true).toBool();
     phosphorPersistence = s.value("screen/phosphor_persistence", 0).toInt();
     system        = s.value("machine/system", "CPC6128").toString();
     diskAPath     = s.value("media/disk_a").toString();
@@ -47,6 +48,7 @@ void Settings::Save()
     s.setValue("keyboard/right_shift_as_backslash", rsBackslash);
     s.setValue("machine/crtc_type", crtcType);
     s.setValue("memory/ram_512k_expansion", ram512kExpansion);
+    s.setValue("debugger/breakpoints_enabled", breakpointsEnabled);
     s.setValue("screen/phosphor_persistence", phosphorPersistence);
     s.setValue("machine/system", system);
     s.setValue("media/disk_a", diskAPath);

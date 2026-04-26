@@ -109,6 +109,7 @@
      <addaction name="actionSave_binary_file"/>
     </widget>
     <addaction name="actionPause"/>
+    <addaction name="actionEnable_breakpoints"/>
     <addaction name="separator"/>
     <addaction name="actionInspect_video_memory"/>
     <addaction name="menuMemory"/>
@@ -267,6 +268,17 @@
    </property>
    <property name="shortcutVisibleInContextMenu">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionEnable_breakpoints">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable breakpoints</string>
    </property>
   </action>
   <action name="actionReset">
