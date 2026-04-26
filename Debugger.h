@@ -57,6 +57,7 @@ private slots:
     void onMenuMemorySaveBinaryFile();
     void onMenuMemoryFindBytes();
     void onMenuMemoryFindNext();
+    void onMenuMemoryGoTo();
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
@@ -77,10 +78,8 @@ private:
     QString lastFindBytes;
     int findFromOffset = 0;
     QModelIndex modelDisassemblyIndex;
-    QStringList listMemory;
     QStandardItemModel *modelMemory;
     bool memoryUpdating = false;
-    QModelIndex modelMemoryIndex;
     MemSource memSource = CpuView;
     int memDetail = 0;
     uchar nextInstructionLength;

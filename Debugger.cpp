@@ -61,6 +61,9 @@ Debugger::Debugger(QWidget *parent)
     ui->listMemory->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     ui->listMemory->verticalHeader()->setMinimumSectionSize(1);
     ui->listMemory->verticalHeader()->setDefaultSectionSize(15);
+    ui->listMemory->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->listMemory->horizontalHeader()->setMinimumSectionSize(20);
+    ui->listMemory->horizontalHeader()->setDefaultSectionSize(20);
     ui->listMemory->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed | QAbstractItemView::AnyKeyPressed);
     connect(modelMemory, &QStandardItemModel::itemChanged, this, &Debugger::onMemoryItemChanged);
     modelStack = new QStringListModel();
@@ -138,7 +141,8 @@ Debugger::Debugger(QWidget *parent)
     memMenu->addAction("Load binary...", this, &Debugger::onMenuMemoryLoadBinaryFile);
     memMenu->addAction("Save binary...", this, &Debugger::onMenuMemorySaveBinaryFile);
     memMenu->addSeparator();
-    memMenu->addAction("Find bytes...", QKeySequence(QKeySequence::Find), this, &Debugger::onMenuMemoryFindBytes);
+    memMenu->addAction("Go to...",      this, &Debugger::onMenuMemoryGoTo);
+    memMenu->addAction("Find bytes...", QKeySequence(QKeySequence::Find),   this, &Debugger::onMenuMemoryFindBytes);
     memMenu->addAction("Find next",     QKeySequence(Qt::CTRL | Qt::Key_G), this, &Debugger::onMenuMemoryFindNext);
 
     for (QObject *child : findChildren<QObject*>())
@@ -246,13 +250,12 @@ void Debugger::Update()
     QModelIndex pcIndex = modelDisassembly->index(pcPosition);
     ui->listDisassembly->scrollTo(pcIndex, QAbstractItemView::PositionAtCenter);
 
-    int memoryIndex = ui->listMemory->currentIndex().row();
+    int memScroll = ui->listMemory->verticalScrollBar()->value();
     memoryUpdating = true;
     modelMemory->clear();
 
     int startAddr = 0x0000;
     int endAddr   = 0xFFF0;
-    int addrDigits = 4;
     BYTE *base = nullptr;
     int baseAddr = 0;
     bool unavailable = false;
@@ -281,9 +284,7 @@ void Debugger::Update()
         break;
     }
 
-    ui->label->setText(addrDigits == 5
-        ? "MEM    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F"
-        : "MEM   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
+    ui->label->setText("MEM   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F");
 
     if (unavailable)
     {
@@ -295,11 +296,10 @@ void Debugger::Update()
     else
     {
         modelMemory->setColumnCount(17);
-        const char *addrFmt = (addrDigits == 5) ? "%05X" : "%04X";
         for (int i = startAddr; i <= endAddr; i += 16)
         {
             QList<QStandardItem*> row;
-            snprintf(buff, sizeof(buff), addrFmt, i);
+            snprintf(buff, sizeof(buff), "%04X", i);
             QStandardItem *addrItem = new QStandardItem(buff);
             addrItem->setFlags(Qt::ItemIsEnabled);
             addrItem->setForeground(QBrush(QColor(150, 150, 150)));
@@ -322,15 +322,11 @@ void Debugger::Update()
             }
             modelMemory->appendRow(row);
         }
-        ui->listMemory->setColumnWidth(0, addrDigits == 5 ? 48 : 40);
-        for (int c = 1; c <= 16; c++) ui->listMemory->setColumnWidth(c, 20);
+        ui->listMemory->setColumnWidth(0, 40);
     }
     memoryUpdating = false;
-    if (memoryIndex >= 0 && memoryIndex < modelMemory->rowCount())
-    {
-        modelMemoryIndex = modelMemory->index(memoryIndex, 0);
-        ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
-    }
+    ui->listMemory->doItemsLayout();
+    ui->listMemory->verticalScrollBar()->setValue(memScroll);
 
     UpdateZ80Panel();
     UpdateCRTCPanel();
@@ -553,6 +549,32 @@ void Debugger::onMenuMemorySaveBinaryFile()
     file.close();
 }
 
+void Debugger::onMenuMemoryGoTo()
+{
+    bool ok = false;
+    QString input = QInputDialog::getText(this, tr("Go to address"), tr("Address (hex):"),
+                                          QLineEdit::Normal, QString(), &ok);
+    if (!ok) return;
+    QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) return;
+    unsigned target = trimmed.toUInt(&ok, 16);
+    if (!ok || target > 0xFFFF) return;
+
+    int startAddr, endAddr;
+    switch (memSource)
+    {
+    case CpuView: case RamCurrent:        startAddr = 0x0000; endAddr = 0xFFFF; break;
+    case RamBank: case LowerRom:          startAddr = 0x0000; endAddr = 0x3FFF; break;
+    case UpperRomSlot: case Cartridge:    startAddr = 0xC000; endAddr = 0xFFFF; break;
+    }
+    if ((int)target < startAddr || (int)target > endAddr) return;
+    int row = (target - startAddr) / 16;
+    int col = (target - startAddr) % 16 + 1;
+    ui->listMemory->scrollTo(modelMemory->index(row, 0), QAbstractItemView::PositionAtCenter);
+    ui->listMemory->horizontalScrollBar()->setValue(0);
+    ui->listMemory->setCurrentIndex(modelMemory->index(row, col));
+}
+
 void Debugger::onMenuMemoryFindBytes()
 {
     QDialog dialog(this);
@@ -619,9 +641,9 @@ void Debugger::onMenuMemoryFindNext()
         {
             int row = (matchAt - startAddr) / 16;
             int col = (matchAt - startAddr) % 16 + 1;
-            QModelIndex idx = modelMemory->index(row, col);
-            ui->listMemory->setCurrentIndex(idx);
-            ui->listMemory->scrollTo(idx, QAbstractItemView::PositionAtCenter);
+            ui->listMemory->scrollTo(modelMemory->index(row, 0), QAbstractItemView::PositionAtCenter);
+            ui->listMemory->horizontalScrollBar()->setValue(0);
+            ui->listMemory->setCurrentIndex(modelMemory->index(row, col));
             findFromOffset = (matchAt - startAddr + 1) % total;
             return;
         }
