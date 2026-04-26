@@ -409,7 +409,7 @@ void MainWindow::applySettingsToUi()
     Keyboard::translation[53] = settings.rsBackslash ? 62 : 52;
 
     if (settings.fullScreen)
-        QTimer::singleShot(0, this, [this]{ ui->actionFull_screen->setChecked(true); });
+        QTimer::singleShot(150, this, [this]{ ui->actionFull_screen->setChecked(true); });
 }
 
 void MainWindow::collectSettingsFromUi()
