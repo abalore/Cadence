@@ -82,6 +82,8 @@ MainWindow::MainWindow(QWidget *parent)
     EmulatorThread::breakpointsEnabled = settings.breakpointsEnabled;
     ui->actionEnable_breakpoints->setChecked(settings.breakpointsEnabled);
     connect(ui->actionEnable_breakpoints, &QAction::toggled, this, [](bool on){ EmulatorThread::breakpointsEnabled = on; });
+    for (int i = 0; i < 65536; i++) CPC::Breakpoint[i] = false;
+    for (int a : settings.breakpoints) CPC::Breakpoint[a & 0xFFFF] = true;
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -423,6 +425,9 @@ void MainWindow::collectSettingsFromUi()
     settings.crtcType     = CPC::crtc.crtcType;
     settings.ram512kExpansion = ui->action512kExpansion->isChecked();
     settings.breakpointsEnabled = EmulatorThread::breakpointsEnabled;
+    settings.breakpoints.clear();
+    for (int i = 0; i < 65536; i++)
+        if (CPC::Breakpoint[i]) settings.breakpoints.append(i);
 }
 
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)

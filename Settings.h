@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include <QString>
+#include <QVector>
 
 class Settings
 {
@@ -16,6 +17,7 @@ public:
     int crtcType = 0;
     bool ram512kExpansion = false;
     bool breakpointsEnabled = true;
+    QVector<int> breakpoints;
     int phosphorPersistence = 0;
     QString system = "CPC6128";
     QString diskAPath;

@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include <QSettings>
 #include <QDir>
+#include <QStringList>
 
 QString Settings::ConfigDir()
 {
@@ -25,6 +26,14 @@ void Settings::Load()
     crtcType      = s.value("machine/crtc_type", 0).toInt();
     ram512kExpansion = s.value("memory/ram_512k_expansion", false).toBool();
     breakpointsEnabled = s.value("debugger/breakpoints_enabled", true).toBool();
+    breakpoints.clear();
+    QString bps = s.value("debugger/breakpoints").toString();
+    for (const QString &t : bps.split(',', Qt::SkipEmptyParts))
+    {
+        bool ok;
+        int a = t.toInt(&ok, 16);
+        if (ok && a >= 0 && a <= 0xFFFF) breakpoints.append(a);
+    }
     phosphorPersistence = s.value("screen/phosphor_persistence", 0).toInt();
     system        = s.value("machine/system", "CPC6128").toString();
     diskAPath     = s.value("media/disk_a").toString();
@@ -49,6 +58,9 @@ void Settings::Save()
     s.setValue("machine/crtc_type", crtcType);
     s.setValue("memory/ram_512k_expansion", ram512kExpansion);
     s.setValue("debugger/breakpoints_enabled", breakpointsEnabled);
+    QStringList bpStrs;
+    for (int a : breakpoints) bpStrs.append(QString::number(a, 16).toUpper());
+    s.setValue("debugger/breakpoints", bpStrs.join(','));
     s.setValue("screen/phosphor_persistence", phosphorPersistence);
     s.setValue("machine/system", system);
     s.setValue("media/disk_a", diskAPath);
