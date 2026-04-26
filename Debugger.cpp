@@ -116,7 +116,7 @@ Debugger::Debugger(QWidget *parent)
         connect(f, &QLineEdit::editingFinished, this, &Debugger::onCRTCFieldEdited);
 
     QWidget *gaWidgets[] = {
-        ui->txtPen, ui->txtBorder, ui->txtMode, ui->txtVideoAddr,
+        ui->txtPen, ui->txtMode, ui->txtVideoAddr,
         ui->txtR52, ui->txtPPI,
         ui->chkLoR, ui->chkHiR, ui->chkCartridge
     };
@@ -830,8 +830,15 @@ void Debugger::UpdateGateArrayPanel()
         field->setText(buf);
     };
     setDec(ui->txtPen, g.currentPen);
-    setDec(ui->txtBorder, g.BORDER);
     setDec(ui->txtMode, g.mode);
+    {
+        const BYTE *brgb = CPC::gateArray.GetBorderPaletteEntry();
+        const char *fg = (brgb[0] * 299 + brgb[1] * 587 + brgb[2] * 114) < 128000 ? "white" : "black";
+        snprintf(buf, sizeof(buf), "%02X", g.BORDER + 0x40);
+        ui->txtBorder->setText(buf);
+        ui->txtBorder->setStyleSheet(QString("background-color: rgb(%1, %2, %3); color: %4; border: 1px solid #808080; font-family: \"Ubuntu Sans Mono\"; font-size: 9pt;")
+                                     .arg(brgb[0]).arg(brgb[1]).arg(brgb[2]).arg(fg));
+    }
     setHex4(ui->txtVideoAddr, g.videoAddress);
     QLabel *inks[16] = {
         ui->txtInk0, ui->txtInk1, ui->txtInk2, ui->txtInk3,

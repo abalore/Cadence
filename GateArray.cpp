@@ -142,6 +142,11 @@ const BYTE *GateArray::GetPaletteEntry(BYTE entry)
     return &Palette[INK[entry] * 3];
 }
 
+const BYTE *GateArray::GetBorderPaletteEntry()
+{
+    return &Palette[BORDER * 3];
+}
+
 BYTE GateArray::GetPenForPixel(BYTE m, BYTE b, BYTE i)
 {
     switch(m)

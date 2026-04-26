@@ -18,6 +18,7 @@ public:
     void ProcessSync();
     BYTE GetPenForPixel(BYTE m, BYTE b, BYTE i);
     const BYTE *GetPaletteEntry(BYTE entry);
+    const BYTE *GetBorderPaletteEntry();
     void WR(BYTE value);
     void AckInt();
     void SetPixel();

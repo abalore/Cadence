@@ -934,7 +934,7 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="txtBorder">
+       <widget class="QLabel" name="txtBorder">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -943,18 +943,12 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
         </property>
         <property name="maximumSize">
          <size>
-          <width>28</width>
+          <width>32</width>
           <height>17</height>
          </size>
         </property>
-        <property name="maxLength">
-         <number>2</number>
-        </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
         </property>
        </widget>
       </item>
