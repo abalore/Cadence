@@ -1,5 +1,6 @@
 # Build output
 build/
+/cadence
 
 # qmake / make generated
 Makefile
