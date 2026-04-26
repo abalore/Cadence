@@ -94,6 +94,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionReset, &QAction::triggered, this, &MainWindow::ResetEmulation);
     connect(ui->actionInsert_tape, &QAction::triggered, this, &MainWindow::onMenuMediaInsertTape);
     connect(ui->actionRemove_tape, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveTape);
+    connect(ui->actionTape_rewind, &QAction::triggered, this, []{ CPC::tape.Rewind(); });
     connect(ui->actionRemove_disk, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveDiskA);
     connect(ui->actionInsert_disk_2, &QAction::triggered, this, &MainWindow::onMenuMediaInsertDiskB);
     connect(ui->actionRemove_disk_2, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveDiskB);
@@ -424,7 +425,7 @@ void MainWindow::collectSettingsFromUi()
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)
 {
     switch (slot) {
-    case MediaSlot::Tape:      setMediaText(tapeLabel, text);      break;
+    case MediaSlot::Tape:      tapeBaseText = text; lastTapePct = -1; setMediaText(tapeLabel, text); break;
     case MediaSlot::DiskA:     setMediaText(diskLabel, text);      break;
     case MediaSlot::DiskB:     setMediaText(diskBLabel, text);     break;
     case MediaSlot::Cartridge: setMediaText(cartridgeLabel, text); break;
@@ -482,6 +483,20 @@ void MainWindow::onEmulatorFinishedFrame()
 {
     ui->openGLWidget->updateTexture();
     motorLabel->setPixmap(CPC::fdc.GetState() != FDC_StateCommand ? ledOnPixmap : ledOffPixmap);
+
+    if (!tapeBaseText.isEmpty() && tapeBaseText != "<Empty>")
+    {
+        int pct = CPC::tape.GetProgressPercent();
+        if (pct != lastTapePct)
+        {
+            lastTapePct = pct;
+            QString suffix = pct > 0 ? QString(" (%1%)").arg(pct) : QString();
+            QFontMetrics fm(tapeLabel->font());
+            int avail = tapeLabel->width() - fm.horizontalAdvance(suffix) - 4;
+            QString name = fm.elidedText(tapeBaseText, Qt::ElideRight, qMax(0, avail));
+            tapeLabel->setText(name + suffix);
+        }
+    }
 }
 
 void MainWindow::onMenuMemoryLoadBinaryFile()

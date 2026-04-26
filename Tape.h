@@ -19,6 +19,8 @@ public:
     ~Tape() { FreeBuffer(); }
     void LoadWAV(char *filename);
     void LoadCDT(char *filename);
+    void Rewind();
+    int GetProgressPercent() const;
     void Eject();
     void Clock();
     void SetMotorState(bool state);

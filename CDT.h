@@ -48,6 +48,7 @@ class CDT
 public:
     bool Init(BYTE *cdtFileData, unsigned int size);
     bool GetNextLevel();
+    unsigned int GetReadOffset() const { return bytesRead; }
     bool EndOfFile;
 private:
     bool ReadByte();

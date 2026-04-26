@@ -89,6 +89,39 @@ void Tape::Clock()
     }
 }
 
+int Tape::GetProgressPercent() const
+{
+    if (tapeSource == TapeSource::WAV)
+    {
+        if (bufferSize <= 44) return 0;
+        return int((bufferReadIndex - 44) * 100 / (bufferSize - 44));
+    }
+    if (tapeSource == TapeSource::CDT)
+    {
+        if (bufferSize == 0) return 0;
+        return int(cdt.GetReadOffset() * 100 / bufferSize);
+    }
+    return 0;
+}
+
+void Tape::Rewind()
+{
+    switch (tapeSource)
+    {
+    case TapeSource::WAV:
+        bufferReadIndex = 44;
+        lastLevel = false;
+        level = 0;
+        break;
+    case TapeSource::CDT:
+        if (buffer && bufferSize)
+            cdt.Init(buffer, bufferSize);
+        break;
+    default:
+        break;
+    }
+}
+
 void Tape::SetMotorState(bool state)
 {
     if (state != motorState)

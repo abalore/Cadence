@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(inkscape /home/abalore/hdd/Work/AAE/AAE/cartridge.svg --export-type=png --export-filename=/home/abalore/hdd/Work/AAE/AAE/cartridge.png -w 1024 -h 1024)",
+      "Bash(inkscape /home/abalore/hdd/Work/AAE/AAE/cartridge.svg --export-type=png --export-filename=/home/abalore/hdd/Work/AAE/AAE/cartridge.png -w 128 -h 128)"
+    ]
+  }
+}

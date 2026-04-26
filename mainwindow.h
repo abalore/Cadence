@@ -94,6 +94,8 @@ private:
     QLabel *diskLabel;
     QLabel *diskBLabel;
     QLabel *tapeLabel;
+    QString tapeBaseText;
+    int lastTapePct = -1;
     QLabel *cartridgeLabel;
     QWidget *diskChip;
     QWidget *diskBChip;
