@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "Debugger.h"
+#include "speedcontroller.h"
 #include "EmulatorThread.h"
 #include "CPC.h"
 #include "Tape.h"
@@ -81,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
     EmulatorThread::breakpointsEnabled = settings.breakpointsEnabled;
     ui->actionEnable_breakpoints->setChecked(settings.breakpointsEnabled);
     connect(ui->actionEnable_breakpoints, &QAction::toggled, this, [](bool on){ EmulatorThread::breakpointsEnabled = on; });
+    connect(ui->actionUnlock_speed, &QAction::toggled, this, [](bool on){ SpeedController::unlocked = on; });
     for (int i = 0; i < 65536; i++) CPC::Breakpoint[i] = false;
     for (int a : settings.breakpoints) CPC::Breakpoint[a & 0xFFFF] = true;
 

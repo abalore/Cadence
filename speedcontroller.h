@@ -15,6 +15,7 @@ class SpeedController
 public:
     static void Run();
     static std::atomic<long> lastElapsed;
+    static std::atomic<bool> unlocked;
     static bool end;
     static bool overrun;
 private:

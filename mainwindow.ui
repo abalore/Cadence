@@ -175,6 +175,8 @@
     <addaction name="menuCRTC"/>
     <addaction name="menuMemoryExpansion"/>
     <addaction name="actionROM_Box"/>
+    <addaction name="separator"/>
+    <addaction name="actionUnlock_speed"/>
    </widget>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
@@ -259,6 +261,14 @@
    </property>
    <property name="shortcutVisibleInContextMenu">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionUnlock_speed">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Unlock speed</string>
    </property>
   </action>
   <action name="actionEnable_breakpoints">

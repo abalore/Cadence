@@ -6,6 +6,7 @@
 using namespace std::chrono;
 
 std::atomic<long> SpeedController::lastElapsed{0};
+std::atomic<bool> SpeedController::unlocked{false};
 
 long SpeedController::lastT = 0;
 long SpeedController::t = 0;
@@ -47,7 +48,7 @@ void SpeedController::Run()
     lastElapsed = elapsed;
 
     overrun = false;
-    if (elapsed > targetTime)
+    if (unlocked || elapsed > targetTime)
         overrun = true;
     else
     {
