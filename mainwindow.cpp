@@ -233,14 +233,9 @@ MainWindow::MainWindow(QWidget *parent)
         chipOut = chip;
         setMediaText(textLabel, "<Empty>");
     };
-    addMediaChip(":/images/cartridge.png", cartridgeLabel, cartridgeChip);
     addMediaChip(":/images/tape.png",      tapeLabel,      tapeChip);
     addMediaChip(":/images/disk.png",      diskLabel,      diskChip);
     addMediaChip(":/images/disk.png",      diskBLabel,     diskBChip);
-    cartridgeChip->installEventFilter(this);
-    tapeChip->installEventFilter(this);
-    diskChip->installEventFilter(this);
-    diskBChip->installEventFilter(this);
 
     ledOnPixmap = outlinePixmap(QIcon(":/images/led_on.png").pixmap(iconSize, iconSize / 2), outlineRadius);
     ledOffPixmap = outlinePixmap(QIcon(":/images/led_off.png").pixmap(iconSize, iconSize / 2), outlineRadius);
@@ -250,13 +245,17 @@ MainWindow::MainWindow(QWidget *parent)
         auto *h = new QHBoxLayout(motorChip);
         h->setContentsMargins(6, 2, 8, 2);
         h->setSpacing(6);
-        QLabel *motorText = new QLabel(tr("Motor"), motorChip);
         motorLabel = new QLabel(motorChip);
         motorLabel->setPixmap(ledOffPixmap);
-        h->addWidget(motorText);
         h->addWidget(motorLabel);
         statusBar()->addWidget(motorChip);
     }
+
+    addMediaChip(":/images/cartridge.png", cartridgeLabel, cartridgeChip);
+    cartridgeChip->installEventFilter(this);
+    tapeChip->installEventFilter(this);
+    diskChip->installEventFilter(this);
+    diskBChip->installEventFilter(this);
 
     auto rightStretch = new QWidget(this);
     rightStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);

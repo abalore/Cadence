@@ -941,9 +941,9 @@ void AssemblerWindow::onAssemble()
         QString fullPath = fname;
         if (QDir::isRelativePath(fname))
         {
-            QString binDir = QDir::homePath() + "/.cadence/BIN";
-            QDir().mkpath(binDir);
-            fullPath = binDir + "/" + fname;
+            QString outDir = base.isEmpty() ? QDir::homePath() + "/.cadence/BIN" : base;
+            QDir().mkpath(outDir);
+            fullPath = outDir + "/" + fname;
         }
         QFile f(fullPath);
         if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -1034,9 +1034,9 @@ void AssemblerWindow::onAssemble()
             QString fullPath = sq.filename;
             if (QDir::isRelativePath(sq.filename))
             {
-                QString binDir = QDir::homePath() + "/.cadence/BIN";
-                QDir().mkpath(binDir);
-                fullPath = binDir + "/" + sq.filename;
+                QString outDir = base.isEmpty() ? QDir::homePath() + "/.cadence/BIN" : base;
+                QDir().mkpath(outDir);
+                fullPath = outDir + "/" + sq.filename;
             }
             QFile f(fullPath);
             if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
