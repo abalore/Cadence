@@ -2920,7 +2920,7 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>15</x>
+     <x>12</x>
      <y>340</y>
      <width>470</width>
      <height>20</height>
@@ -2934,7 +2934,7 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
     </font>
    </property>
    <property name="text">
-    <string>MEM   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F</string>
+    <string>Address 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">

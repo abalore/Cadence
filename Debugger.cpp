@@ -2,6 +2,7 @@
 #include "ui_Debugger.h"
 #include "EmulatorThread.h"
 #include "Disassembler.h"
+#include "enterbytesdialog.h"
 #include "Z80.h"
 #include "PPI.h"
 #include "CPC.h"
@@ -20,6 +21,12 @@
 #include <QScrollBar>
 #include <QShortcut>
 #include <QInputDialog>
+#include <QFileDialog>
+#include <QFile>
+#include <QDir>
+#include <QFormLayout>
+#include <QDialogButtonBox>
+#include <QRegularExpression>
 #include <QBrush>
 #include <QColor>
 #include <QMenuBar>
@@ -124,6 +131,15 @@ Debugger::Debugger(QWidget *parent)
     debugMenu->addAction("Toggle Breakpoint", QKeySequence(Qt::Key_F9), this, &Debugger::onToggleBreakpointClicked);
     debugMenu->addAction("Go To...",          QKeySequence(Qt::Key_F3),  this, &Debugger::onGoToClicked);
     debugMenu->addAction("Reset NOPS",        QKeySequence(Qt::Key_F12), this, &Debugger::onResetNopsClicked);
+
+    enterBytesDialog = new EnterBytesDialog(this);
+    QMenu *memMenu = bar->addMenu("&Memory");
+    memMenu->addAction("Enter bytes...", this, &Debugger::onMenuMemoryEnterBytes);
+    memMenu->addAction("Load binary...", this, &Debugger::onMenuMemoryLoadBinaryFile);
+    memMenu->addAction("Save binary...", this, &Debugger::onMenuMemorySaveBinaryFile);
+    memMenu->addSeparator();
+    memMenu->addAction("Find bytes...", QKeySequence(QKeySequence::Find), this, &Debugger::onMenuMemoryFindBytes);
+    memMenu->addAction("Find next",     QKeySequence(Qt::CTRL | Qt::Key_G), this, &Debugger::onMenuMemoryFindNext);
 
     for (QObject *child : findChildren<QObject*>())
         child->installEventFilter(this);
@@ -484,6 +500,132 @@ void Debugger::onZ80FieldEdited()
     s.IFF2             = bit(ui->txtIFF2, s.IFF2);
     CPC::z80.SetDebugState(s);
     UpdateZ80Panel();
+}
+
+void Debugger::onMenuMemoryEnterBytes()
+{
+    enterBytesDialog->show();
+}
+
+void Debugger::onMenuMemoryLoadBinaryFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QFile file(fileName);
+    file.open(QIODevice::ReadOnly);
+    if (!file.isOpen()) return;
+    QByteArray ba = file.readAll();
+    file.close();
+    bool ok;
+    QString addressText = QInputDialog::getText(this, tr("Target address"), tr("Target address (hex):"), QLineEdit::Normal, "4000", &ok);
+    if (!ok) return;
+    word address = addressText.toUShort(nullptr, 16);
+    for (int i = 0; i < ba.size(); i++)
+        CPC::SetByteAt(address + i, (BYTE)ba[i]);
+}
+
+void Debugger::onMenuMemorySaveBinaryFile()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Save binary"));
+    QFormLayout *layout = new QFormLayout(&dialog);
+    QLineEdit *addressEdit = new QLineEdit("0000", &dialog);
+    QLineEdit *lengthEdit = new QLineEdit("4000", &dialog);
+    layout->addRow(tr("Source address (hex):"), addressEdit);
+    layout->addRow(tr("Length (hex):"), lengthEdit);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    layout->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted) return;
+    word address = addressEdit->text().toUShort(nullptr, 16);
+    int length = lengthEdit->text().toInt(nullptr, 16);
+    if (length <= 0) return;
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QFile file(fileName);
+    file.open(QIODevice::WriteOnly);
+    if (!file.isOpen()) return;
+    QByteArray ba;
+    ba.resize(length);
+    for (int i = 0; i < length; i++)
+        ba[i] = (char)CPC::GetByteAt(address + i);
+    file.write(ba);
+    file.close();
+}
+
+void Debugger::onMenuMemoryFindBytes()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Find bytes"));
+    QFormLayout *layout = new QFormLayout(&dialog);
+    QLineEdit *bytesEdit = new QLineEdit(lastFindBytes, &dialog);
+    layout->addRow(tr("Bytes (hex separated by space):"), bytesEdit);
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    layout->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted) return;
+    lastFindBytes = bytesEdit->text().trimmed();
+    findFromOffset = 0;
+    onMenuMemoryFindNext();
+}
+
+void Debugger::onMenuMemoryFindNext()
+{
+    if (lastFindBytes.isEmpty()) return;
+    QByteArray pattern;
+    for (const QString &p : lastFindBytes.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts))
+    {
+        bool ok;
+        unsigned v = p.toUInt(&ok, 16);
+        if (!ok || v > 0xFF) return;
+        pattern.append((char)v);
+    }
+    if (pattern.isEmpty()) return;
+
+    int startAddr, endAddr;
+    switch (memSource)
+    {
+    case CpuView: case RamCurrent:        startAddr = 0x0000; endAddr = 0xFFFF; break;
+    case RamBank: case LowerRom:          startAddr = 0x0000; endAddr = 0x3FFF; break;
+    case UpperRomSlot: case Cartridge:    startAddr = 0xC000; endAddr = 0xFFFF; break;
+    }
+    auto readByte = [&](int a) -> int {
+        switch (memSource)
+        {
+        case CpuView:      return CPC::memPage[(a >> 14) & 3][a & 0x3FFF];
+        case RamCurrent:   return CPC::RAM[(a >> 14) & 3][a & 0x3FFF];
+        case RamBank:      return CPC::RAMs[memDetail] ? CPC::RAMs[memDetail][a] : -1;
+        case LowerRom:     return CPC::LoROM ? CPC::LoROM[a] : -1;
+        case UpperRomSlot: return CPC::HiROMs[memDetail] ? CPC::HiROMs[memDetail][a - 0xC000] : -1;
+        case Cartridge:    return CPC::Cartridge ? CPC::Cartridge[memDetail * 0x4000 + (a - 0xC000)] : -1;
+        }
+        return -1;
+    };
+
+    int total = endAddr - startAddr + 1;
+    for (int tried = 0; tried < total; tried++)
+    {
+        int matchAt = startAddr + (findFromOffset + tried) % total;
+        bool match = true;
+        for (int j = 0; j < pattern.size(); j++)
+        {
+            int a = matchAt + j;
+            if (a > endAddr) { match = false; break; }
+            int b = readByte(a);
+            if (b < 0 || (BYTE)b != (BYTE)pattern[j]) { match = false; break; }
+        }
+        if (match)
+        {
+            int row = (matchAt - startAddr) / 16;
+            int col = (matchAt - startAddr) % 16 + 1;
+            QModelIndex idx = modelMemory->index(row, col);
+            ui->listMemory->setCurrentIndex(idx);
+            ui->listMemory->scrollTo(idx, QAbstractItemView::PositionAtCenter);
+            findFromOffset = (matchAt - startAddr + 1) % total;
+            return;
+        }
+    }
 }
 
 void Debugger::onMemoryItemChanged(QStandardItem *item)

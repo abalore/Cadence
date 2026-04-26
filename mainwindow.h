@@ -42,8 +42,6 @@ private slots:
     void onEmulatorPaused();
     void onEmulatorResumed();
     void onEmulatorFinishedFrame();
-    void onMenuMemoryLoadBinaryFile();
-    void onMenuMemorySaveBinaryFile();
     void onMenuMediaInsertTape();
     void onMenuMediaRemoveTape();
     void onMenuMediaRemoveDiskA();
@@ -56,7 +54,6 @@ private slots:
     void onMenuMediaWriteProtectA();
     void onMenuMediaWriteProtectB();
     void onMenuROMLoadFromFile();
-    void onMenuMemoryEnterBytes();
     void onMenuMediaRemoveCartridge();
     void onMenuMediaInsertCartridge();
     void onMenuMediaInsertBlankCartridge();
@@ -82,7 +79,6 @@ private:
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;
-    EnterBytesDialog *enterBytesDialog;
     AssemblerWindow *assemblerWindow;
     EmulatorThread *workerThread;
     SoundThread *soundThread;

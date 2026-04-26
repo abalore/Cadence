@@ -100,19 +100,10 @@
     <property name="title">
      <string>Development</string>
     </property>
-    <widget class="QMenu" name="menuMemory">
-     <property name="title">
-      <string>Memory</string>
-     </property>
-     <addaction name="actionEnter_bytes"/>
-     <addaction name="actionLoad_binary_file"/>
-     <addaction name="actionSave_binary_file"/>
-    </widget>
     <addaction name="actionPause"/>
     <addaction name="actionEnable_breakpoints"/>
     <addaction name="separator"/>
     <addaction name="actionInspect_video_memory"/>
-    <addaction name="menuMemory"/>
     <addaction name="separator"/>
     <addaction name="actionAssembler"/>
    </widget>
@@ -460,21 +451,6 @@
   <action name="actionLoad_fromFile">
    <property name="text">
     <string>Load from file</string>
-   </property>
-  </action>
-  <action name="actionEnter_bytes">
-   <property name="text">
-    <string>Enter bytes...</string>
-   </property>
-  </action>
-  <action name="actionLoad_binary_file">
-   <property name="text">
-    <string>Load binary file...</string>
-   </property>
-  </action>
-  <action name="actionSave_binary_file">
-   <property name="text">
-    <string>Save binary file...</string>
    </property>
   </action>
   <action name="actionEnable_cartridge">

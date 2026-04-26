@@ -69,7 +69,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     debugger = new Debugger(this);
     graphicsInspector = new GraphicsInspector(this);
-    enterBytesDialog = new EnterBytesDialog(this);
     assemblerWindow = nullptr;
 
     Instance = this;
@@ -110,9 +109,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionWrite_protect_A, &QAction::changed, this, &MainWindow::onMenuMediaWriteProtectA);
     connect(ui->actionWrite_protect_B, &QAction::changed, this, &MainWindow::onMenuMediaWriteProtectB);
     connect(ui->actionROM_Box, &QAction::triggered, this, &MainWindow::onMenuROMLoadFromFile);
-    connect(ui->actionEnter_bytes, &QAction::triggered, this, &MainWindow::onMenuMemoryEnterBytes);
-    connect(ui->actionLoad_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemoryLoadBinaryFile);
-    connect(ui->actionSave_binary_file, &QAction::triggered, this, &MainWindow::onMenuMemorySaveBinaryFile);
     connect(ui->actionRemove_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaRemoveCartridge);
     connect(ui->actionInsert_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertCartridge);
     connect(ui->actionInsert_blank_cartridge, &QAction::triggered, this, &MainWindow::onMenuMediaInsertBlankCartridge);
@@ -306,6 +302,7 @@ void MainWindow::RefreshDebuggerIfOpen()
         debugger->Update();
 }
 
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (assemblerWindow && !assemblerWindow->close())
@@ -463,11 +460,6 @@ void MainWindow::ResetEmulation()
     StartThreads();
 }
 
-void MainWindow::onMenuMemoryEnterBytes()
-{
-    enterBytesDialog->show();
-}
-
 void MainWindow::onEmulatorPaused()
 {
     ui->hLine->setVisible(true);
@@ -504,58 +496,6 @@ void MainWindow::onEmulatorFinishedFrame()
             QString name = fm.elidedText(tapeBaseText, Qt::ElideRight, qMax(0, avail));
             tapeLabel->setText(name + suffix);
         }
-    }
-}
-
-void MainWindow::onMenuMemoryLoadBinaryFile()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
-    QFile file = QFile(fileName);
-    file.open(QIODevice::ReadOnly);
-    if (file.isOpen())
-    {
-        QByteArray ba = file.readAll();
-        file.close();
-        bool ok;
-        QString addressText = QInputDialog::getText(this, tr("Target address"), tr("Target address (hex):"), QLineEdit::Normal, "4000", &ok);
-        if (ok)
-        {
-            word address = addressText.toUShort(nullptr, 16);
-            for (int i = 0; i < ba.size(); i++)
-                CPC::SetByteAt(address + i, (BYTE)ba[i]);
-        }
-    }
-}
-
-void MainWindow::onMenuMemorySaveBinaryFile()
-{
-    QDialog dialog(this);
-    dialog.setWindowTitle(tr("Save binary"));
-    QFormLayout *layout = new QFormLayout(&dialog);
-    QLineEdit *addressEdit = new QLineEdit("0000", &dialog);
-    QLineEdit *lengthEdit = new QLineEdit("4000", &dialog);
-    layout->addRow(tr("Source address (hex):"), addressEdit);
-    layout->addRow(tr("Length (hex):"), lengthEdit);
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    layout->addRow(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    if (dialog.exec() != QDialog::Accepted) return;
-    word address = addressEdit->text().toUShort(nullptr, 16);
-    int length = lengthEdit->text().toInt(nullptr, 16);
-    if (length <= 0) return;
-
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
-    QFile file = QFile(fileName);
-    file.open(QIODevice::WriteOnly);
-    if (file.isOpen())
-    {
-        QByteArray ba;
-        ba.resize(length);
-        for (int i = 0; i < length; i++)
-            ba[i] = (char)CPC::GetByteAt(address + i);
-        file.write(ba);
-        file.close();
     }
 }
 

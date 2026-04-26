@@ -52,6 +52,11 @@ private slots:
     void onCRTCFieldEdited();
     void onStackClicked(const QModelIndex &index);
     void onMemoryItemChanged(QStandardItem *item);
+    void onMenuMemoryEnterBytes();
+    void onMenuMemoryLoadBinaryFile();
+    void onMenuMemorySaveBinaryFile();
+    void onMenuMemoryFindBytes();
+    void onMenuMemoryFindNext();
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
@@ -68,6 +73,9 @@ private:
     std::set<word> manualAnchors;
     DisassemblyModel *modelDisassembly;
     QStringListModel *modelStack;
+    class EnterBytesDialog *enterBytesDialog = nullptr;
+    QString lastFindBytes;
+    int findFromOffset = 0;
     QModelIndex modelDisassemblyIndex;
     QStringList listMemory;
     QStandardItemModel *modelMemory;
