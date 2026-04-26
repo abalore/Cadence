@@ -28,8 +28,8 @@
   <property name="styleSheet">
    <string notr="true">QFrame#pnlZ80 QLineEdit, QFrame#pnlCRTC QLineEdit, QFrame#pnlGateArray QLineEdit { padding: 0px 2px; font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
 QFrame#pnlZ80 QLabel, QFrame#pnlCRTC QLabel, QFrame#pnlGateArray QLabel { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
-QListView#listDisassembly, QListView#listMemory, QListView#listStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
-QListView#listDisassembly, QListView#listMemory, QListView#listStack { border: 1px solid black; }
+QListView#listDisassembly, QTableView#listMemory, QListView#listStack { font-family: &quot;Ubuntu Sans Mono&quot;; font-size: 9pt; }
+QListView#listDisassembly, QTableView#listMemory, QListView#listStack { border: 1px solid black; }
 QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }</string>
   </property>
   <property name="modal">
@@ -2831,7 +2831,7 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
     <string>Selected: 0</string>
    </property>
   </widget>
-  <widget class="QListView" name="listMemory">
+  <widget class="QTableView" name="listMemory">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -2846,24 +2846,18 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
      <pointsize>9</pointsize>
     </font>
    </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
    <property name="horizontalScrollBarPolicy">
     <enum>Qt::ScrollBarAlwaysOff</enum>
    </property>
-   <property name="selectionBehavior">
-    <enum>QAbstractItemView::SelectRows</enum>
+   <property name="showGrid">
+    <bool>false</bool>
    </property>
-   <property name="layoutMode">
-    <enum>QListView::SinglePass</enum>
-   </property>
-   <property name="uniformItemSizes">
-    <bool>true</bool>
-   </property>
-   <property name="batchSize">
-    <number>8</number>
-   </property>
+   <attribute name="horizontalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
   </widget>
   <widget class="QLabel" name="lblMemorySource">
    <property name="geometry">
@@ -2926,7 +2920,7 @@ QFrame#pnlZ80, QFrame#pnlCRTC, QFrame#pnlGateArray { border: 1px solid black; }<
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>15</x>
      <y>340</y>
      <width>470</width>
      <height>20</height>

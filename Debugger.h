@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QStringListModel>
+#include <QStandardItemModel>
 #include <QEvent>
 #include <QVector>
 #include <QSet>
@@ -50,6 +51,7 @@ private slots:
     void onZ80FieldEdited();
     void onCRTCFieldEdited();
     void onStackClicked(const QModelIndex &index);
+    void onMemoryItemChanged(QStandardItem *item);
 private:
     enum MemSource { CpuView, RamCurrent, RamBank, LowerRom, UpperRomSlot, Cartridge };
     void PopulateMemorySources();
@@ -68,7 +70,8 @@ private:
     QStringListModel *modelStack;
     QModelIndex modelDisassemblyIndex;
     QStringList listMemory;
-    QStringListModel *modelMemory;
+    QStandardItemModel *modelMemory;
+    bool memoryUpdating = false;
     QModelIndex modelMemoryIndex;
     MemSource memSource = CpuView;
     int memDetail = 0;

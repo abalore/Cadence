@@ -13,6 +13,9 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QStringListModel>
+#include <QStandardItemModel>
+#include <QHeaderView>
+#include <QTableView>
 #include <QModelIndex>
 #include <QScrollBar>
 #include <QShortcut>
@@ -44,8 +47,15 @@ Debugger::Debugger(QWidget *parent)
     ui->setupUi(this);
     modelDisassembly = new DisassemblyModel();
     ui->listDisassembly->setModel(modelDisassembly);
-    modelMemory = new QStringListModel();
+    modelMemory = new QStandardItemModel();
     ui->listMemory->setModel(modelMemory);
+    ui->listMemory->verticalHeader()->setVisible(false);
+    ui->listMemory->horizontalHeader()->setVisible(false);
+    ui->listMemory->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->listMemory->verticalHeader()->setMinimumSectionSize(1);
+    ui->listMemory->verticalHeader()->setDefaultSectionSize(15);
+    ui->listMemory->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed | QAbstractItemView::AnyKeyPressed);
+    connect(modelMemory, &QStandardItemModel::itemChanged, this, &Debugger::onMemoryItemChanged);
     modelStack = new QStringListModel();
     ui->listStack->setModel(modelStack);
     connect(ui->listStack, &QListView::clicked, this, &Debugger::onStackClicked);
@@ -221,7 +231,8 @@ void Debugger::Update()
     ui->listDisassembly->scrollTo(pcIndex, QAbstractItemView::PositionAtCenter);
 
     int memoryIndex = ui->listMemory->currentIndex().row();
-    listMemory.clear();
+    memoryUpdating = true;
+    modelMemory->clear();
 
     int startAddr = 0x0000;
     int endAddr   = 0xFFF0;
@@ -260,37 +271,50 @@ void Debugger::Update()
 
     if (unavailable)
     {
-        listMemory.append(unavailableMsg);
+        modelMemory->setColumnCount(1);
+        QStandardItem *msg = new QStandardItem(unavailableMsg);
+        msg->setFlags(Qt::ItemIsEnabled);
+        modelMemory->appendRow(msg);
     }
     else
     {
-        const char *fmt = (addrDigits == 5)
-            ? "%05X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"
-            : "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X";
+        modelMemory->setColumnCount(17);
+        const char *addrFmt = (addrDigits == 5) ? "%05X" : "%04X";
         for (int i = startAddr; i <= endAddr; i += 16)
         {
-            BYTE b[16];
+            QList<QStandardItem*> row;
+            snprintf(buff, sizeof(buff), addrFmt, i);
+            QStandardItem *addrItem = new QStandardItem(buff);
+            addrItem->setFlags(Qt::ItemIsEnabled);
+            addrItem->setForeground(QBrush(QColor(150, 150, 150)));
+            row.append(addrItem);
             for (int k = 0; k < 16; k++)
             {
                 int a = i + k;
+                BYTE b;
                 switch (memSource)
                 {
-                case CpuView:      b[k] = CPC::memPage[(a >> 14) & 3][a & 0x3FFF]; break;
-                case RamCurrent:   b[k] = CPC::RAM[(a >> 14) & 3][a & 0x3FFF];     break;
-                default:           b[k] = base[a - baseAddr];                      break;
+                case CpuView:      b = CPC::memPage[(a >> 14) & 3][a & 0x3FFF]; break;
+                case RamCurrent:   b = CPC::RAM[(a >> 14) & 3][a & 0x3FFF];     break;
+                default:           b = base[a - baseAddr];                      break;
                 }
+                snprintf(buff, sizeof(buff), "%02X", b);
+                QStandardItem *cell = new QStandardItem(buff);
+                cell->setData(a, Qt::UserRole + 1);
+                cell->setTextAlignment(Qt::AlignCenter);
+                row.append(cell);
             }
-            sprintf(buff, fmt, i,
-                    b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
-                    b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
-            listMemory.append(buff);
+            modelMemory->appendRow(row);
         }
+        ui->listMemory->setColumnWidth(0, addrDigits == 5 ? 48 : 40);
+        for (int c = 1; c <= 16; c++) ui->listMemory->setColumnWidth(c, 20);
     }
-
-    modelMemory -> setStringList(listMemory);
-    modelMemoryIndex = modelMemory->index(memoryIndex);
-    ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
-    ui->listMemory->setCurrentIndex(modelMemoryIndex);
+    memoryUpdating = false;
+    if (memoryIndex >= 0 && memoryIndex < modelMemory->rowCount())
+    {
+        modelMemoryIndex = modelMemory->index(memoryIndex, 0);
+        ui->listMemory->scrollTo(modelMemoryIndex, QAbstractItemView::PositionAtCenter);
+    }
 
     UpdateZ80Panel();
     UpdateCRTCPanel();
@@ -460,6 +484,48 @@ void Debugger::onZ80FieldEdited()
     s.IFF2             = bit(ui->txtIFF2, s.IFF2);
     CPC::z80.SetDebugState(s);
     UpdateZ80Panel();
+}
+
+void Debugger::onMemoryItemChanged(QStandardItem *item)
+{
+    if (memoryUpdating) return;
+    QVariant addrVar = item->data(Qt::UserRole + 1);
+    if (!addrVar.isValid()) return;
+    bool ok;
+    unsigned v = item->text().toUInt(&ok, 16);
+    int a = addrVar.toInt();
+    if (!ok || v > 0xFF)
+    {
+        memoryUpdating = true;
+        BYTE cur;
+        switch (memSource)
+        {
+        case CpuView:      cur = CPC::memPage[(a >> 14) & 3][a & 0x3FFF]; break;
+        case RamCurrent:   cur = CPC::RAM[(a >> 14) & 3][a & 0x3FFF];     break;
+        case RamBank:      cur = CPC::RAMs[memDetail][a]; break;
+        case LowerRom:     cur = CPC::LoROM[a]; break;
+        case UpperRomSlot: cur = CPC::HiROMs[memDetail][a - 0xC000]; break;
+        case Cartridge:    cur = CPC::Cartridge[memDetail * 0x4000 + (a - 0xC000)]; break;
+        }
+        char buf[8]; snprintf(buf, sizeof(buf), "%02X", cur);
+        item->setText(buf);
+        memoryUpdating = false;
+        return;
+    }
+    BYTE b = (BYTE)v;
+    switch (memSource)
+    {
+    case CpuView:      CPC::memPage[(a >> 14) & 3][a & 0x3FFF] = b; break;
+    case RamCurrent:   CPC::RAM[(a >> 14) & 3][a & 0x3FFF] = b; break;
+    case RamBank:      CPC::RAMs[memDetail][a] = b; break;
+    case LowerRom:     CPC::LoROM[a] = b; break;
+    case UpperRomSlot: CPC::HiROMs[memDetail][a - 0xC000] = b; break;
+    case Cartridge:    CPC::Cartridge[memDetail * 0x4000 + (a - 0xC000)] = b; CPC::cartridgeDirty = true; break;
+    }
+    memoryUpdating = true;
+    char buf[8]; snprintf(buf, sizeof(buf), "%02X", b);
+    item->setText(buf);
+    memoryUpdating = false;
 }
 
 void Debugger::onCRTCFieldEdited()
