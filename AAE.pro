@@ -75,7 +75,8 @@ SOURCES += \
     Assembler.cpp \
     AssemblerWindow.cpp \
     AsmHighlighter.cpp \
-    PreferencesDialog.cpp
+    PreferencesDialog.cpp \
+    ShortcutsDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -109,7 +110,8 @@ HEADERS += \
     Assembler.h \
     AssemblerWindow.h \
     AsmHighlighter.h \
-    PreferencesDialog.h
+    PreferencesDialog.h \
+    ShortcutsDialog.h
 
 FORMS += \
     Debugger.ui \

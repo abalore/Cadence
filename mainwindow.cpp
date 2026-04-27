@@ -13,6 +13,7 @@
 #include "ROMBoxDialog.h"
 #include "Settings.h"
 #include "PreferencesDialog.h"
+#include "ShortcutsDialog.h"
 #include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
@@ -166,6 +167,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
     connect(ui->action512kExpansion, &QAction::toggled, this, &MainWindow::onToggle512kExpansion);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
+    connect(ui->actionShortcuts, &QAction::triggered, this, [this]{
+        ShortcutsDialog dlg(this);
+        dlg.exec();
+    });
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onMenuPreferences);
 
     for (QAction *a : {ui->actionSmooth, ui->actionGreen_monitor, ui->actionFull_screen,

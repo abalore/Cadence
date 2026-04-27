@@ -166,6 +166,8 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionShortcuts"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuSystem"/>
@@ -363,6 +365,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About...</string>
+   </property>
+  </action>
+  <action name="actionShortcuts">
+   <property name="text">
+    <string>Shortcuts...</string>
    </property>
   </action>
   <action name="actionAudio_enabled">
