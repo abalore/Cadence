@@ -110,74 +110,10 @@
     <property name="title">
      <string>System</string>
     </property>
-    <widget class="QMenu" name="menuSettings">
-    <property name="title">
-     <string>Settings</string>
-    </property>
-    <widget class="QMenu" name="menuScreen">
-     <property name="title">
-      <string>Screen</string>
-     </property>
-     <widget class="QMenu" name="menuPhosphor_persistence">
-      <property name="title">
-       <string>Phosphor persistence</string>
-      </property>
-      <addaction name="actionPersistence_0"/>
-      <addaction name="actionPersistence_1"/>
-      <addaction name="actionPersistence_2"/>
-      <addaction name="actionPersistence_3"/>
-      <addaction name="actionPersistence_4"/>
-      <addaction name="actionPersistence_5"/>
-     </widget>
-     <addaction name="actionSmooth"/>
-     <addaction name="actionGreen_monitor"/>
-     <addaction name="menuPhosphor_persistence"/>
-     <addaction name="actionFull_screen"/>
-    </widget>
-    <widget class="QMenu" name="menuAudio">
-     <property name="title">
-      <string>Audio</string>
-     </property>
-     <addaction name="actionAudio_enabled"/>
-     <addaction name="actionSFX_enabled"/>
-     <addaction name="actionTape_enabled"/>
-    </widget>
-    <widget class="QMenu" name="menuKeyboard">
-     <property name="title">
-      <string>Keyboard</string>
-     </property>
-     <addaction name="actionRight_shift_as_backslash"/>
-    </widget>
-    <widget class="QMenu" name="menuCRTC">
-     <property name="title">
-      <string>CRTC</string>
-     </property>
-     <addaction name="actionCRTC_0"/>
-     <addaction name="actionCRTC_1"/>
-     <addaction name="actionCRTC_2"/>
-     <addaction name="actionCRTC_3"/>
-     <addaction name="actionCRTC_4"/>
-    </widget>
-    <widget class="QMenu" name="menuMemoryExpansion">
-     <property name="title">
-      <string>Memory</string>
-     </property>
-     <addaction name="action512kExpansion"/>
-    </widget>
-    <addaction name="menuScreen"/>
-    <addaction name="menuAudio"/>
-    <addaction name="menuKeyboard"/>
-    <addaction name="menuCRTC"/>
-    <addaction name="menuMemoryExpansion"/>
-    <addaction name="actionROM_Box"/>
-    <addaction name="separator"/>
-    <addaction name="actionUnlock_speed"/>
-    <addaction name="actionJoystick_emulation"/>
-   </widget>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
-    <addaction name="menuSettings"/>
+    <addaction name="actionPreferences"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
@@ -236,6 +172,14 @@
    <addaction name="menuDebug"/>
    <addaction name="menuHelp"/>
   </widget>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Settings...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::PreferencesRole</enum>
+   </property>
+  </action>
   <action name="actionPause">
    <property name="icon">
     <iconset>

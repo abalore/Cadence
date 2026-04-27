@@ -62,6 +62,7 @@ private slots:
     void onMenuViewFullScreen();
     void onMenuDebugAssembler();
     void onMenuAbout();
+    void onMenuPreferences();
     void onMediaChanged(MediaSlot slot, const QString &text);
     void StartThreads();
     void StopThreads();
@@ -76,6 +77,7 @@ private:
     void applySettingsToUi();
     void applyROMOverrides();
     void collectSettingsFromUi();
+    void applyPreferences(const Settings &newSettings, bool newUnlockSpeed);
     Ui::MainWindow *ui;
     Debugger *debugger;
     GraphicsInspector *graphicsInspector;

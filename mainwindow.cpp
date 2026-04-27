@@ -12,6 +12,7 @@
 #include "AboutDialog.h"
 #include "ROMBoxDialog.h"
 #include "Settings.h"
+#include "PreferencesDialog.h"
 #include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
@@ -165,6 +166,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionRight_shift_as_backslash, &QAction::toggled, this, [](bool checked){ Keyboard::translation[53] = checked ? 62 : 52; });
     connect(ui->action512kExpansion, &QAction::toggled, this, &MainWindow::onToggle512kExpansion);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
+    connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onMenuPreferences);
 
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
@@ -663,6 +665,77 @@ void MainWindow::onMenuROMLoadFromFile()
 {
     ROMBoxDialog dlg(&settings, this);
     dlg.exec();
+}
+
+void MainWindow::onMenuPreferences()
+{
+    collectSettingsFromUi();
+    PreferencesDialog dlg(settings, SpeedController::unlocked, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+    applyPreferences(dlg.result(), dlg.unlockSpeed());
+}
+
+void MainWindow::applyPreferences(const Settings &ns, bool newUnlockSpeed)
+{
+    if (ns.smooth != settings.smooth)
+        ui->actionSmooth->setChecked(ns.smooth);
+    if (ns.greenMonitor != settings.greenMonitor)
+        ui->actionGreen_monitor->setChecked(ns.greenMonitor);
+    if (ns.phosphorPersistence != settings.phosphorPersistence)
+    {
+        settings.phosphorPersistence = ns.phosphorPersistence;
+        QAction *pa[6] = {
+            ui->actionPersistence_0, ui->actionPersistence_1, ui->actionPersistence_2,
+            ui->actionPersistence_3, ui->actionPersistence_4, ui->actionPersistence_5
+        };
+        int level = (ns.phosphorPersistence >= 0 && ns.phosphorPersistence <= 5)
+                        ? ns.phosphorPersistence : 0;
+        pa[level]->setChecked(true);
+        ui->openGLWidget->setPersistence(level);
+    }
+    if (ns.audioEnabled != settings.audioEnabled)
+        ui->actionAudio_enabled->setChecked(ns.audioEnabled);
+    if (ns.sfxEnabled != settings.sfxEnabled)
+        ui->actionSFX_enabled->setChecked(ns.sfxEnabled);
+    if (ns.tapeEnabled != settings.tapeEnabled)
+        ui->actionTape_enabled->setChecked(ns.tapeEnabled);
+    if (ns.rsBackslash != settings.rsBackslash)
+        ui->actionRight_shift_as_backslash->setChecked(ns.rsBackslash);
+    if (ns.joystickEmulation != settings.joystickEmulation)
+        ui->actionJoystick_emulation->setChecked(ns.joystickEmulation);
+    if (ns.crtcType != settings.crtcType)
+    {
+        QAction *ca[5] = {
+            ui->actionCRTC_0, ui->actionCRTC_1, ui->actionCRTC_2,
+            ui->actionCRTC_3, ui->actionCRTC_4
+        };
+        int ct = (ns.crtcType >= 0 && ns.crtcType < 5) ? ns.crtcType : 0;
+        ca[ct]->setChecked(true);
+        CPC::crtc.crtcType = ct;
+        settings.crtcType = ct;
+    }
+
+    if (newUnlockSpeed != SpeedController::unlocked)
+        ui->actionUnlock_speed->setChecked(newUnlockSpeed);
+
+    bool romPathsChanged = false;
+    for (int i = 0; i < 16; i++)
+    {
+        if (ns.romPaths[i] != settings.romPaths[i])
+        {
+            romPathsChanged = true;
+            settings.romPaths[i] = ns.romPaths[i];
+        }
+    }
+    if (romPathsChanged)
+        applyROMOverrides();
+
+    if (ns.ram512kExpansion != settings.ram512kExpansion)
+        ui->action512kExpansion->setChecked(ns.ram512kExpansion);
+
+    if (ns.fullScreen != settings.fullScreen)
+        ui->actionFull_screen->setChecked(ns.fullScreen);
 }
 
 void MainWindow::applyROMOverrides()
