@@ -11,7 +11,6 @@
 #include <QPainterPath>
 #include <QDir>
 #include <QFile>
-#include <QProcess>
 #include <cstdlib>
 
 static void seedUserHomeIfMissing()
@@ -19,19 +18,19 @@ static void seedUserHomeIfMissing()
     QString cadenceDir = QDir::homePath() + "/.cadence";
     if (QDir(cadenceDir).exists()) return;
 
-    QFile src(":/data/userhome.zip");
-    if (!src.open(QIODevice::ReadOnly)) return;
-    QByteArray data = src.readAll();
-    src.close();
+    QDir home(QDir::homePath());
+    for (const char *sub : {".cadence/BIN", ".cadence/CDT", ".cadence/CPR",
+                            ".cadence/DSK", ".cadence/ROM"})
+        home.mkpath(sub);
 
-    QString tmpPath = QDir::temp().absoluteFilePath("cadence_userhome.zip");
-    QFile tmp(tmpPath);
-    if (!tmp.open(QIODevice::WriteOnly | QIODevice::Truncate)) return;
-    tmp.write(data);
-    tmp.close();
-
-    QProcess::execute("unzip", {"-q", "-o", tmpPath, "-d", QDir::homePath()});
-    QFile::remove(tmpPath);
+    QString romDst = cadenceDir + "/ROM";
+    for (const QString &name : QDir(":/data/ROM").entryList(QDir::Files))
+    {
+        QString out = romDst + "/" + name;
+        if (QFile::exists(out)) continue;
+        if (QFile::copy(":/data/ROM/" + name, out))
+            QFile::setPermissions(out, QFile::ReadOwner | QFile::WriteOwner);
+    }
 }
 
 class MenuIndicatorStyle : public QProxyStyle

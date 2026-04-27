@@ -1,6 +1,12 @@
 <RCC>
-    <qresource prefix="/data">
-        <file>userhome.zip</file>
+    <qresource prefix="/data/ROM">
+        <file alias="AMSDOS_6128.bin">data/ROM/AMSDOS_6128.bin</file>
+        <file alias="BASIC_464.bin">data/ROM/BASIC_464.bin</file>
+        <file alias="BASIC_664.bin">data/ROM/BASIC_664.bin</file>
+        <file alias="BASIC_6128.bin">data/ROM/BASIC_6128.bin</file>
+        <file alias="BIOS_464.bin">data/ROM/BIOS_464.bin</file>
+        <file alias="BIOS_664.bin">data/ROM/BIOS_664.bin</file>
+        <file alias="BIOS_6128.bin">data/ROM/BIOS_6128.bin</file>
     </qresource>
     <qresource prefix="/images">
         <file>monitor_frame.png</file>
