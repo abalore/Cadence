@@ -4,7 +4,12 @@
       "Bash(inkscape /home/abalore/hdd/Work/AAE/AAE/cartridge.svg --export-type=png --export-filename=/home/abalore/hdd/Work/AAE/AAE/cartridge.png -w 1024 -h 1024)",
       "Bash(inkscape /home/abalore/hdd/Work/AAE/AAE/cartridge.svg --export-type=png --export-filename=/home/abalore/hdd/Work/AAE/AAE/cartridge.png -w 128 -h 128)",
       "Bash(inkscape /home/abalore/hdd/Work/AAE/AAE/cadence.svg --export-type=png --export-filename=/home/abalore/hdd/Work/AAE/AAE/cadence.png -w 1024 -h 1024)",
-      "Bash(apt-cache search *)"
+      "Bash(apt-cache search *)",
+      "Bash(unzip -l /home/abalore/hdd/Work/AAE/AAE/userhome.zip)",
+      "Read(//usr/include/x86_64-linux-gnu/qt6/**)",
+      "Read(//usr/include/**)",
+      "Bash(pkg-config --exists libzip)",
+      "Bash(apt list *)"
     ]
   }
 }

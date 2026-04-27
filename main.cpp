@@ -9,7 +9,30 @@
 #include <QMenu>
 #include <QPainter>
 #include <QPainterPath>
+#include <QDir>
+#include <QFile>
+#include <QProcess>
 #include <cstdlib>
+
+static void seedUserHomeIfMissing()
+{
+    QString cadenceDir = QDir::homePath() + "/.cadence";
+    if (QDir(cadenceDir).exists()) return;
+
+    QFile src(":/data/userhome.zip");
+    if (!src.open(QIODevice::ReadOnly)) return;
+    QByteArray data = src.readAll();
+    src.close();
+
+    QString tmpPath = QDir::temp().absoluteFilePath("cadence_userhome.zip");
+    QFile tmp(tmpPath);
+    if (!tmp.open(QIODevice::WriteOnly | QIODevice::Truncate)) return;
+    tmp.write(data);
+    tmp.close();
+
+    QProcess::execute("unzip", {"-q", "-o", tmpPath, "-d", QDir::homePath()});
+    QFile::remove(tmpPath);
+}
 
 class MenuIndicatorStyle : public QProxyStyle
 {
@@ -66,6 +89,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);
+    seedUserHomeIfMissing();
 
     QApplication::setStyle(new MenuIndicatorStyle(QStyleFactory::create("Fusion")));
     QPalette p;

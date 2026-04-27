@@ -186,18 +186,18 @@ void CPC::Init()
     switch(cpcType)
     {
     case CPCType::CPC464:
-        ReadROM((char *)"ROM/ROM_BIOS_464.bin", -1);
-        ReadROM((char *)"ROM/ROM_BASIC_464.bin", 0);
+        ReadROM((char *)"ROM/BIOS_464.bin", -1);
+        ReadROM((char *)"ROM/BASIC_464.bin", 0);
         break;
     case CPCType::CPC664:
-        ReadROM((char *)"ROM/ROM_BIOS_664.bin", -1);
-        ReadROM((char *)"ROM/ROM_BASIC_664.bin", 0);
-        ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
+        ReadROM((char *)"ROM/BIOS_664.bin", -1);
+        ReadROM((char *)"ROM/BASIC_664.bin", 0);
+        ReadROM((char *)"ROM/AMSDOS_6128.bin", 7);
         break;
     case CPCType::CPC6128:
-        ReadROM((char *)"ROM/ROM_BIOS_6128.bin", -1);
-        ReadROM((char *)"ROM/ROM_BASIC_6128.bin", 0);
-        ReadROM((char *)"ROM/ROM_AMSDOS_6128.bin", 7);
+        ReadROM((char *)"ROM/BIOS_6128.bin", -1);
+        ReadROM((char *)"ROM/BASIC_6128.bin", 0);
+        ReadROM((char *)"ROM/AMSDOS_6128.bin", 7);
         //ReadROM((char *)"ROM/PARADOS.ROM", 7);
         break;
     }

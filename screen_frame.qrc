@@ -1,4 +1,7 @@
 <RCC>
+    <qresource prefix="/data">
+        <file>userhome.zip</file>
+    </qresource>
     <qresource prefix="/images">
         <file>monitor_frame.png</file>
         <file>cadence.svg</file>
