@@ -1,41 +1,15 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="screenBg" cx="50%" cy="50%" r="50%" fx="50%" fy="29%">
-      <stop offset="0%"   stop-color="#E0FFE0" />
-      <stop offset="40%"  stop-color="#78D878" />
-      <stop offset="88%"  stop-color="#3C803C" />
-      <stop offset="100%" stop-color="#0C300C" />
-    </radialGradient>
-    <radialGradient id="ballGrad" cx="38%" cy="30%" r="68%">
-      <stop offset="0%"   stop-color="#FFC8C8" />
-      <stop offset="12%"  stop-color="#E05858" />
-      <stop offset="45%"  stop-color="#8C1818" />
-      <stop offset="80%"  stop-color="#400808" />
-      <stop offset="100%" stop-color="#1A0202" />
-    </radialGradient>
-    <radialGradient id="baseGrad" cx="50%" cy="0%" r="75%" fx="50%" fy="0%">
-      <stop offset="0%"   stop-color="#717171" />
-      <stop offset="40%"  stop-color="#444444" />
-      <stop offset="80%"  stop-color="#212121" />
-      <stop offset="100%" stop-color="#090909" />
-    </radialGradient>
-    <linearGradient id="shaftGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%"   stop-color="#2A0404" />
-      <stop offset="18%"  stop-color="#6A1010" />
-      <stop offset="38%"  stop-color="#C84040" />
-      <stop offset="55%"  stop-color="#901818" />
-      <stop offset="80%"  stop-color="#3A0606" />
-      <stop offset="100%" stop-color="#1A0202" />
-    </linearGradient>
+    <clipPath id="clipScreen">
+      <circle cx="256" cy="256" r="256" />
+    </clipPath>
   </defs>
 
-  <circle cx="256" cy="256" r="256" fill="url(#screenBg)" />
+  <circle cx="256" cy="256" r="256" fill="#008000" />
 
-  <!-- Joystick base: bottom segment of the circle, shaded like a dome -->
-  <path d="M 12.5 335 L 499.5 335 A 256 256 0 0 1 12.5 335 Z"
-        fill="url(#baseGrad)" />
-  <!-- Joystick shaft: cylinder (drawn first so the ball sits on top) -->
-  <rect x="231" y="150" width="50" height="185" fill="url(#shaftGrad)" />
-  <!-- Joystick ball: sphere -->
-  <circle cx="256" cy="150" r="60" fill="url(#ballGrad)" />
+  <g clip-path="url(#clipScreen)" transform="rotate(-90 256 256)">
+    <path d="M 12.5 335 L 499.5 335 A 256 256 0 0 1 12.5 335 Z"
+          fill="#000080" />
+  </g>
+  <circle cx="256" cy="256" r="120" fill="#FFFF00" />
 </svg>
