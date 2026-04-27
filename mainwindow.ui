@@ -101,11 +101,10 @@
      <string>Development</string>
     </property>
     <addaction name="actionPause"/>
-    <addaction name="actionEnable_breakpoints"/>
-    <addaction name="separator"/>
-    <addaction name="actionInspect_video_memory"/>
-    <addaction name="separator"/>
     <addaction name="actionAssembler"/>
+    <addaction name="separator"/>
+    <addaction name="actionEnable_breakpoints"/>
+    <addaction name="actionInspect_video_memory"/>
    </widget>
    <widget class="QMenu" name="menuSystem">
     <property name="title">
@@ -181,10 +180,8 @@
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>
-    <addaction name="separator"/>
-    <addaction name="actionReset"/>
-    <addaction name="separator"/>
     <addaction name="menuSettings"/>
+    <addaction name="actionReset"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -248,7 +245,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Show debugger...</string>
+    <string>Debugger...</string>
    </property>
    <property name="toolTip">
     <string>Show debugger</string>
@@ -310,7 +307,7 @@
   </action>
   <action name="actionInspect_video_memory">
    <property name="text">
-    <string>Inspect video memory</string>
+    <string>Inspect video memory...</string>
    </property>
   </action>
   <action name="actionAssembler">
@@ -612,9 +609,6 @@
   <action name="actionROM_Box">
    <property name="text">
     <string>ROM...</string>
-   </property>
-   <property name="shortcut">
-    <string>F4</string>
    </property>
   </action>
   <action name="actionInsert_cartridge">
