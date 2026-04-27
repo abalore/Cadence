@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Cadence 0.1a</string>
+   <string>Cadence</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>

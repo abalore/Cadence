@@ -4,9 +4,9 @@ QT += opengl
 QT += openglwidgets
 QT += svg
 
-VERSION = 0.1
+VERSION = 0.2
 TARGET = cadence
-DEFINES += APP_VERSION=\\\"0.1a\\\" APP_NAME=\\\"Cadence\\\"
+DEFINES += APP_VERSION=\\\"0.2a\\\" APP_NAME=\\\"Cadence\\\"
 
 QMAKE_CXXFLAGS+=-Wall
 QMAKE_CXXFLAGS+=-Werror

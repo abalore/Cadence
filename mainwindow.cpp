@@ -59,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle(QString("%1 %2").arg(APP_NAME, APP_VERSION));
     setAcceptDrops(true);
     QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
     if (!screen) screen = QApplication::primaryScreen();
