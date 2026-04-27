@@ -17,6 +17,7 @@ public:
     int crtcType = 0;
     bool ram512kExpansion = false;
     bool breakpointsEnabled = true;
+    bool joystickEmulation = false;
     QVector<int> breakpoints;
     int phosphorPersistence = 0;
     QString system = "CPC6128";

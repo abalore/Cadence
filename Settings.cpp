@@ -26,6 +26,7 @@ void Settings::Load()
     crtcType      = s.value("machine/crtc_type", 0).toInt();
     ram512kExpansion = s.value("memory/ram_512k_expansion", false).toBool();
     breakpointsEnabled = s.value("debugger/breakpoints_enabled", true).toBool();
+    joystickEmulation = s.value("input/joystick_emulation", false).toBool();
     breakpoints.clear();
     QString bps = s.value("debugger/breakpoints").toString();
     for (const QString &t : bps.split(',', Qt::SkipEmptyParts))
@@ -58,6 +59,7 @@ void Settings::Save()
     s.setValue("machine/crtc_type", crtcType);
     s.setValue("memory/ram_512k_expansion", ram512kExpansion);
     s.setValue("debugger/breakpoints_enabled", breakpointsEnabled);
+    s.setValue("input/joystick_emulation", joystickEmulation);
     QStringList bpStrs;
     for (int a : breakpoints) bpStrs.append(QString::number(a, 16).toUpper());
     s.setValue("debugger/breakpoints", bpStrs.join(','));

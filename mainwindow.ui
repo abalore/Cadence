@@ -172,6 +172,7 @@
     <addaction name="actionROM_Box"/>
     <addaction name="separator"/>
     <addaction name="actionUnlock_speed"/>
+    <addaction name="actionJoystick_emulation"/>
    </widget>
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
@@ -262,6 +263,20 @@
    </property>
    <property name="text">
     <string>Unlock speed</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
+   </property>
+  </action>
+  <action name="actionJoystick_emulation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Joystick emulation</string>
+   </property>
+   <property name="shortcut">
+    <string>F10</string>
    </property>
   </action>
   <action name="actionEnable_breakpoints">

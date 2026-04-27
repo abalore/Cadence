@@ -83,6 +83,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionEnable_breakpoints->setChecked(settings.breakpointsEnabled);
     connect(ui->actionEnable_breakpoints, &QAction::toggled, this, [](bool on){ EmulatorThread::breakpointsEnabled = on; });
     connect(ui->actionUnlock_speed, &QAction::toggled, this, [](bool on){ SpeedController::unlocked = on; });
+    Keyboard::joystickEmulation = settings.joystickEmulation;
+    ui->actionJoystick_emulation->setChecked(settings.joystickEmulation);
+    connect(ui->actionJoystick_emulation, &QAction::toggled, this, [](bool on){ Keyboard::joystickEmulation = on; });
     for (int i = 0; i < 65536; i++) CPC::Breakpoint[i] = false;
     for (int a : settings.breakpoints) CPC::Breakpoint[a & 0xFFFF] = true;
 
@@ -420,6 +423,7 @@ void MainWindow::collectSettingsFromUi()
     settings.crtcType     = CPC::crtc.crtcType;
     settings.ram512kExpansion = ui->action512kExpansion->isChecked();
     settings.breakpointsEnabled = EmulatorThread::breakpointsEnabled;
+    settings.joystickEmulation = Keyboard::joystickEmulation;
     settings.breakpoints.clear();
     for (int i = 0; i < 65536; i++)
         if (CPC::Breakpoint[i]) settings.breakpoints.append(i);

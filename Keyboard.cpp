@@ -1,6 +1,8 @@
 #include "Keyboard.h"
 #include <cstring>
 
+std::atomic<bool> Keyboard::joystickEmulation{false};
+
 #ifdef __APPLE__
 // macOS virtual key codes (kVK_*) → CPC matrix values
 BYTE Keyboard::translation[128] =
@@ -30,10 +32,10 @@ BYTE Keyboard::translation[128] =
         62, 255, 11, 75, 68, // 53 - 57  SHIFT ??? COPY SPACE CAPSLOCK
         255,255,255,255,255,10,255,255,255,255, // 58 - 67   F keys
         255, 255, // 68 - 69  NUMLOCK SCROLLLOCK
-        21, 31, 30,  59, 42, 41, 40, 49, 51, 61, 50, 71, 70, // 70 - 82 Keypad: 789 KP-/JoyFire2 456 KP+/JoyFire1 1230 .
-        255, 255, 255, 255, 255, 255, 255, 49, 255, 255, 255, 255, // 83 - 94
+        21, 31, 30, 255, 42, 41, 40,255, 51, 61, 50, 71, 70, // 70 - 82 Keypad: 789 KP- 456 KP+ 1230 .
+        255, 255, 255, 255, 255, 255, 255,255, 255, 255, 255, 255, // 83 - 94
         60, // 95
-        255, 255, 255, 255, 255, 9, 0, 39, 1, 10, 19, 20, 255, 29, // 96 - 109
+        255, 255, 255, 255, 255,255, 0,255, 1, 10,255, 20, 255,255, // 96 - 109
         2, 255, 255, 255, 255, 255, 255, 255, 255, 255 // 110  CLR ?? ?? ?? ?? ??
     };
 #endif
@@ -62,9 +64,29 @@ void Keyboard::KeyEvent(int key, bool release)
 #ifdef __APPLE__
     if (key < 0 || key > 127) return;
     BYTE cpcKey = translation[key];
+    if (joystickEmulation) {
+        switch (key) {
+        case 126: cpcKey = 9;  break;  // Up    → Joy1 Up
+        case 125: cpcKey = 19; break;  // Down  → Joy1 Down
+        case 123: cpcKey = 29; break;  // Left  → Joy1 Left
+        case 124: cpcKey = 39; break;  // Right → Joy1 Right
+        case 59:  cpcKey = 49; break;  // LCtrl → Fire 1
+        case 56:  cpcKey = 59; break;  // LShift → Fire 2
+        }
+    }
 #else
     if (key < 9 || key > 136) return;
     BYTE cpcKey = translation[key - 9];
+    if (joystickEmulation) {
+        switch (key) {
+        case 111: cpcKey = 9;  break;  // Up    → Joy1 Up
+        case 116: cpcKey = 19; break;  // Down  → Joy1 Down
+        case 113: cpcKey = 29; break;  // Left  → Joy1 Left
+        case 114: cpcKey = 39; break;  // Right → Joy1 Right
+        case 37:  cpcKey = 49; break;  // LCtrl → Fire 1
+        case 50:  cpcKey = 59; break;  // LShift → Fire 2
+        }
+    }
 #endif
     if (cpcKey >= 80) return;
     int row = cpcKey % 10;
