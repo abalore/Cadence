@@ -91,10 +91,11 @@ void PboWidget::setSmoothing(bool enabled)
     doneCurrent();
 }
 
-void PboWidget::setPersistence(int level)
+void PboWidget::setPersistence(int frames)
 {
-    if (level < 0) level = 0;
-    if (level > 90) level = 90;
-    persistence = level;
-    if (level == 0) memset(prev, 0, sizeof(prev));
+    if (frames < 0) frames = 0;
+    if (frames > 5) frames = 5;
+    static const int retentionByFrames[6] = {0, 30, 55, 70, 80, 88};
+    persistence = retentionByFrames[frames];
+    if (frames == 0) memset(prev, 0, sizeof(prev));
 }

@@ -118,15 +118,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     QActionGroup *persistenceGroup = new QActionGroup(this);
     persistenceGroup->setExclusive(true);
-    QAction *persistenceActions[10] = {
-        ui->actionPersistence_0,  ui->actionPersistence_10, ui->actionPersistence_20,
-        ui->actionPersistence_30, ui->actionPersistence_40, ui->actionPersistence_50,
-        ui->actionPersistence_60, ui->actionPersistence_70, ui->actionPersistence_80,
-        ui->actionPersistence_90
+    QAction *persistenceActions[6] = {
+        ui->actionPersistence_0, ui->actionPersistence_1, ui->actionPersistence_2,
+        ui->actionPersistence_3, ui->actionPersistence_4, ui->actionPersistence_5
     };
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 6; i++)
     {
-        persistenceActions[i]->setData(i * 10);
+        persistenceActions[i]->setData(i);
         persistenceGroup->addAction(persistenceActions[i]);
     }
     connect(persistenceGroup, &QActionGroup::triggered, this, &MainWindow::onMenuScreenPhosphorPersistence);
@@ -388,14 +386,12 @@ void MainWindow::applySettingsToUi()
     CPC::has512kExpansion = settings.ram512kExpansion;
 
     int pLevel = settings.phosphorPersistence;
-    if (pLevel < 0 || pLevel > 90 || (pLevel % 10) != 0) pLevel = 0;
-    QAction *persistenceActions[10] = {
-        ui->actionPersistence_0,  ui->actionPersistence_10, ui->actionPersistence_20,
-        ui->actionPersistence_30, ui->actionPersistence_40, ui->actionPersistence_50,
-        ui->actionPersistence_60, ui->actionPersistence_70, ui->actionPersistence_80,
-        ui->actionPersistence_90
+    if (pLevel < 0 || pLevel > 5) pLevel = 0;
+    QAction *persistenceActions[6] = {
+        ui->actionPersistence_0, ui->actionPersistence_1, ui->actionPersistence_2,
+        ui->actionPersistence_3, ui->actionPersistence_4, ui->actionPersistence_5
     };
-    persistenceActions[pLevel / 10]->setChecked(true);
+    persistenceActions[pLevel]->setChecked(true);
 
     const bool smooth = settings.smooth;
     QTimer::singleShot(0, this, [this, smooth, pLevel]{
