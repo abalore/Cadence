@@ -42,8 +42,9 @@ bool CDT::GetNextLevel()
 
 bool CDT::ReadByte()
 {
+    if (bytesRead >= dataSize) return false;
     outByte = data[bytesRead++];
-    return bytesRead < dataSize;
+    return true;
 }
 
 bool CDT::ReadWord()

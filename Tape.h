@@ -38,6 +38,10 @@ private:
     BYTE level = 0;
     class CDT cdt;
     word tapeTick = 0;
+    int wavTickDiv = 20;
+    int wavBytesPerFrame = 1;
+    bool wavIs16Bit = false;
+    unsigned long wavDataStart = 44;
 };
 
 #endif // TAPE_H

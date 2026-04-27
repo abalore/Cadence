@@ -1,13 +1,15 @@
 #include "Tape.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 #include <QFileInfo>
 
 void Tape::LoadWAV(char *filename)
 {
     FreeBuffer();
     qint64 sz = QFileInfo(filename).size();
-    if (sz <= 0) return;
+    if (sz < 44) return;
     FILE *f = fopen(filename, "rb");
     if (!f) return;
     buffer = (BYTE *)malloc(sz);
@@ -15,7 +17,43 @@ void Tape::LoadWAV(char *filename)
     size_t n = fread(buffer, 1, bufferSize, f);
     fclose(f);
     if (n != bufferSize) { FreeBuffer(); return; }
-    bufferReadIndex = 44;
+
+    if (memcmp(buffer, "RIFF", 4) != 0 || memcmp(buffer + 8, "WAVE", 4) != 0)
+    { FreeBuffer(); return; }
+
+    int sampleRate = 50000, bitsPerSample = 8, channels = 1;
+    unsigned long dataStart = 0, dataLen = 0;
+    unsigned long p = 12;
+    while (p + 8 <= bufferSize)
+    {
+        const unsigned char *id = buffer + p;
+        unsigned long len = (unsigned long)buffer[p+4] | ((unsigned long)buffer[p+5] << 8) | ((unsigned long)buffer[p+6] << 16) | ((unsigned long)buffer[p+7] << 24);
+        if (memcmp(id, "fmt ", 4) == 0 && p + 8 + 16 <= bufferSize)
+        {
+            channels      = buffer[p+10] | (buffer[p+11] << 8);
+            sampleRate    = buffer[p+12] | (buffer[p+13] << 8) | (buffer[p+14] << 16) | (buffer[p+15] << 24);
+            bitsPerSample = buffer[p+22] | (buffer[p+23] << 8);
+        }
+        else if (memcmp(id, "data", 4) == 0)
+        {
+            dataStart = p + 8;
+            dataLen = len;
+            break;
+        }
+        p += 8 + len + (len & 1);
+    }
+    if (dataStart == 0 || sampleRate <= 0)
+    { FreeBuffer(); return; }
+
+    bufferReadIndex = dataStart;
+    wavDataStart = dataStart;
+    if (dataStart + dataLen <= bufferSize)
+        bufferSize = dataStart + dataLen;
+    wavBytesPerFrame = (bitsPerSample / 8) * channels;
+    if (wavBytesPerFrame < 1) wavBytesPerFrame = 1;
+    wavIs16Bit = (bitsPerSample == 16);
+    wavTickDiv = 1000000 / sampleRate;
+    if (wavTickDiv < 1) wavTickDiv = 1;
     tapeSource = TapeSource::WAV;
 }
 
@@ -43,7 +81,8 @@ void Tape::LoadCDT(char *filename)
 void Tape::Clock()
 {
     tapeTick++;
-    if (tapeTick >= 20) // (1 Mhz / sample rate) i.e. 20 for 50 Khz
+    int divisor = (tapeSource == TapeSource::WAV) ? wavTickDiv : 20;
+    if (tapeTick >= divisor)
     {
         tapeTick = 0;
         switch(tapeSource)
@@ -51,27 +90,31 @@ void Tape::Clock()
         case TapeSource::None:
             break;
         case TapeSource::WAV:
-            if (motorState)
+            if (motorState && buffer)
             {
-
-                if (buffer != 0)
+                level = lastLevel;
+                if (bufferReadIndex + (unsigned long)wavBytesPerFrame <= bufferSize)
                 {
-                    level = lastLevel;
-                    if (bufferReadIndex < bufferSize)
+                    if (wavIs16Bit)
                     {
-                        if (buffer[bufferReadIndex] > 0xA0)
-                            level = true;
-                        if (buffer[bufferReadIndex++] < 0x60)
-                            level = false;
+                        int16_t s = (int16_t)(buffer[bufferReadIndex] | (buffer[bufferReadIndex + 1] << 8));
+                        if (s >  0x2000) level = true;
+                        else if (s < -0x2000) level = false;
                     }
                     else
                     {
-                        tapeSource = TapeSource::None;
-                        FreeBuffer();
+                        BYTE b = buffer[bufferReadIndex];
+                        if (b > 0xA0) level = true;
+                        else if (b < 0x60) level = false;
                     }
-                    lastLevel = level;
+                    bufferReadIndex += wavBytesPerFrame;
                 }
-
+                else
+                {
+                    tapeSource = TapeSource::None;
+                    FreeBuffer();
+                }
+                lastLevel = level;
             }
             break;
         case TapeSource::Input:
@@ -93,8 +136,8 @@ int Tape::GetProgressPercent() const
 {
     if (tapeSource == TapeSource::WAV)
     {
-        if (bufferSize <= 44) return 0;
-        return int((bufferReadIndex - 44) * 100 / (bufferSize - 44));
+        if (bufferSize <= wavDataStart) return 0;
+        return int((bufferReadIndex - wavDataStart) * 100 / (bufferSize - wavDataStart));
     }
     if (tapeSource == TapeSource::CDT)
     {
@@ -109,7 +152,7 @@ void Tape::Rewind()
     switch (tapeSource)
     {
     case TapeSource::WAV:
-        bufferReadIndex = 44;
+        bufferReadIndex = wavDataStart;
         lastLevel = false;
         level = 0;
         break;
