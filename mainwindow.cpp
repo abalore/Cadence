@@ -168,6 +168,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onMenuPreferences);
 
+    for (QAction *a : {ui->actionSmooth, ui->actionGreen_monitor, ui->actionFull_screen,
+                       ui->actionUnlock_speed, ui->actionJoystick_emulation,
+                       ui->actionPersistence_0, ui->actionPersistence_1,
+                       ui->actionPersistence_2, ui->actionPersistence_3,
+                       ui->actionPersistence_4, ui->actionPersistence_5})
+        addAction(a);
+
     ui->hLine->setVisible(false);
     ui->vLine->setVisible(false);
 
