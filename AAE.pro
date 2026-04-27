@@ -122,3 +122,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
   screen_frame.qrc
 
+macx {
+    ICON = cadence.icns
+}
+
