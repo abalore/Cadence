@@ -36,6 +36,13 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     mainLayout->setSpacing(6);
     mainLayout->setContentsMargins(16, 12, 16, 12);
 
+    auto *columns = new QHBoxLayout;
+    columns->setSpacing(12);
+    auto *leftColumn  = new QVBoxLayout;
+    auto *rightColumn = new QVBoxLayout;
+    leftColumn->setSpacing(6);
+    rightColumn->setSpacing(6);
+
     // --- Screen ---
     auto *screenGroup = new QGroupBox(tr("Screen"));
     auto *screenLayout = new QVBoxLayout(screenGroup);
@@ -55,7 +62,7 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     persRow->addWidget(persistenceCombo);
     persRow->addStretch();
     screenLayout->addLayout(persRow);
-    mainLayout->addWidget(screenGroup);
+    rightColumn->addWidget(screenGroup);
 
     // --- Audio ---
     auto *audioGroup = new QGroupBox(tr("Audio"));
@@ -66,7 +73,7 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     audioLayout->addWidget(audioEnabledCheck);
     audioLayout->addWidget(sfxEnabledCheck);
     audioLayout->addWidget(tapeAudioCheck);
-    mainLayout->addWidget(audioGroup);
+    rightColumn->addWidget(audioGroup);
 
     // --- Input ---
     auto *inputGroup = new QGroupBox(tr("Input"));
@@ -75,7 +82,7 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     joystickCheck = new QCheckBox(tr("Joystick emulation"), inputGroup);
     inputLayout->addWidget(rsBackslashCheck);
     inputLayout->addWidget(joystickCheck);
-    mainLayout->addWidget(inputGroup);
+    leftColumn->addWidget(inputGroup);
 
     // --- Hardware ---
     auto *hwGroup = new QGroupBox(tr("Hardware"));
@@ -99,14 +106,20 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     auto *romBoxBtn = new QPushButton(tr("ROM Box..."), hwGroup);
     connect(romBoxBtn, &QPushButton::clicked, this, &PreferencesDialog::openROMBox);
     hwLayout->addWidget(romBoxBtn, 0, Qt::AlignLeft);
-    mainLayout->addWidget(hwGroup);
+    leftColumn->addWidget(hwGroup);
 
     // --- Performance ---
     auto *perfGroup = new QGroupBox(tr("Performance"));
     auto *perfLayout = new QVBoxLayout(perfGroup);
     unlockSpeedCheck = new QCheckBox(tr("Unlock speed"), perfGroup);
     perfLayout->addWidget(unlockSpeedCheck);
-    mainLayout->addWidget(perfGroup);
+    rightColumn->addWidget(perfGroup);
+
+    leftColumn->addStretch();
+    rightColumn->addStretch();
+    columns->addLayout(leftColumn);
+    columns->addLayout(rightColumn);
+    mainLayout->addLayout(columns);
 
     // --- Buttons ---
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
