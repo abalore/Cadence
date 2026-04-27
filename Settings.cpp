@@ -1,11 +1,17 @@
 #include "Settings.h"
 #include <QSettings>
 #include <QDir>
+#include <QStandardPaths>
 #include <QStringList>
+
+QString Settings::CadenceDir()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+}
 
 QString Settings::ConfigDir()
 {
-    return QDir::homePath() + "/.cadence";
+    return CadenceDir();
 }
 
 QString Settings::ConfigFile()

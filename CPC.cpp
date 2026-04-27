@@ -7,6 +7,8 @@
 #include "FDC.h"
 #include "Tape.h"
 #include "CRTScreen.h"
+#include "Settings.h"
+#include <QByteArray>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -53,9 +55,11 @@ void CPC::ReadROM(char *filename, int number)
         dest = HiROMs[number];
     }
     char fullpath[1024];
-    const char *home = getenv("HOME");
-    if (filename[0] != '/' && home)
-        snprintf(fullpath, sizeof(fullpath), "%s/.cadence/%s", home, filename);
+    if (filename[0] != '/')
+    {
+        QByteArray dir = Settings::CadenceDir().toLocal8Bit();
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", dir.constData(), filename);
+    }
     else
         snprintf(fullpath, sizeof(fullpath), "%s", filename);
     FILE *file = fopen(fullpath, "r");

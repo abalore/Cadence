@@ -2,6 +2,7 @@
 #include "ui_Debugger.h"
 #include "EmulatorThread.h"
 #include "Disassembler.h"
+#include "Settings.h"
 #include "enterbytesdialog.h"
 #include "Z80.h"
 #include "PPI.h"
@@ -505,7 +506,7 @@ void Debugger::onMenuMemoryEnterBytes()
 
 void Debugger::onMenuMemoryLoadBinaryFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load binary"), Settings::CadenceDir() + "/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
     QFile file(fileName);
     file.open(QIODevice::ReadOnly);
     if (!file.isOpen()) return;
@@ -537,7 +538,7 @@ void Debugger::onMenuMemorySaveBinaryFile()
     int length = lengthEdit->text().toInt(nullptr, 16);
     if (length <= 0) return;
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), QDir::homePath() + "/.cadence/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save binary"), Settings::CadenceDir() + "/BIN", tr("Binary Files (*.bin)"), nullptr, QFileDialog::DontUseNativeDialog);
     QFile file(fileName);
     file.open(QIODevice::WriteOnly);
     if (!file.isOpen()) return;

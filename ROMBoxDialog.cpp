@@ -90,7 +90,7 @@ void ROMBoxDialog::refreshRow(int slot)
 void ROMBoxDialog::loadSlot(int slot)
 {
     QString fileName = QFileDialog::getOpenFileName(
-        this, tr("Load ROM into slot %1").arg(slot), QDir::homePath() + "/.cadence/ROM",
+        this, tr("Load ROM into slot %1").arg(slot), Settings::CadenceDir() + "/ROM",
         tr("ROM Files (*.bin *.rom *.BIN *.ROM)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty()) return;
     CPC::ReadROM((char *)fileName.toUtf8().data(), slot);

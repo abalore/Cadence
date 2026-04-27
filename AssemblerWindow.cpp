@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 #include "EmulatorThread.h"
 #include "mainwindow.h"
+#include "Settings.h"
 
 #include <QCloseEvent>
 #include <QDir>
@@ -941,7 +942,7 @@ void AssemblerWindow::onAssemble()
         QString fullPath = fname;
         if (QDir::isRelativePath(fname))
         {
-            QString outDir = base.isEmpty() ? QDir::homePath() + "/.cadence/BIN" : base;
+            QString outDir = base.isEmpty() ? Settings::CadenceDir() + "/BIN" : base;
             QDir().mkpath(outDir);
             fullPath = outDir + "/" + fname;
         }
@@ -1034,7 +1035,7 @@ void AssemblerWindow::onAssemble()
             QString fullPath = sq.filename;
             if (QDir::isRelativePath(sq.filename))
             {
-                QString outDir = base.isEmpty() ? QDir::homePath() + "/.cadence/BIN" : base;
+                QString outDir = base.isEmpty() ? Settings::CadenceDir() + "/BIN" : base;
                 QDir().mkpath(outDir);
                 fullPath = outDir + "/" + sq.filename;
             }

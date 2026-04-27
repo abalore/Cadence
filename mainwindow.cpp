@@ -11,6 +11,7 @@
 #include "Keyboard.h"
 #include "AboutDialog.h"
 #include "ROMBoxDialog.h"
+#include "Settings.h"
 #include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
@@ -511,7 +512,7 @@ void MainWindow::onMenuScreenInspectGraphics()
 
 void MainWindow::onMenuMediaInsertTape()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), QDir::homePath() + "/.cadence/CDT", tr("Tape Files (*.cdt *.wav)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), Settings::CadenceDir() + "/CDT", tr("Tape Files (*.cdt *.wav)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadTape(fileName);
 }
@@ -523,7 +524,7 @@ void MainWindow::onMenuScreenSmooth()
 
 void MainWindow::onMenuMediaInsertDiskA()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), Settings::CadenceDir() + "/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadDiskA(fileName);
 }
@@ -540,7 +541,7 @@ void MainWindow::onMenuMediaWriteProtectB()
 
 void MainWindow::onMenuMediaNewBlankDiskA()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("New blank disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getSaveFileName(this, tr("New blank disc"), Settings::CadenceDir() + "/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty())
         return;
     if (!fileName.endsWith(".dsk", Qt::CaseInsensitive))
@@ -637,7 +638,7 @@ void MainWindow::onMenuMediaNewBlankDiskA()
 
 void MainWindow::onMenuMediaInsertDiskB()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), QDir::homePath() + "/.cadence/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), Settings::CadenceDir() + "/DSK", tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadDiskB(fileName);
 }
@@ -680,7 +681,7 @@ void MainWindow::onMenuMediaRemoveCartridge()
 
 void MainWindow::onMenuMediaInsertCartridge()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), QDir::homePath() + "/.cadence/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), Settings::CadenceDir() + "/CPR", tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName != nullptr)
         media->LoadCartridge(fileName);
 }
@@ -689,7 +690,7 @@ void MainWindow::onMenuMediaInsertBlankCartridge()
 {
     QString fileName = QFileDialog::getSaveFileName(
         this, tr("New blank cartridge"),
-        QDir::homePath() + "/.cadence/CPR",
+        Settings::CadenceDir() + "/CPR",
         tr("Cartridge Files (*.cpr)"),
         nullptr, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty()) return;

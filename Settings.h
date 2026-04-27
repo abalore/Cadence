@@ -30,6 +30,8 @@ public:
     void Load();
     void Save();
 
+    static QString CadenceDir();
+
 private:
     static QString ConfigDir();
     static QString ConfigFile();

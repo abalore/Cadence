@@ -11,19 +11,27 @@
 #include <QPainterPath>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include "Settings.h"
 #include <cstdlib>
 
-static void seedUserHomeIfMissing()
+static void setupAppDataDir()
 {
-    QString cadenceDir = QDir::homePath() + "/.cadence";
-    if (QDir(cadenceDir).exists()) return;
+    QString newDir = Settings::CadenceDir();
+    if (QDir(newDir).exists()) return;
 
-    QDir home(QDir::homePath());
-    for (const char *sub : {".cadence/BIN", ".cadence/CDT", ".cadence/CPR",
-                            ".cadence/DSK", ".cadence/ROM"})
-        home.mkpath(sub);
+    QString oldDir = QDir::homePath() + "/.cadence";
+    if (QDir(oldDir).exists())
+    {
+        QDir().mkpath(QFileInfo(newDir).absolutePath());
+        QDir().rename(oldDir, newDir);
+        return;
+    }
 
-    QString romDst = cadenceDir + "/ROM";
+    for (const char *sub : {"BIN", "CDT", "CPR", "DSK", "ROM"})
+        QDir().mkpath(newDir + "/" + sub);
+
+    QString romDst = newDir + "/ROM";
     for (const QString &name : QDir(":/data/ROM").entryList(QDir::Files))
     {
         QString out = romDst + "/" + name;
@@ -88,7 +96,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);
-    seedUserHomeIfMissing();
+    setupAppDataDir();
 
     QApplication::setStyle(new MenuIndicatorStyle(QStyleFactory::create("Fusion")));
     QPalette p;
