@@ -13,6 +13,7 @@ QMAKE_CXXFLAGS+=-Werror
 QMAKE_CXXFLAGS+=-flto -fno-strict-aliasing
 QMAKE_CFLAGS_WARN_ON+=-Wno-implicit-function-declaration
 QMAKE_CXXFLAGS_WARN_ON+=-Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-result
+macx: QMAKE_CXXFLAGS_WARN_ON+=-Wno-implicit-function-declaration
 QMAKE_LFLAGS+=-flto
 
 CONFIG += link_pkgconfig
