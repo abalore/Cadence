@@ -69,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     debugger = new Debugger(this);
+    debugger->hide();
     graphicsInspector = new GraphicsInspector(this);
     assemblerWindow = nullptr;
 
@@ -217,7 +218,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto leftStretch = new QWidget(this);
     leftStretch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     statusBar()->addWidget(leftStretch, 1);
-    auto addMediaChip = [this, outlinePixmap, outlineRadius](const QString &iconPath, QLabel *&textLabel, QWidget *&chipOut) {
+    auto addMediaChip = [this, outlinePixmap](const QString &iconPath, QLabel *&textLabel, QWidget *&chipOut) {
         QWidget *chip = new QWidget(this);
         chip->setObjectName("mediaChip");
         chip->setCursor(Qt::PointingHandCursor);
