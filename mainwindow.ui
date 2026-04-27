@@ -110,6 +110,7 @@
     <property name="title">
      <string>System</string>
     </property>
+
     <addaction name="actionAmstrad_CPC464"/>
     <addaction name="actionAmstrad_CPC664"/>
     <addaction name="actionAmstrad_CPC6128"/>

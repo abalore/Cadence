@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowTitle(QString("%1 %2").arg(APP_NAME, APP_VERSION));
+    ui->menuSettings->menuAction()->setMenuRole(QAction::NoRole);
     setAcceptDrops(true);
     QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
     if (!screen) screen = QApplication::primaryScreen();
