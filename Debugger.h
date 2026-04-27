@@ -84,7 +84,7 @@ private:
     int memDetail = 0;
     uchar nextInstructionLength;
     uchar nextInstructionOpCode;
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // DEBUGGER_H
