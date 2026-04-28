@@ -10,7 +10,29 @@
       "Read(//usr/include/**)",
       "Bash(pkg-config --exists libzip)",
       "Bash(apt list *)",
-      "Bash(unzip -j /home/abalore/hdd/Work/AAE/AAE/userhome.zip \".cadence/ROM/*.bin\" -d /home/abalore/hdd/Work/AAE/AAE/data/ROM/)"
+      "Bash(unzip -j /home/abalore/hdd/Work/AAE/AAE/userhome.zip \".cadence/ROM/*.bin\" -d /home/abalore/hdd/Work/AAE/AAE/data/ROM/)",
+      "Bash(coredumpctl list *)",
+      "Read(//proc/sys/kernel/**)",
+      "Read(//var/lib/systemd/coredump/**)",
+      "Bash(ulimit -c)",
+      "Read(//var/crash/**)",
+      "Read(//var/lib/apport/coredump/**)",
+      "Read(//home/**)",
+      "Bash(journalctl --since \"10 minutes ago\" --grep \"cadence|segfault\")",
+      "Bash(gdb -batch -ex 'set pagination off' -ex 'thread apply all bt' /home/abalore/hdd/Work/AAE/AAE/build/cadence '/var/lib/apport/coredump/core._home_abalore_hdd_Work_AAE_AAE_build_cadence.1000.de03af0b-386c-4978-b7ff-7cf9c7a5930a.472098.60053512')",
+      "Bash(gdb -batch -ex 'set pagination off' -ex 'thread 1' -ex 'info registers' -ex 'x/40i $pc-80' -ex 'x/i $pc' /home/abalore/hdd/Work/AAE/AAE/build/cadence /var/lib/apport/coredump/core._home_abalore_hdd_Work_AAE_AAE_build_cadence.1000.de03af0b-386c-4978-b7ff-7cf9c7a5930a.472098.60053512)",
+      "Bash(gdb -batch -ex 'set pagination off' -ex 'x/30i 0x63719640bf20' /home/abalore/hdd/Work/AAE/AAE/build/cadence)",
+      "Bash(gdb -batch -ex 'set pagination off' -ex 'file /home/abalore/hdd/Work/AAE/AAE/build/cadence' -ex 'x/40i 0x63719640bf20')",
+      "Bash(objdump -d build/cadence --disassemble=_ZN14EmulatorThread3runEv)",
+      "Bash(objdump -d build/cadence)",
+      "Bash(awk '/<_ZN14EmulatorThread3runEv>:/,/^$/')",
+      "Bash(grep -E \"error|warning|cadence$\")",
+      "Read(//var/log/**)",
+      "Bash(journalctl --since \"20 minutes ago\" --grep 'cadence|segfault|apport')",
+      "Bash(journalctl --since \"20:10\")",
+      "Bash(dmesg)",
+      "Bash(grep -E \"error|warning|^g\\\\+\\\\+ -o|cadence$\")",
+      "Bash(gdb --version)"
     ]
   }
 }

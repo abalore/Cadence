@@ -19,14 +19,12 @@ public:
 private:
     int hOffset;
     int hPhaseFP;
-    int clocksSinceTrigger;
+    int hFlywheelCounter = 0;
     static constexpr int FPShift = 8;
     static constexpr int FPOne = 1 << FPShift;
     static constexpr int NominalLineLen = PixelWidth;
     static constexpr int NominalLineLenFP = NominalLineLen << FPShift;
     static constexpr int PLLGainDenom = 16;
-    // Flywheel: if no HSYNC arrives within ~1.1 nominal lines, generate one ourselves.
-    static constexpr int FlywheelTimeout = NominalLineLen + NominalLineLen / 8;
 };
 
 #endif // CRTSCREEN_H

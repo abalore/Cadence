@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run cadence",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cadence",
+            "args": [],
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "Debug cadence",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cadence",
+            "args": [],
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                { "text": "-enable-pretty-printing" },
+                { "text": "handle SIG34 nostop noprint pass", "ignoreFailures": true }
+            ],
+            "preLaunchTask": "build (debug)"
+        }
+    ]
+}
