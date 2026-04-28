@@ -35,7 +35,6 @@ void CRTC::Reset()
     VLC = 0;
     vccWrapped = false;
     vsyncFiredThisFrame = false;
-
 }
 
 BYTE CRTC::RD(BYTE address)
@@ -194,6 +193,7 @@ void CRTC::RunHorizontalChar()
     {
         HCC++;
     }
+
     if (HCC == HSP)
     {
         HSC = 0;

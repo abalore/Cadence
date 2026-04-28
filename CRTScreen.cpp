@@ -8,6 +8,7 @@ void CRTScreen::Init()
     hOffset = 0;
     frameFinished = false;
     hPhaseFP = 0;
+    clocksSinceTrigger = 0;
 }
 
 void CRTScreen::Clock()
@@ -15,6 +16,8 @@ void CRTScreen::Clock()
     hPhaseFP += FPOne;
     if (hPhaseFP >= NominalLineLenFP)
         hPhaseFP -= NominalLineLenFP;
+
+    clocksSinceTrigger++;
 
     if (CPC::gateArray.hsyncTrigger)
     {
@@ -50,6 +53,13 @@ void CRTScreen::Clock()
             frameFinished = true;
             CPC::gateArray.vsyncTrigger = false;
         }
+        clocksSinceTrigger = 0;
+    }
+    else if (clocksSinceTrigger >= FlywheelTimeout)
+    {
+        // No HSYNC for too long — free-run one line at the expected boundary.
+        vPos++;
+        clocksSinceTrigger = 0;
     }
 
     hPos = hPhaseFP >> FPShift;
