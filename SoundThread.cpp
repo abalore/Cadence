@@ -7,6 +7,10 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
+#ifndef _WIN32
+#include <unistd.h>
+#include <fcntl.h>
+#endif
 
 QWaitCondition SoundThread::waitCondition;
 std::atomic<long> SoundThread::frames{0};
@@ -74,7 +78,15 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     }
     spinPos = 0;
 
+#ifndef _WIN32
+    int savedStderr = dup(STDERR_FILENO);
+    int devNull = open("/dev/null", O_WRONLY);
+    if (devNull >= 0) { fflush(stderr); dup2(devNull, STDERR_FILENO); close(devNull); }
+#endif
     PaError err = Pa_Initialize();
+#ifndef _WIN32
+    if (savedStderr >= 0) { fflush(stderr); dup2(savedStderr, STDERR_FILENO); close(savedStderr); }
+#endif
     if (err != paNoError) {
         fprintf(stderr, "[SND] Pa_Initialize failed: %s — sound disabled\n", Pa_GetErrorText(err));
         end = true;
