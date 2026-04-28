@@ -19,6 +19,7 @@ const Entry kMain[] = {
     {"F3",         "Insert cartridge..."},
     {"Ctrl+F3",    "Remove cartridge"},
     {"F5",         "Show Debugger"},
+    {"F6",         "Show Assembler"},
     {"F9",         "Toggle Unlock speed"},
     {"F10",        "Toggle Joystick emulation"},
     {"F11",        "Toggle Full screen"},

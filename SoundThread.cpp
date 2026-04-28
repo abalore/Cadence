@@ -83,7 +83,14 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     paInitialized = true;
 
     PaStreamParameters outputParams;
+#ifdef __linux__
+    PaHostApiIndex alsaIdx = Pa_HostApiTypeIdToHostApiIndex(paALSA);
+    outputParams.device = (alsaIdx >= 0)
+        ? Pa_GetHostApiInfo(alsaIdx)->defaultOutputDevice
+        : Pa_GetDefaultOutputDevice();
+#else
     outputParams.device = Pa_GetDefaultOutputDevice();
+#endif
     if (outputParams.device == paNoDevice) {
         fprintf(stderr, "[SND] No default output device — sound disabled\n");
         end = true;

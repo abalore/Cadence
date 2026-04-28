@@ -93,6 +93,7 @@ public:
 int main(int argc, char *argv[])
 {
     setenv("PIPEWIRE_LATENCY", "32/62500", 0);
+    setenv("JACK_NO_START_SERVER", "1", 0);
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);

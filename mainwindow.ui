@@ -272,6 +272,9 @@
    <property name="text">
     <string>Assembler...</string>
    </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
   </action>
   <action name="actionAmstrad_CPC464">
    <property name="checkable">

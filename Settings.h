@@ -25,6 +25,10 @@ public:
     QString diskBPath;
     QString tapePath;
     QString cartridgePath;
+    QString tapeDir;
+    QString diskDir;
+    QString cartridgeDir;
+    QString assemblerDir;
     QString romPaths[16];
 
     void Load();

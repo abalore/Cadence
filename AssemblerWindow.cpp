@@ -596,10 +596,13 @@ void AssemblerWindow::onNew()
 
 void AssemblerWindow::onOpen()
 {
-    QString path = QFileDialog::getOpenFileName(this, tr("Open Source"), QString(),
+    QSettings cfg(Settings::CadenceDir() + "/settings.cfg", QSettings::IniFormat);
+    QString startDir = cfg.value("assembler/dir").toString();
+    QString path = QFileDialog::getOpenFileName(this, tr("Open Source"), startDir,
                                                 tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
                                                 nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
+    cfg.setValue("assembler/dir", QFileInfo(path).absolutePath());
 
     for (int i = 0; i < tabs->count(); i++)
     {
@@ -635,10 +638,14 @@ void AssemblerWindow::onSaveAs()
 {
     QPlainTextEdit *ed = currentEditor();
     if (!ed) return;
-    QString path = QFileDialog::getSaveFileName(this, tr("Save Source"), editorFile(ed),
+    QSettings cfg(Settings::CadenceDir() + "/settings.cfg", QSettings::IniFormat);
+    QString startPath = editorFile(ed);
+    if (startPath.isEmpty()) startPath = cfg.value("assembler/dir").toString();
+    QString path = QFileDialog::getSaveFileName(this, tr("Save Source"), startPath,
                                                 tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
                                                 nullptr, QFileDialog::DontUseNativeDialog);
     if (path.isEmpty()) return;
+    cfg.setValue("assembler/dir", QFileInfo(path).absolutePath());
     if (writeEditorToFile(ed, path))
         setEditorFile(ed, path);
 }
@@ -1109,10 +1116,13 @@ bool AssemblerWindow::maybeSaveEditor(QPlainTextEdit *ed)
         QString target = path;
         if (target.isEmpty())
         {
-            target = QFileDialog::getSaveFileName(this, tr("Save Source"), QString(),
+            QSettings cfg(Settings::CadenceDir() + "/settings.cfg", QSettings::IniFormat);
+            QString startDir = cfg.value("assembler/dir").toString();
+            target = QFileDialog::getSaveFileName(this, tr("Save Source"), startDir,
                                                   tr("Assembly files (*.asm *.z80 *.s);;All files (*)"),
                                                   nullptr, QFileDialog::DontUseNativeDialog);
             if (target.isEmpty()) return false;
+            cfg.setValue("assembler/dir", QFileInfo(target).absolutePath());
         }
         if (!writeEditorToFile(ed, target)) return false;
         setEditorFile(ed, target);
