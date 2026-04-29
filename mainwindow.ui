@@ -166,6 +166,8 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionQuick_start"/>
+    <addaction name="separator"/>
     <addaction name="actionShortcuts"/>
     <addaction name="actionBreakpoints_help"/>
     <addaction name="actionAssembler_directives_help"/>
@@ -385,6 +387,11 @@
   <action name="actionAssembler_directives_help">
    <property name="text">
     <string>Assembler directives...</string>
+   </property>
+  </action>
+  <action name="actionQuick_start">
+   <property name="text">
+    <string>Quick start...</string>
    </property>
   </action>
   <action name="actionAudio_enabled">

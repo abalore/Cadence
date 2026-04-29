@@ -16,6 +16,7 @@
 #include "ShortcutsDialog.h"
 #include "BreakpointsHelpDialog.h"
 #include "AssemblerDirectivesDialog.h"
+#include "QuickStartDialog.h"
 #include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
@@ -185,6 +186,10 @@ MainWindow::MainWindow(QWidget *parent)
     });
     connect(ui->actionAssembler_directives_help, &QAction::triggered, this, [this]{
         AssemblerDirectivesDialog dlg(this);
+        dlg.exec();
+    });
+    connect(ui->actionQuick_start, &QAction::triggered, this, [this]{
+        QuickStartDialog dlg(this);
         dlg.exec();
     });
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onMenuPreferences);

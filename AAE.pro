@@ -79,7 +79,8 @@ SOURCES += \
     ShortcutsDialog.cpp \
     BpExpr.cpp \
     BreakpointsHelpDialog.cpp \
-    AssemblerDirectivesDialog.cpp
+    AssemblerDirectivesDialog.cpp \
+    QuickStartDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -117,7 +118,8 @@ HEADERS += \
     ShortcutsDialog.h \
     BpExpr.h \
     BreakpointsHelpDialog.h \
-    AssemblerDirectivesDialog.h
+    AssemblerDirectivesDialog.h \
+    QuickStartDialog.h
 
 FORMS += \
     Debugger.ui \
