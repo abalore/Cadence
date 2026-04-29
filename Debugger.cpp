@@ -410,15 +410,14 @@ void Debugger::onEditBreakpointConditionClicked()
     word address = disassemblyAddresses.at(index);
 
     QString current = QString::fromStdString(CPC::BreakpointCondition[address]);
-    bool ok = false;
-    QString title = QString("Breakpoint condition @ &%1").arg(address, 4, 16, QChar('0')).toUpper();
-    QString input = QInputDialog::getText(this, title,
-        "Expression (empty = unconditional):\n"
-        "Registers: A B C D E F H L AF BC DE HL IX IY PC SP IXH IXL IYH IYL R I AF' BC' DE' HL'\n"
-        "Flags: FZ FC FS FN FH FP   Memory byte: [addr]\n"
-        "Numbers: &FF $FF #FF 0xFF 12H 123",
-        QLineEdit::Normal, current, &ok);
-    if (!ok) return;
+    QString hex = QString::number(address, 16).toUpper().rightJustified(4, '0');
+    QInputDialog dlg(this);
+    dlg.setWindowTitle(QString("Breakpoint condition @ &%1").arg(hex));
+    dlg.setLabelText("Expression:");
+    dlg.setTextValue(current);
+    dlg.resize(dlg.sizeHint().width() * 2, dlg.sizeHint().height());
+    if (dlg.exec() != QDialog::Accepted) return;
+    QString input = dlg.textValue();
     QString trimmed = input.trimmed();
     std::string expr = trimmed.toStdString();
 
