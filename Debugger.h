@@ -45,6 +45,7 @@ private slots:
     void onRunToClicked();
     void onResetNopsClicked();
     void onToggleBreakpointClicked();
+    void onEditBreakpointConditionClicked();
     void onGoToClicked();
     void onMemorySourceChanged(int index);
     void onMemoryDetailChanged(int index);

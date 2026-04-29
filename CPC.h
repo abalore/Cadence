@@ -1,6 +1,7 @@
 #ifndef CPC_H
 #define CPC_H
 
+#include <string>
 #include "defs.h"
 #include "CRTC.h"
 #include "Keyboard.h"
@@ -59,6 +60,7 @@ public:
     static BYTE tick;
     static BYTE baseVMA;
     static bool Breakpoint[65536];
+    static std::string BreakpointCondition[65536];
     static CRTC crtc;
     static Keyboard keyboard;
     static Tape tape;

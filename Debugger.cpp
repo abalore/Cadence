@@ -3,6 +3,7 @@
 #include "EmulatorThread.h"
 #include "Disassembler.h"
 #include "Settings.h"
+#include "BpExpr.h"
 #include "enterbytesdialog.h"
 #include "Z80.h"
 #include "PPI.h"
@@ -22,6 +23,7 @@
 #include <QScrollBar>
 #include <QShortcut>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QFileDialog>
 #include <QFile>
 #include <QDir>
@@ -132,7 +134,8 @@ Debugger::Debugger(QWidget *parent)
     debugMenu->addAction("Step Over",         QKeySequence(Qt::Key_F8), this, &Debugger::onStepOverClicked);
     debugMenu->addAction("Step Out",          QKeySequence(Qt::Key_F6), this, &Debugger::onStepOutClicked);
     debugMenu->addAction("Run To",            QKeySequence(Qt::Key_F4), this, &Debugger::onRunToClicked);
-    debugMenu->addAction("Toggle Breakpoint", QKeySequence(Qt::Key_F9), this, &Debugger::onToggleBreakpointClicked);
+    debugMenu->addAction("Toggle Breakpoint",   QKeySequence(Qt::Key_F9),               this, &Debugger::onToggleBreakpointClicked);
+    debugMenu->addAction("Edit Condition...",   QKeySequence(Qt::SHIFT | Qt::Key_F9),   this, &Debugger::onEditBreakpointConditionClicked);
     debugMenu->addAction("Go To...",          QKeySequence(Qt::Key_F3),  this, &Debugger::onGoToClicked);
     debugMenu->addAction("Reset NOPS",        QKeySequence(Qt::Key_F12), this, &Debugger::onResetNopsClicked);
 
@@ -224,7 +227,10 @@ void Debugger::Update()
         auto it = std::upper_bound(anchors.begin(), anchors.end(), (int)position);
         int boundary = *it;
         Disassembler::GetNextInstruction(instrLength, opCode, &label, &address, &bytes, &instruction, boundary);
-        sprintf(buff, "%14.14s %s %4s  %12s  %s", label.data(), CPC::Breakpoint[position] ? "● " : "  ", address.data(), bytes.data(), instruction.data());
+        const char *bpMarker = "  ";
+        if (CPC::Breakpoint[position])
+            bpMarker = CPC::BreakpointCondition[position].empty() ? "● " : "◆ ";
+        sprintf(buff, "%14.14s %s %4s  %12s  %s", label.data(), bpMarker, address.data(), bytes.data(), instruction.data());
         listDisassembly.append(buff);
         disassemblyAddresses.append(position);
         if (CPC::Breakpoint[position]) modelDisassembly->bpRows.insert(instrCount);
@@ -389,6 +395,47 @@ void Debugger::onToggleBreakpointClicked()
     if (index < 0) return;
     word address = disassemblyAddresses.at(index);
     CPC::Breakpoint[address] = !CPC::Breakpoint[address];
+    if (!CPC::Breakpoint[address])
+        CPC::BreakpointCondition[address].clear();
+    Update();
+    QModelIndex restored = modelDisassembly->index(index);
+    ui->listDisassembly->setCurrentIndex(restored);
+    ui->listDisassembly->scrollTo(restored, QAbstractItemView::PositionAtCenter);
+}
+
+void Debugger::onEditBreakpointConditionClicked()
+{
+    int index = ui->listDisassembly->currentIndex().row();
+    if (index < 0) return;
+    word address = disassemblyAddresses.at(index);
+
+    QString current = QString::fromStdString(CPC::BreakpointCondition[address]);
+    bool ok = false;
+    QString title = QString("Breakpoint condition @ &%1").arg(address, 4, 16, QChar('0')).toUpper();
+    QString input = QInputDialog::getText(this, title,
+        "Expression (empty = unconditional):\n"
+        "Registers: A B C D E F H L AF BC DE HL IX IY PC SP IXH IXL IYH IYL R I AF' BC' DE' HL'\n"
+        "Flags: FZ FC FS FN FH FP   Memory byte: [addr]\n"
+        "Numbers: &FF $FF #FF 0xFF 12H 123",
+        QLineEdit::Normal, current, &ok);
+    if (!ok) return;
+    QString trimmed = input.trimmed();
+    std::string expr = trimmed.toStdString();
+
+    if (!trimmed.isEmpty())
+    {
+        std::string err = BpExpr::validate(expr);
+        if (!err.empty())
+        {
+            QMessageBox::warning(this, "Invalid expression",
+                                 QString::fromStdString(err));
+            return;
+        }
+    }
+
+    CPC::BreakpointCondition[address] = expr;
+    if (!trimmed.isEmpty())
+        CPC::Breakpoint[address] = true; // setting a condition implies breakpoint on
     Update();
     QModelIndex restored = modelDisassembly->index(index);
     ui->listDisassembly->setCurrentIndex(restored);

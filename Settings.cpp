@@ -41,6 +41,19 @@ void Settings::Load()
         int a = t.toInt(&ok, 16);
         if (ok && a >= 0 && a <= 0xFFFF) breakpoints.append(a);
     }
+    breakpointConditions.clear();
+    s.beginGroup("debugger/breakpoint_conditions");
+    for (const QString &k : s.childKeys())
+    {
+        bool ok;
+        int a = k.toInt(&ok, 16);
+        if (ok && a >= 0 && a <= 0xFFFF)
+        {
+            QString cond = s.value(k).toString();
+            if (!cond.isEmpty()) breakpointConditions.insert(a, cond);
+        }
+    }
+    s.endGroup();
     phosphorPersistence = s.value("screen/phosphor_persistence", 0).toInt();
     system        = s.value("machine/system", "CPC6128").toString();
     diskAPath     = s.value("media/disk_a").toString();
@@ -73,6 +86,14 @@ void Settings::Save()
     QStringList bpStrs;
     for (int a : breakpoints) bpStrs.append(QString::number(a, 16).toUpper());
     s.setValue("debugger/breakpoints", bpStrs.join(','));
+    s.beginGroup("debugger/breakpoint_conditions");
+    s.remove(""); // wipe stale per-address entries
+    for (auto it = breakpointConditions.constBegin(); it != breakpointConditions.constEnd(); ++it)
+    {
+        if (!it.value().isEmpty())
+            s.setValue(QString::number(it.key(), 16).toUpper(), it.value());
+    }
+    s.endGroup();
     s.setValue("screen/phosphor_persistence", phosphorPersistence);
     s.setValue("machine/system", system);
     s.setValue("media/disk_a", diskAPath);

@@ -76,7 +76,9 @@ SOURCES += \
     AssemblerWindow.cpp \
     AsmHighlighter.cpp \
     PreferencesDialog.cpp \
-    ShortcutsDialog.cpp
+    ShortcutsDialog.cpp \
+    BpExpr.cpp \
+    BreakpointsHelpDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -111,7 +113,9 @@ HEADERS += \
     AssemblerWindow.h \
     AsmHighlighter.h \
     PreferencesDialog.h \
-    ShortcutsDialog.h
+    ShortcutsDialog.h \
+    BpExpr.h \
+    BreakpointsHelpDialog.h
 
 FORMS += \
     Debugger.ui \

@@ -14,6 +14,7 @@
 #include "Settings.h"
 #include "PreferencesDialog.h"
 #include "ShortcutsDialog.h"
+#include "BreakpointsHelpDialog.h"
 #include <QCloseEvent>
 #include <QFrame>
 #include <QKeyEvent>
@@ -91,8 +92,14 @@ MainWindow::MainWindow(QWidget *parent)
     Keyboard::joystickEmulation = settings.joystickEmulation;
     ui->actionJoystick_emulation->setChecked(settings.joystickEmulation);
     connect(ui->actionJoystick_emulation, &QAction::toggled, this, [](bool on){ Keyboard::joystickEmulation = on; });
-    for (int i = 0; i < 65536; i++) CPC::Breakpoint[i] = false;
+    for (int i = 0; i < 65536; i++) { CPC::Breakpoint[i] = false; CPC::BreakpointCondition[i].clear(); }
     for (int a : settings.breakpoints) CPC::Breakpoint[a & 0xFFFF] = true;
+    for (auto it = settings.breakpointConditions.constBegin(); it != settings.breakpointConditions.constEnd(); ++it)
+    {
+        int a = it.key() & 0xFFFF;
+        CPC::BreakpointCondition[a] = it.value().toStdString();
+        if (!it.value().isEmpty()) CPC::Breakpoint[a] = true;
+    }
 
     workerThread = new EmulatorThread(this);
     soundThread = new SoundThread(this);
@@ -169,6 +176,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onMenuAbout);
     connect(ui->actionShortcuts, &QAction::triggered, this, [this]{
         ShortcutsDialog dlg(this);
+        dlg.exec();
+    });
+    connect(ui->actionBreakpoints_help, &QAction::triggered, this, [this]{
+        BreakpointsHelpDialog dlg(this);
         dlg.exec();
     });
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onMenuPreferences);
@@ -442,8 +453,13 @@ void MainWindow::collectSettingsFromUi()
     settings.breakpointsEnabled = EmulatorThread::breakpointsEnabled;
     settings.joystickEmulation = Keyboard::joystickEmulation;
     settings.breakpoints.clear();
+    settings.breakpointConditions.clear();
     for (int i = 0; i < 65536; i++)
+    {
         if (CPC::Breakpoint[i]) settings.breakpoints.append(i);
+        if (!CPC::BreakpointCondition[i].empty())
+            settings.breakpointConditions.insert(i, QString::fromStdString(CPC::BreakpointCondition[i]));
+    }
 }
 
 void MainWindow::onMediaChanged(MediaSlot slot, const QString &text)

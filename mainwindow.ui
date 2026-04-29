@@ -167,6 +167,7 @@
      <string>Help</string>
     </property>
     <addaction name="actionShortcuts"/>
+    <addaction name="actionBreakpoints_help"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -373,6 +374,11 @@
   <action name="actionShortcuts">
    <property name="text">
     <string>Shortcuts...</string>
+   </property>
+  </action>
+  <action name="actionBreakpoints_help">
+   <property name="text">
+    <string>Breakpoints...</string>
    </property>
   </action>
   <action name="actionAudio_enabled">

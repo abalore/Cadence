@@ -15,6 +15,7 @@
 #include <cstring>
 
 bool CPC::Breakpoint[65536];
+std::string CPC::BreakpointCondition[65536];
 CRTC CPC::crtc;
 Keyboard CPC::keyboard;
 Tape CPC::tape;

@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QVector>
+#include <QMap>
 
 class Settings
 {
@@ -19,6 +20,7 @@ public:
     bool breakpointsEnabled = true;
     bool joystickEmulation = false;
     QVector<int> breakpoints;
+    QMap<int, QString> breakpointConditions;
     int phosphorPersistence = 0;
     QString system = "CPC6128";
     QString diskAPath;
