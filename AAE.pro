@@ -78,7 +78,8 @@ SOURCES += \
     PreferencesDialog.cpp \
     ShortcutsDialog.cpp \
     BpExpr.cpp \
-    BreakpointsHelpDialog.cpp
+    BreakpointsHelpDialog.cpp \
+    AssemblerDirectivesDialog.cpp
 
 HEADERS += \
     Debugger.h \
@@ -115,7 +116,8 @@ HEADERS += \
     PreferencesDialog.h \
     ShortcutsDialog.h \
     BpExpr.h \
-    BreakpointsHelpDialog.h
+    BreakpointsHelpDialog.h \
+    AssemblerDirectivesDialog.h
 
 FORMS += \
     Debugger.ui \
