@@ -17,7 +17,7 @@ export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
 echo "==> Building $APP_NAME..."
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
-"$QT_DIR/bin/qmake" ../AAE.pro
+"$QT_DIR/bin/qmake" ../Cadence.pro
 make -j"$(sysctl -n hw.ncpu)"
 cd "$SCRIPT_DIR"
 
