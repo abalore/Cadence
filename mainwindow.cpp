@@ -853,22 +853,29 @@ void MainWindow::onMenuViewFullScreen()
     QSize size = QSize(768, 544);
     if (ui->actionFull_screen->isChecked())
     {
-        float ratio = (float)size.height() / size.width();
-        QScreen *screen = this->windowHandle()->screen();
-        QSize screenSize = screen->size();
         setMinimumSize(0, 0);
         setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-        ui->centralwidget->setFixedSize(screenSize);
+        ui->centralwidget->setMinimumSize(0, 0);
+        ui->centralwidget->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
         statusBar()->hide();
-        this->menuBar()->setFixedHeight(0);
+        menuBar()->setFixedHeight(0);
         ui->centralwidget->setStyleSheet("background-color:black;");
-        float height = screenSize.height();
-        ui->openGLWidget->setFixedSize(QSize(height / ratio, height));
+        QScreen *screen = windowHandle() ? windowHandle()->screen()
+                                         : QApplication::primaryScreen();
+        if (screen)
+        {
+            float ratio = (float)size.height() / size.width();
+            float height = screen->size().height();
+            QSize glSize(height / ratio, height);
+            ui->openGLWidget->setMinimumSize(glSize);
+            ui->openGLWidget->setMaximumSize(glSize);
+        }
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         showFullScreen();
     }
     else
     {
-        this->menuBar()->setFixedHeight(23);
+        menuBar()->setFixedHeight(23);
         showNormal();
         ui->openGLWidget->setFixedSize(size);
         ui->centralwidget->setStyleSheet("background-color:gray;");
@@ -876,7 +883,7 @@ void MainWindow::onMenuViewFullScreen()
         statusBar()->show();
         adjustSize();
         setFixedSize(this->size());
-        if (QScreen *screen = this->windowHandle() ? this->windowHandle()->screen() : QApplication::primaryScreen())
+        if (QScreen *screen = windowHandle() ? windowHandle()->screen() : QApplication::primaryScreen())
         {
             QRect avail = screen->availableGeometry();
             move(avail.center() - QPoint(width() / 2, height() / 2));
