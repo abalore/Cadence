@@ -39,6 +39,7 @@
 - **Audio del PSG** activable/desactivable.
 - **Efectos de sonido** del hardware (motor del disco, paso del cabezal).
 - **Audio de la cinta** opcional.
+- **Latencia de audio** seleccionable en *Preferences* (Low / Normal / Safe): equilibra latencia y robustez frente a cortes según el sistema de sonido.
 
 ### Soportes / medios
 
@@ -100,7 +101,7 @@
 
 - **Settings** guardados entre sesiones:
   - Preferencias de vídeo (verde, smoothing, persistencia, pantalla completa)
-  - Audio (PSG, SFX, cinta)
+  - Audio (PSG, SFX, cinta, latencia)
   - CRTC, expansión 512K, modelo de CPC
   - Estado de breakpoints (lista + condiciones)
   - Joystick y mapeo de teclas
