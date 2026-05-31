@@ -25,6 +25,7 @@ private:
     QComboBox *persistenceCombo;
 
     QCheckBox *audioEnabledCheck;
+    QComboBox *audioLatencyCombo;
     QCheckBox *sfxEnabledCheck;
     QCheckBox *tapeAudioCheck;
 

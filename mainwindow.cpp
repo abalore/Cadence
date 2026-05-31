@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     workerThread = new EmulatorThread(this);
+    SoundThread::bufferFrames = settings.audioLatencyFrames;
     soundThread = new SoundThread(this);
     media = new MediaController(this);
     applyROMOverrides();
@@ -750,6 +751,11 @@ void MainWindow::applyPreferences(const Settings &ns, bool newUnlockSpeed)
         ui->actionSFX_enabled->setChecked(ns.sfxEnabled);
     if (ns.tapeEnabled != settings.tapeEnabled)
         ui->actionTape_enabled->setChecked(ns.tapeEnabled);
+    if (ns.audioLatencyFrames != settings.audioLatencyFrames)
+    {
+        settings.audioLatencyFrames = ns.audioLatencyFrames;
+        SoundThread::bufferFrames = ns.audioLatencyFrames;
+    }
     if (ns.rsBackslash != settings.rsBackslash)
         ui->actionRight_shift_as_backslash->setChecked(ns.rsBackslash);
     if (ns.joystickEmulation != settings.joystickEmulation)

@@ -28,6 +28,7 @@ void Settings::Load()
     audioEnabled  = s.value("audio/enabled", true).toBool();
     sfxEnabled    = s.value("audio/sfx", true).toBool();
     tapeEnabled   = s.value("audio/tape", true).toBool();
+    audioLatencyFrames = s.value("audio/latency_frames", 256).toInt();
     rsBackslash   = s.value("keyboard/right_shift_as_backslash", true).toBool();
     crtcType      = s.value("machine/crtc_type", 0).toInt();
     ram512kExpansion = s.value("memory/ram_512k_expansion", false).toBool();
@@ -78,6 +79,7 @@ void Settings::Save()
     s.setValue("audio/enabled", audioEnabled);
     s.setValue("audio/sfx", sfxEnabled);
     s.setValue("audio/tape", tapeEnabled);
+    s.setValue("audio/latency_frames", audioLatencyFrames);
     s.setValue("keyboard/right_shift_as_backslash", rsBackslash);
     s.setValue("machine/crtc_type", crtcType);
     s.setValue("memory/ram_512k_expansion", ram512kExpansion);

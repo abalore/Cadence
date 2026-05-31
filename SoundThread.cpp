@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
+#include <cstdlib>
 #ifndef _WIN32
 #include <unistd.h>
 #include <fcntl.h>
@@ -21,6 +22,7 @@ BYTE SoundThread::ringBuffer[RING_SIZE];
 std::atomic<int> SoundThread::ringHead{0};
 std::atomic<int> SoundThread::ringTail{0};
 std::atomic<SoundThread *> SoundThread::instance{nullptr};
+int SoundThread::bufferFrames = 256;
 
 // Saturated-mix lookup table for two U8 PCM samples biased at 128.
 // Uses Viktor T. Toth additive mixing (no hard clipping).
@@ -85,6 +87,13 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     int devNull = open("/dev/null", O_WRONLY);
     if (devNull >= 0) { fflush(stderr); dup2(devNull, STDERR_FILENO); close(devNull); }
 #endif
+    // Ask the PipeWire node for a quantum of `bufferFrames` (must match the
+    // PortAudio framesPerBuffer below). Otherwise the client is clamped to the
+    // graph min-quantum (32), which forces the shared hardware sink to 32-frame
+    // periods and makes it xrun (heard as noise + a ~0.7 s buffer repeat).
+    char latbuf[32];
+    snprintf(latbuf, sizeof(latbuf), "%d/62500", bufferFrames);
+    setenv("PIPEWIRE_LATENCY", latbuf, 1);
     PaError err = Pa_Initialize();
 #ifndef _WIN32
     if (savedStderr >= 0) { fflush(stderr); dup2(savedStderr, STDERR_FILENO); close(savedStderr); }
@@ -116,7 +125,7 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     outputParams.hostApiSpecificStreamInfo = nullptr;
 
     err = Pa_OpenStream(&stream, nullptr, &outputParams,
-                        62500, 128, paNoFlag,
+                        62500, (unsigned long)bufferFrames, paNoFlag,
                         paCallback, nullptr);
     if (err != paNoError) {
         fprintf(stderr, "[SND] Pa_OpenStream failed: %s — sound disabled\n", Pa_GetErrorText(err));

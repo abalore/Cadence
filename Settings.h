@@ -14,6 +14,7 @@ public:
     bool audioEnabled = true;
     bool sfxEnabled = true;
     bool tapeEnabled = true;
+    int audioLatencyFrames = 256;
     bool rsBackslash = true;
     int crtcType = 0;
     bool ram512kExpansion = false;

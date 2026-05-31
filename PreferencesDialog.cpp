@@ -73,6 +73,18 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     audioLayout->addWidget(audioEnabledCheck);
     audioLayout->addWidget(sfxEnabledCheck);
     audioLayout->addWidget(tapeAudioCheck);
+    auto *latRow = new QHBoxLayout;
+    latRow->addWidget(new QLabel(tr("Latency:"), audioGroup));
+    audioLatencyCombo = new QComboBox(audioGroup);
+    audioLatencyCombo->addItem(tr("Low (128)"), 128);
+    audioLatencyCombo->addItem(tr("Normal (256)"), 256);
+    audioLatencyCombo->addItem(tr("Safe (512)"), 512);
+    latRow->addWidget(audioLatencyCombo);
+    latRow->addStretch();
+    audioLayout->addLayout(latRow);
+    auto *latNote = new QLabel(tr("(applies on restart)"), audioGroup);
+    latNote->setStyleSheet("color: #8a93a0; font-size: 11px;");
+    audioLayout->addWidget(latNote);
     rightColumn->addWidget(audioGroup);
 
     // --- Input ---
@@ -138,6 +150,8 @@ PreferencesDialog::PreferencesDialog(const Settings &current, bool unlockSpd, QW
     audioEnabledCheck->setChecked(current.audioEnabled);
     sfxEnabledCheck->setChecked(current.sfxEnabled);
     tapeAudioCheck->setChecked(current.tapeEnabled);
+    int latIdx = audioLatencyCombo->findData(current.audioLatencyFrames);
+    audioLatencyCombo->setCurrentIndex(latIdx >= 0 ? latIdx : 1);
     rsBackslashCheck->setChecked(current.rsBackslash);
     joystickCheck->setChecked(current.joystickEmulation);
     int ct = (current.crtcType >= 0 && current.crtcType < 5) ? current.crtcType : 0;
@@ -156,6 +170,7 @@ Settings PreferencesDialog::result() const
     s.audioEnabled = audioEnabledCheck->isChecked();
     s.sfxEnabled = sfxEnabledCheck->isChecked();
     s.tapeEnabled = tapeAudioCheck->isChecked();
+    s.audioLatencyFrames = audioLatencyCombo->currentData().toInt();
     s.rsBackslash = rsBackslashCheck->isChecked();
     s.joystickEmulation = joystickCheck->isChecked();
     for (int i = 0; i < 5; i++)

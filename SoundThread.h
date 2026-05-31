@@ -19,6 +19,7 @@ public:
     static QWaitCondition waitCondition;
     static std::atomic<long> frames;
     static std::atomic<SoundThread *> instance;
+    static int bufferFrames;   // PortAudio framesPerBuffer / PipeWire quantum; read at construction
     void pushFrame();
 protected:
     void run() override;
