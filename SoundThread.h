@@ -18,6 +18,8 @@ public:
     static std::atomic<bool> sfxEnabled;
     static QWaitCondition waitCondition;
     static std::atomic<long> frames;
+    static std::atomic<SoundThread *> instance;
+    void pushFrame();
 protected:
     void run() override;
 private:

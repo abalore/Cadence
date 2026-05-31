@@ -102,7 +102,8 @@ void EmulatorThread::run()
             }
             CPC::screen.frameFinished = false;
             frameMutex.unlock();
-            SoundThread::waitCondition.wakeOne();
+            SoundThread *st = SoundThread::instance.load(std::memory_order_relaxed);
+            if (st) st->pushFrame();
             emit OnFinishedFrame();
             SpeedController::Run();
         }
