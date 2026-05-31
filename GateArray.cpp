@@ -27,7 +27,6 @@ void GateArray::Reset()
     pixelIndex = 0;
     lastHSYNC = false;
     lastVSYNC = false;
-    lastHDISP = false;
     hsyncDelay = 0;
     vsyncDelay = 0;
     blankColor = nullptr;
@@ -57,17 +56,13 @@ void GateArray::ProcessSync()
     dispEnFF1 = CPC::crtc.BORDER;
     bool hsyncFallingEdge = lastHSYNC && !CPC::crtc.HSYNC;
     bool hsyncRisingEdge = !lastHSYNC && CPC::crtc.HSYNC;
-    bool hdispRisingEdge = !lastHDISP && CPC::crtc.HDISP;
-    if (hdispRisingEdge)
-    {
-        mode = nextMode;
-    }
     if (hsyncRisingEdge)
     {
         hsyncTrigger = true;
     }
     if (hsyncFallingEdge)
     {
+        mode = nextMode;
         if (porch > 0) porch--;
         R52++;
         if (R52 == 52)
@@ -94,7 +89,6 @@ void GateArray::ProcessSync()
 
     lastVSYNC = CPC::crtc.VSYNC;
     lastHSYNC = CPC::crtc.HSYNC;
-    lastHDISP = CPC::crtc.HDISP;
 
     if (CPC::crtc.HSYNC || CPC::crtc.VSYNC)
         blankColor = AbsoluteBlack;

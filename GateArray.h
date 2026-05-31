@@ -43,7 +43,7 @@ public:
     static constexpr BYTE cHG = 254;
     static constexpr BYTE cHB = 254;
 
-    static constexpr BYTE AbsoluteBlack[3] = {0, 100, 0};
+    static constexpr BYTE AbsoluteBlack[3] = {0, 0, 0};
     static constexpr BYTE NormalBlack[3] = {cL, cL, cL};
     static constexpr BYTE Palette[3 * 32] =
         {
@@ -112,7 +112,6 @@ private:
     const BYTE *currentPalette;
     bool lastHSYNC;
     bool lastVSYNC;
-    bool lastHDISP;
     BYTE hsyncDelay;
     BYTE vsyncDelay;
     BYTE intTimeout;
