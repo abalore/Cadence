@@ -7,7 +7,6 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
-#include <chrono> // DEBUG-SND
 #ifndef _WIN32
 #include <unistd.h>
 #include <fcntl.h>
@@ -26,15 +25,6 @@ std::atomic<SoundThread *> SoundThread::instance{nullptr};
 // Saturated-mix lookup table for two U8 PCM samples biased at 128.
 // Uses Viktor T. Toth additive mixing (no hard clipping).
 static BYTE g_mixTable[256][256];
-
-// DEBUG-SND: temporary underrun characterization (per-second report from pushFrame).
-static std::atomic<long> dbgUnderrunEvents{0};
-static std::atomic<long> dbgUnderrunSamples{0};
-static std::atomic<long> dbgDeviceXruns{0};
-static std::atomic<long> dbgCallbacks{0};
-static std::atomic<int>  dbgMinFill{8192};
-static std::atomic<int>  dbgMaxJump{0};
-static long dbgMaxGapUs = 0; // emulator-thread only
 
 static void buildMixTable()
 {
@@ -158,18 +148,14 @@ int SoundThread::paCallback(const void *input, void *output,
 {
     (void)input;
     (void)timeInfo;
+    (void)statusFlags;
     (void)userData;
 
     BYTE *out = static_cast<BYTE *>(output);
     int tail = ringTail.load(std::memory_order_relaxed);
     int head = ringHead.load(std::memory_order_acquire);
 
-    int dbgFill = (head - tail) & (RING_SIZE - 1);                  // DEBUG-SND
-    if (dbgFill < dbgMinFill.load(std::memory_order_relaxed))       // DEBUG-SND
-        dbgMinFill.store(dbgFill, std::memory_order_relaxed);       // DEBUG-SND
     static BYTE lastSample = 128;
-    bool dbgInUnderrun = false;                                     // DEBUG-SND
-
     for (unsigned long i = 0; i < frameCount; i++) {
         if (tail != head) {
             lastSample = ringBuffer[tail];
@@ -177,20 +163,8 @@ int SoundThread::paCallback(const void *input, void *output,
             tail = (tail + 1) & (RING_SIZE - 1);
         } else {
             out[i] = lastSample;
-            dbgUnderrunSamples.fetch_add(1, std::memory_order_relaxed);          // DEBUG-SND
-            if (!dbgInUnderrun) {                                                // DEBUG-SND
-                dbgInUnderrun = true;                                            // DEBUG-SND
-                dbgUnderrunEvents.fetch_add(1, std::memory_order_relaxed);       // DEBUG-SND
-                int dbgJump = lastSample > 128 ? lastSample - 128 : 128 - lastSample; // DEBUG-SND (avoided)
-                if (dbgJump > dbgMaxJump.load(std::memory_order_relaxed))        // DEBUG-SND
-                    dbgMaxJump.store(dbgJump, std::memory_order_relaxed);        // DEBUG-SND
-            }
         }
     }
-    if (statusFlags & paOutputUnderflow)                            // DEBUG-SND
-        dbgDeviceXruns.fetch_add(1, std::memory_order_relaxed);     // DEBUG-SND
-    dbgCallbacks.fetch_add(1, std::memory_order_relaxed);           // DEBUG-SND
-
     ringTail.store(tail, std::memory_order_release);
     return paContinue;
 }
@@ -249,22 +223,4 @@ void SoundThread::pushFrame()
 
     CPC::psg.bufferIndex = 0;
     frames = (head - ringTail.load(std::memory_order_acquire)) & (RING_SIZE - 1);
-
-    // DEBUG-SND: producer cadence + once-per-second report
-    static auto dbgPrev = std::chrono::steady_clock::now();
-    auto dbgNow = std::chrono::steady_clock::now();
-    long dbgGapUs = std::chrono::duration_cast<std::chrono::microseconds>(dbgNow - dbgPrev).count();
-    dbgPrev = dbgNow;
-    if (dbgGapUs > dbgMaxGapUs) dbgMaxGapUs = dbgGapUs;
-    static int dbgFrameCtr = 0;
-    if (++dbgFrameCtr >= 50)
-    {
-        dbgFrameCtr = 0;
-        fprintf(stderr, "[SND dbg] underruns/s=%ld silence/s=%ld devXruns/s=%ld minFill=%d maxJump=%d maxGapUs=%ld cb/s=%ld fillNow=%ld\n",
-                dbgUnderrunEvents.exchange(0), dbgUnderrunSamples.exchange(0),
-                dbgDeviceXruns.exchange(0), dbgMinFill.exchange(RING_SIZE),
-                dbgMaxJump.exchange(0), dbgMaxGapUs, dbgCallbacks.exchange(0),
-                (long)frames);
-        dbgMaxGapUs = 0;
-    }
 }
