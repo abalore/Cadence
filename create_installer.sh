@@ -69,9 +69,9 @@ echo "==> Updating Info.plist..."
     "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || \
     /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $APP_NAME" \
     "$APP_BUNDLE/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.3a" \
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.4a" \
     "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || \
-    /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 0.3a" \
+    /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 0.4a" \
     "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :NSHighResolutionCapable true" \
     "$APP_BUNDLE/Contents/Info.plist" 2>/dev/null || \
