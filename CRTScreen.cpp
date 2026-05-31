@@ -18,7 +18,18 @@ void CRTScreen::Clock()
     if (hPhaseFP >= NominalLineLenFP)
         hPhaseFP -= NominalLineLenFP;
 
-    if (CPC::gateArray.hsyncTrigger || hFlywheelCounter == 1280)
+    bool retrace;
+    if (CPC::gateArray.hsyncTrigger)
+    {
+        CPC::gateArray.hsyncTrigger = false;          // consume the pulse, accepted or not
+        retrace = hFlywheelCounter >= SyncWindowMin;  // reject pulses arriving before the lock window
+    }
+    else
+    {
+        retrace = hFlywheelCounter >= FreeRunMax;      // free-run if no sync arrives
+    }
+
+    if (retrace)
     {
         hFlywheelCounter = 0;
         int err = hPhaseFP;
@@ -46,7 +57,6 @@ void CRTScreen::Clock()
             hOffset = 0;
             break;
         }
-        CPC::gateArray.hsyncTrigger = false;
         if (CPC::gateArray.vsyncTrigger || vPos == 312)
         {
             vPos = 0;

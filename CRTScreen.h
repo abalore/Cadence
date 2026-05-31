@@ -25,6 +25,12 @@ private:
     static constexpr int NominalLineLen = PixelWidth;
     static constexpr int NominalLineLenFP = NominalLineLen << FPShift;
     static constexpr int PLLGainDenom = 16;
+    // Horizontal flywheel lock window: only a sync arriving past SyncWindowMin
+    // clocks counts as a real line; earlier pulses (e.g. a second HSYNC injected
+    // mid-scanline by moving R2/R3) are ignored. If no sync arrives by FreeRunMax
+    // the flywheel free-runs and retraces anyway.
+    static constexpr int SyncWindowMin = NominalLineLen * 7 / 8; // 896
+    static constexpr int FreeRunMax = NominalLineLen * 5 / 4;    // 1280
 };
 
 #endif // CRTSCREEN_H
