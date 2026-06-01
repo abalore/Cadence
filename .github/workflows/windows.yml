@@ -32,6 +32,7 @@ jobs:
             mingw-w64-x86_64-qt6-svg
             mingw-w64-x86_64-qt6-tools
             mingw-w64-x86_64-portaudio
+            mingw-w64-x86_64-ntldd
 
       - name: qmake
         run: |
@@ -57,14 +58,19 @@ jobs:
           mkdir -p dist
           cp "$EXE" dist/
           windeployqt6 --release --no-translations --no-system-d3d-compiler dist/cadence.exe
-          # Copy non-Qt DLLs windeployqt won't: PortAudio + the MinGW C/C++
-          # runtime. Without the latter the exe won't start on a clean Windows
-          # box (no MSYS2 installed).
-          BIN="$(cygpath -u "$MINGW_PREFIX")/bin"
-          cp "$BIN/libportaudio.dll" dist/
-          cp "$BIN/libgcc_s_seh-1.dll" dist/
-          cp "$BIN/libstdc++-6.dll" dist/
-          cp "$BIN/libwinpthread-1.dll" dist/
+          # windeployqt copies Qt's modules/plugins but NOT the third-party
+          # DLLs Qt itself links against (ICU, PCRE2, freetype, harfbuzz, ...),
+          # nor PortAudio / the MinGW runtime. Walk the full dependency closure
+          # with ntldd and copy every resolved DLL that lives under MINGW64 —
+          # version-proof, unlike hand-listing libicuin78.dll & friends.
+          ntldd -R dist/cadence.exe | tr -d '\r' \
+            | awk -F' => ' '/mingw64/ {p=$2; sub(/ \(0x.*/, "", p); print p}' \
+            | sort -u \
+            | while read -r w; do
+                u="$(cygpath -u "$w")"
+                [ -f "$u" ] && cp -n "$u" dist/
+              done
+          echo "=== bundled DLLs ==="; ls -1 dist/*.dll | wc -l; ls -1 dist/*.dll
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
