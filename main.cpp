@@ -15,8 +15,9 @@
 #include "Settings.h"
 #include <cstdlib>
 #ifdef _WIN32
-#include <windows.h>
-#include <timeapi.h>
+// Declared by hand to avoid pulling <windows.h> into a Qt translation unit
+// (its INT/min/max etc. clash with Qt headers). Resolved from winmm.
+extern "C" unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
 #endif
 
 static void setupAppDataDir()
