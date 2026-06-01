@@ -41,7 +41,7 @@ jobs:
           # *inside* Qt6's own headers (QHash/QChar); the project's -Werror
           # would turn that into a hard error. Demote just that diagnostic
           # (appended after -Werror so it wins) — our code is still -Werror.
-          qmake6 ../Cadence.pro QMAKE_CXXFLAGS+=-Wno-error=sfinae-incomplete DEFINES+=CADENCE_KEYLOG
+          qmake6 ../Cadence.pro QMAKE_CXXFLAGS+=-Wno-error=sfinae-incomplete
 
       - name: Build
         run: |

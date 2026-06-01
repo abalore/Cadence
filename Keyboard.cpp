@@ -21,7 +21,9 @@ BYTE Keyboard::translation[128] =
      255,255,255,  1, 10, 20,  0,255              //120-127 — — F1 LEFT RIGHT DOWN UP —
     };
 #else
-// X11 scan codes (evdev, offset by 9) → CPC matrix values
+// X11 scan codes (evdev, offset by 9) → CPC matrix values.
+// Also reused for Windows: the Win set-1 scancode equals the evdev code for
+// the main block, so the same table is indexed by (scancode - 1) there.
 BYTE Keyboard::translation[128] =
     { 28, 8, 18, 17, 7, 16, 6, 15, 5, 14, 4, 13, 3, 79,   // 0 - 13  ESC 1234567890 - CLR DEL
         48, 38, 37, 27, 26, 36, 35, 25, 34, 24, 33, 23, 12,   // 14 - 26  TAB QWERTYUIOP @ [
@@ -72,6 +74,46 @@ void Keyboard::KeyEvent(int key, bool release)
         case 124: cpcKey = 39; break;  // Right → Joy1 Right
         case 59:  cpcKey = 49; break;  // LCtrl → Fire 1
         case 56:  cpcKey = 59; break;  // LShift → Fire 2
+        }
+    }
+#elif defined(_WIN32)
+    // Windows delivers PC/AT set-1 scan codes via nativeScanCode(); extended
+    // keys (arrows, keypad Enter, the dedicated Delete) carry a 0xE0 high byte.
+    // Captured under Wine and verified against the X11/evdev table.
+    const bool ext = (key & 0xFF00) != 0;
+    const int  base = key & 0xFF;
+    BYTE cpcKey;
+    if (ext)
+    {
+        switch (base) {
+        case 0x48: cpcKey = 0;  break;  // Up
+        case 0x4B: cpcKey = 1;  break;  // Left
+        case 0x4D: cpcKey = 10; break;  // Right
+        case 0x50: cpcKey = 20; break;  // Down
+        case 0x53: cpcKey = 2;  break;  // Delete → CLR
+        case 0x1C: cpcKey = 60; break;  // Keypad Enter
+        default:   return;
+        }
+    }
+    else
+    {
+        int idx = base - 1;             // set-1 scancode == evdev == x11 index + 1
+        if (idx < 0 || idx > 127) return;
+        cpcKey = translation[idx];
+    }
+    if (joystickEmulation) {
+        if (ext) {
+            switch (base) {
+            case 0x48: cpcKey = 9;  break;  // Up    → Joy1 Up
+            case 0x50: cpcKey = 19; break;  // Down  → Joy1 Down
+            case 0x4B: cpcKey = 29; break;  // Left  → Joy1 Left
+            case 0x4D: cpcKey = 39; break;  // Right → Joy1 Right
+            }
+        } else {
+            switch (base) {
+            case 0x1D: cpcKey = 49; break;  // LCtrl  → Fire 1
+            case 0x2A: cpcKey = 59; break;  // LShift → Fire 2
+            }
         }
     }
 #else
