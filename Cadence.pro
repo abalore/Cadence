@@ -19,6 +19,11 @@ QMAKE_LFLAGS+=-flto
 CONFIG += link_pkgconfig
 PKGCONFIG += portaudio-2.0
 
+# The renderer uses fixed-function OpenGL (glBegin/glVertex2f/...). On Linux
+# the Qt6 opengl module pulls in the GL libs; on Windows those symbols live in
+# opengl32.dll and must be linked explicitly.
+win32: LIBS += -lopengl32
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
