@@ -63,7 +63,11 @@ jobs:
           # nor PortAudio / the MinGW runtime. Walk the full dependency closure
           # with ntldd and copy every resolved DLL that lives under MINGW64 —
           # version-proof, unlike hand-listing libicuin78.dll & friends.
-          ntldd -R dist/cadence.exe | tr -d '\r' \
+          # Run it over the exe AND the deployed plugins (imageformats/qjpeg,
+          # platforms/qwindows, ...): plugins load at runtime, so they aren't in
+          # the exe's import closure (e.g. qjpeg.dll -> libjpeg-8.dll).
+          { echo dist/cadence.exe; find dist -name '*.dll'; } \
+            | while read -r f; do ntldd -R "$f"; done | tr -d '\r' \
             | awk -F' => ' '/mingw64/ {p=$2; sub(/ \(0x.*/, "", p); print p}' \
             | sort -u \
             | while read -r w; do
