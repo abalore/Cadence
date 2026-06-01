@@ -102,6 +102,7 @@ jobs:
             **Download `cadence-windows-x64.zip`**, unzip, and run `cadence.exe`
             (self-contained — Qt6 + PortAudio + MinGW runtime DLLs are bundled).
 
-            ⚠️ Test build, not yet verified on real Windows. Known issue: the
-            keyboard mapping still uses the X11 layout, so many keys will be
-            wrong until a Windows scan-code table is added.
+            ⚠️ Test build. Runs and self-heals its ROMs; the keyboard is mapped
+            for Windows (set-1 scancodes, incl. arrows/keypad), verified against
+            captured scancodes — but the whole thing is not yet confirmed on
+            real Windows hardware (developed/tested under Wine).
