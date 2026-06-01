@@ -3,6 +3,8 @@ name: Windows build
 on:
   workflow_dispatch:
   push:
+    branches:
+      - windows-ci   # temporary: auto-run while testing the CI on this branch
     tags:
       - 'v*'
 
