@@ -1,0 +1,82 @@
+name: macOS build
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing release tag to attach the .dmg to (blank = build artifact only)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'v*-mac'
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-latest   # Apple Silicon (arm64)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt6 + PortAudio (Homebrew)
+        run: brew install qt portaudio pkg-config
+
+      - name: Build
+        run: |
+          export PATH="$(brew --prefix qt)/bin:$PATH"
+          export PKG_CONFIG_PATH="$(brew --prefix portaudio)/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          mkdir -p build && cd build
+          qmake6 ../Cadence.pro
+          make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Bundle .app (Qt frameworks + PortAudio) and make DMG
+        run: |
+          export PATH="$(brew --prefix qt)/bin:$PATH"
+          cd build
+          APP=cadence.app
+          VER=$(grep APP_VERSION ../Cadence.pro | grep -oE '[0-9]+\.[0-9]+[a-z]?' | head -1)
+          DMG="Cadence-${VER}-macOS-arm64.dmg"
+
+          # Capture the PortAudio dylib path before macdeployqt rewrites things.
+          PA_SRC=$(otool -L "$APP/Contents/MacOS/cadence" | grep -i portaudio | awk '{print $1}')
+
+          macdeployqt "$APP" -always-overwrite
+
+          if [ -n "$PA_SRC" ] && [ -f "$PA_SRC" ]; then
+            mkdir -p "$APP/Contents/Frameworks"
+            PA=$(basename "$PA_SRC")
+            cp "$PA_SRC" "$APP/Contents/Frameworks/$PA"
+            CUR=$(otool -L "$APP/Contents/MacOS/cadence" | grep -i portaudio | awk '{print $1}')
+            install_name_tool -change "$CUR" "@executable_path/../Frameworks/$PA" "$APP/Contents/MacOS/cadence"
+            install_name_tool -id "@executable_path/../Frameworks/$PA" "$APP/Contents/Frameworks/$PA"
+          fi
+
+          # Ad-hoc sign (no Apple Developer cert available in CI).
+          codesign --force --deep --sign - "$APP"
+
+          # Report any leftover non-system dylib references.
+          echo "=== otool -L ==="; otool -L "$APP/Contents/MacOS/cadence"
+
+          rm -rf dmg && mkdir dmg
+          cp -R "$APP" "dmg/Cadence.app"
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Cadence -srcfolder dmg -ov -format UDZO "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cadence-macos-arm64
+          path: build/${{ env.DMG }}
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event.inputs.release_tag != '' || startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          [ -z "$TAG" ] && TAG="${GITHUB_REF_NAME}"
+          gh release upload "$TAG" "build/${DMG}" --clobber
