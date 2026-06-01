@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - 'v*-win'   # Windows releases use a -win suffix; plain v* tags (general
+                   # Linux/Mac releases) must not trigger this Windows build.
 
 jobs:
   windows-mingw:

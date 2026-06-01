@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$SCRIPT_DIR/build"
 APP_NAME="Cadence"
-APP_VERSION="0.5a"
+APP_VERSION="0.6a"
 ARCH="x86_64"
 
 APPDIR="$BUILD_DIR/AppDir"
