@@ -34,7 +34,11 @@ jobs:
       - name: qmake
         run: |
           mkdir -p build && cd build
-          qmake6 ../Cadence.pro
+          # MSYS2 ships a bleeding-edge GCC whose -Wsfinae-incomplete fires
+          # *inside* Qt6's own headers (QHash/QChar); the project's -Werror
+          # would turn that into a hard error. Demote just that diagnostic
+          # (appended after -Werror so it wins) — our code is still -Werror.
+          qmake6 ../Cadence.pro QMAKE_CXXFLAGS+=-Wno-error=sfinae-incomplete
 
       - name: Build
         run: |
