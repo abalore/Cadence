@@ -14,6 +14,10 @@
 #include <QFileInfo>
 #include "Settings.h"
 #include <cstdlib>
+#ifdef _WIN32
+#include <windows.h>
+#include <timeapi.h>
+#endif
 
 static void setupAppDataDir()
 {
@@ -98,6 +102,12 @@ public:
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
+    // Raise the system timer resolution to 1 ms. The default ~15.6 ms tick
+    // makes the 20 ms (50 Hz) frame pacer in SpeedController overshoot, which
+    // shows up as the emulator running at ~half speed with choppy, gappy audio.
+    timeBeginPeriod(1);
+#endif
 #ifndef _WIN32
     // PipeWire/JACK only — ignored by the WASAPI/WMME backend on Windows,
     // and setenv() isn't in the MinGW CRT.

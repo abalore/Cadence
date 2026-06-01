@@ -26,6 +26,8 @@ INCLUDEPATH += third_party/miniz
 # the Qt6 opengl module pulls in the GL libs; on Windows those symbols live in
 # opengl32.dll and must be linked explicitly.
 win32: LIBS += -lopengl32
+# winmm: timeBeginPeriod() to get a 1 ms timer for accurate frame pacing.
+win32: LIBS += -lwinmm
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

@@ -1,9 +1,13 @@
 #include "speedcontroller.h"
 #include "SoundThread.h"
-#include <chrono>
-#include <QThread>
+#include <QElapsedTimer>
+#include <thread>
 
-using namespace std::chrono;
+// Monotonic, high-resolution time source. QElapsedTimer uses QueryPerformance-
+// Counter on Windows (sub-µs) and clock_gettime(MONOTONIC) on Linux, avoiding
+// the coarse (~15.6 ms) default Windows timer that std::chrono / QThread::usleep
+// can be hostage to.
+static QElapsedTimer s_timer;
 
 std::atomic<long> SpeedController::lastElapsed{0};
 std::atomic<bool> SpeedController::unlocked{false};
@@ -42,8 +46,13 @@ void SpeedController::Run()
         break;
     }
 
-    duration now = high_resolution_clock::now().time_since_epoch();
-    t = duration_cast<microseconds>(now).count();
+    if (!s_timer.isValid())
+    {
+        s_timer.start();
+        lastT = 0;
+    }
+
+    t = s_timer.nsecsElapsed() / 1000;
     elapsed = t - lastT;
     lastElapsed = elapsed;
 
@@ -54,9 +63,8 @@ void SpeedController::Run()
     {
         while (elapsed < targetTime)
         {
-            QThread::usleep(0);
-            duration now = high_resolution_clock::now().time_since_epoch();
-            t = duration_cast<microseconds>(now).count();
+            std::this_thread::yield();
+            t = s_timer.nsecsElapsed() / 1000;
             elapsed = t - lastT;
         }
     }
