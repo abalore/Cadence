@@ -55,9 +55,14 @@ jobs:
           mkdir -p dist
           cp "$EXE" dist/
           windeployqt6 --release --no-translations --no-system-d3d-compiler dist/cadence.exe
-          # PortAudio is not a Qt lib, so windeployqt won't copy it
-          cp "$(cygpath -u "$MINGW_PREFIX")/bin/libportaudio.dll" dist/ 2>/dev/null || \
-            cp /mingw64/bin/libportaudio*.dll dist/
+          # Copy non-Qt DLLs windeployqt won't: PortAudio + the MinGW C/C++
+          # runtime. Without the latter the exe won't start on a clean Windows
+          # box (no MSYS2 installed).
+          BIN="$(cygpath -u "$MINGW_PREFIX")/bin"
+          cp "$BIN/libportaudio.dll" dist/
+          cp "$BIN/libgcc_s_seh-1.dll" dist/
+          cp "$BIN/libstdc++-6.dll" dist/
+          cp "$BIN/libwinpthread-1.dll" dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
