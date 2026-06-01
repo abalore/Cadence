@@ -93,7 +93,7 @@ jobs:
           files: cadence-windows-x64.zip
           fail_on_unmatched_files: true
           prerelease: true
-          name: Cadence ${{ github.ref_name }} — Windows (test build)
+          name: Cadence ${{ github.ref_name }} — Windows
           body: |
             Windows x64 build of Cadence, cross-built under MSYS2/MINGW64.
 
