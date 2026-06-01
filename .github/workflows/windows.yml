@@ -1,0 +1,106 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  windows-mingw:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # needed to create the Release on tag pushes
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2 / MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt6-base
+            mingw-w64-x86_64-qt6-svg
+            mingw-w64-x86_64-qt6-tools
+            mingw-w64-x86_64-portaudio
+            mingw-w64-x86_64-ntldd
+
+      - name: qmake
+        run: |
+          mkdir -p build && cd build
+          # MSYS2 ships a bleeding-edge GCC whose -Wsfinae-incomplete fires
+          # *inside* Qt6's own headers (QHash/QChar); the project's -Werror
+          # would turn that into a hard error. Demote just that diagnostic
+          # (appended after -Werror so it wins) — our code is still -Werror.
+          qmake6 ../Cadence.pro QMAKE_CXXFLAGS+=-Wno-error=sfinae-incomplete
+
+      - name: Build
+        run: |
+          cd build
+          mingw32-make -j$(nproc)
+
+      - name: Bundle exe + Qt/runtime DLLs
+        run: |
+          cd build
+          # qmake on win32-g++ may emit into ./ , ./release or ./debug
+          EXE=$(find . -name cadence.exe | head -1)
+          if [ -z "$EXE" ]; then echo "cadence.exe not found"; find . -name '*.exe'; exit 1; fi
+          echo "Found exe at $EXE"
+          mkdir -p dist
+          cp "$EXE" dist/
+          windeployqt6 --release --no-translations --no-system-d3d-compiler dist/cadence.exe
+          # windeployqt copies Qt's modules/plugins but NOT the third-party
+          # DLLs Qt itself links against (ICU, PCRE2, freetype, harfbuzz, ...),
+          # nor PortAudio / the MinGW runtime. Walk the full dependency closure
+          # with ntldd and copy every resolved DLL that lives under MINGW64 —
+          # version-proof, unlike hand-listing libicuin78.dll & friends.
+          # Run it over the exe AND the deployed plugins (imageformats/qjpeg,
+          # platforms/qwindows, ...): plugins load at runtime, so they aren't in
+          # the exe's import closure (e.g. qjpeg.dll -> libjpeg-8.dll).
+          { echo dist/cadence.exe; find dist -name '*.dll'; } \
+            | while read -r f; do ntldd -R "$f"; done | tr -d '\r' \
+            | awk -F' => ' '/mingw64/ {p=$2; sub(/ \(0x.*/, "", p); print p}' \
+            | sort -u \
+            | while read -r w; do
+                u="$(cygpath -u "$w")"
+                [ -f "$u" ] && cp -n "$u" dist/
+              done
+          echo "=== bundled DLLs ==="; ls -1 dist/*.dll | wc -l; ls -1 dist/*.dll
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cadence-windows-x64
+          path: build/dist
+          if-no-files-found: error
+
+      - name: Package zip for release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: Compress-Archive -Path build/dist/* -DestinationPath cadence-windows-x64.zip
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cadence-windows-x64.zip
+          fail_on_unmatched_files: true
+          prerelease: true
+          name: Cadence ${{ github.ref_name }} — Windows (test build)
+          body: |
+            Unofficial Windows x64 build of Cadence, cross-built under MSYS2/MINGW64.
+
+            **Download `cadence-windows-x64.zip`**, unzip, and run `cadence.exe`
+            (self-contained — Qt6 + PortAudio + MinGW runtime DLLs are bundled).
+
+            ⚠️ Test build. Runs and self-heals its ROMs; the keyboard is mapped
+            for Windows (set-1 scancodes, incl. arrows/keypad), verified against
+            captured scancodes — but the whole thing is not yet confirmed on
+            real Windows hardware (developed/tested under Wine).

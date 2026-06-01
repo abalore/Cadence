@@ -18,16 +18,22 @@
 static void setupAppDataDir()
 {
     QString newDir = Settings::CadenceDir();
-    if (QDir(newDir).exists()) return;
 
-    QString oldDir = QDir::homePath() + "/.cadence";
-    if (QDir(oldDir).exists())
+    // One-time migration of the legacy ~/.cadence layout.
+    if (!QDir(newDir).exists())
     {
-        QDir().mkpath(QFileInfo(newDir).absolutePath());
-        QDir().rename(oldDir, newDir);
-        return;
+        QString oldDir = QDir::homePath() + "/.cadence";
+        if (QDir(oldDir).exists())
+        {
+            QDir().mkpath(QFileInfo(newDir).absolutePath());
+            QDir().rename(oldDir, newDir);
+        }
     }
 
+    // Always ensure the dir tree and bundled ROMs are present. Don't gate this
+    // on the data dir already existing: a half-initialised dir (e.g. created by
+    // an earlier failed run) would otherwise never get its ROMs, and the
+    // emulator boots with no firmware. The per-file copy below is idempotent.
     for (const char *sub : {"BIN", "CDT", "CPR", "DSK", "ROM"})
         QDir().mkpath(newDir + "/" + sub);
 
@@ -92,8 +98,12 @@ public:
 
 int main(int argc, char *argv[])
 {
+#ifndef _WIN32
+    // PipeWire/JACK only — ignored by the WASAPI/WMME backend on Windows,
+    // and setenv() isn't in the MinGW CRT.
     setenv("PIPEWIRE_LATENCY", "32/62500", 0);
     setenv("JACK_NO_START_SERVER", "1", 0);
+#endif
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);
