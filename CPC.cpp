@@ -63,7 +63,7 @@ void CPC::ReadROM(char *filename, int number)
     }
     else
         snprintf(fullpath, sizeof(fullpath), "%s", filename);
-    FILE *file = fopen(fullpath, "r");
+    FILE *file = fopen(fullpath, "rb");
     if (file)
     {
         size_t n = fread(dest, 1, 16384, file);
