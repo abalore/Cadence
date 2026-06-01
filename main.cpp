@@ -92,8 +92,12 @@ public:
 
 int main(int argc, char *argv[])
 {
+#ifndef _WIN32
+    // PipeWire/JACK only — ignored by the WASAPI/WMME backend on Windows,
+    // and setenv() isn't in the MinGW CRT.
     setenv("PIPEWIRE_LATENCY", "32/62500", 0);
     setenv("JACK_NO_START_SERVER", "1", 0);
+#endif
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName(APP_NAME);
     QCoreApplication::setApplicationVersion(APP_VERSION);

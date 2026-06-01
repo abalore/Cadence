@@ -91,9 +91,11 @@ SoundThread::SoundThread(QObject *parent) : QThread(parent), stream(nullptr), pa
     // PortAudio framesPerBuffer below). Otherwise the client is clamped to the
     // graph min-quantum (32), which forces the shared hardware sink to 32-frame
     // periods and makes it xrun (heard as noise + a ~0.7 s buffer repeat).
+#ifndef _WIN32
     char latbuf[32];
     snprintf(latbuf, sizeof(latbuf), "%d/62500", bufferFrames);
     setenv("PIPEWIRE_LATENCY", latbuf, 1);
+#endif
     PaError err = Pa_Initialize();
 #ifndef _WIN32
     if (savedStderr >= 0) { fflush(stderr); dup2(savedStderr, STDERR_FILENO); close(savedStderr); }

@@ -1,0 +1,61 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  windows-mingw:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2 / MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-qt6-base
+            mingw-w64-x86_64-qt6-svg
+            mingw-w64-x86_64-qt6-tools
+            mingw-w64-x86_64-portaudio
+
+      - name: qmake
+        run: |
+          mkdir -p build && cd build
+          qmake6 ../Cadence.pro
+
+      - name: Build
+        run: |
+          cd build
+          mingw32-make -j$(nproc)
+
+      - name: Bundle exe + Qt/runtime DLLs
+        run: |
+          cd build
+          # qmake on win32-g++ may emit into ./ , ./release or ./debug
+          EXE=$(find . -name cadence.exe | head -1)
+          if [ -z "$EXE" ]; then echo "cadence.exe not found"; find . -name '*.exe'; exit 1; fi
+          echo "Found exe at $EXE"
+          mkdir -p dist
+          cp "$EXE" dist/
+          windeployqt6 --release --no-translations --no-system-d3d-compiler dist/cadence.exe
+          # PortAudio is not a Qt lib, so windeployqt won't copy it
+          cp "$(cygpath -u "$MINGW_PREFIX")/bin/libportaudio.dll" dist/ 2>/dev/null || \
+            cp /mingw64/bin/libportaudio*.dll dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cadence-windows-x64
+          path: build/dist
+          if-no-files-found: error
