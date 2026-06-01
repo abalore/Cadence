@@ -53,7 +53,7 @@ void CRTScreen::Clock()
             hOffset = 0;
             break;
         }
-        if (CPC::gateArray.vsyncTrigger || vPos == 312)
+        if (CPC::gateArray.vsyncTrigger || vPos == 400)
         {
             vPos = 0;
             frameFinished = true;
