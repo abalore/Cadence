@@ -61,6 +61,10 @@ void Settings::Load()
     diskBPath     = s.value("media/disk_b").toString();
     tapePath      = s.value("media/tape").toString();
     cartridgePath = s.value("media/cartridge").toString();
+    diskAEntry    = s.value("media/disk_a_entry").toString();
+    diskBEntry    = s.value("media/disk_b_entry").toString();
+    tapeEntry     = s.value("media/tape_entry").toString();
+    cartridgeEntry = s.value("media/cartridge_entry").toString();
     tapeDir       = s.value("media/tape_dir").toString();
     diskDir       = s.value("media/disk_dir").toString();
     cartridgeDir  = s.value("media/cartridge_dir").toString();
@@ -102,6 +106,10 @@ void Settings::Save()
     s.setValue("media/disk_b", diskBPath);
     s.setValue("media/tape", tapePath);
     s.setValue("media/cartridge", cartridgePath);
+    s.setValue("media/disk_a_entry", diskAEntry);
+    s.setValue("media/disk_b_entry", diskBEntry);
+    s.setValue("media/tape_entry", tapeEntry);
+    s.setValue("media/cartridge_entry", cartridgeEntry);
     s.setValue("media/tape_dir", tapeDir);
     s.setValue("media/disk_dir", diskDir);
     s.setValue("media/cartridge_dir", cartridgeDir);

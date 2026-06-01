@@ -73,6 +73,11 @@ private slots:
     void onToggle512kExpansion(bool checked);
 private:
     void SwitchMachine(CPCType type);
+    // For a .zip, returns the in-archive entry to load (prompting if several
+    // match exts), or empty if none match / the user cancels.
+    QString chooseZipEntry(const QString &zipPath, const QStringList &exts);
+    // Drag&drop: inspect a dropped .zip and load the first media kind it holds.
+    void loadZipMedia(const QString &zipPath);
     void setMediaText(QLabel *label, const QString &text);
     void applySettingsToUi();
     void applyROMOverrides();

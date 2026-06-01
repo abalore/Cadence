@@ -19,6 +19,9 @@ QMAKE_LFLAGS+=-flto
 CONFIG += link_pkgconfig
 PKGCONFIG += portaudio-2.0
 
+# Vendored miniz (public domain) for reading media out of .zip archives.
+INCLUDEPATH += third_party/miniz
+
 # The renderer uses fixed-function OpenGL (glBegin/glVertex2f/...). On Linux
 # the Qt6 opengl module pulls in the GL libs; on Windows those symbols live in
 # opengl32.dll and must be linked explicitly.
@@ -75,6 +78,8 @@ SOURCES += \
     speedcontroller.cpp \
     Settings.cpp \
     MediaController.cpp \
+    ZipMedia.cpp \
+    third_party/miniz/miniz.c \
     AboutDialog.cpp \
     ROMBoxDialog.cpp \
     Assembler.cpp \
@@ -114,6 +119,8 @@ HEADERS += \
     speedcontroller.h \
     Settings.h \
     MediaController.h \
+    ZipMedia.h \
+    third_party/miniz/miniz.h \
     AboutDialog.h \
     ROMBoxDialog.h \
     Assembler.h \

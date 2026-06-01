@@ -27,6 +27,7 @@
 #include <QByteArray>
 #include <QWindow>
 #include <QInputDialog>
+#include "ZipMedia.h"
 #include <QDialog>
 #include <QFormLayout>
 #include <QLineEdit>
@@ -313,13 +314,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     applySettingsToUi();
     if (!settings.diskAPath.isEmpty() && QFileInfo::exists(settings.diskAPath))
-        media->LoadDiskA(settings.diskAPath);
+        media->LoadDiskA(settings.diskAPath, settings.diskAEntry);
     if (!settings.diskBPath.isEmpty() && QFileInfo::exists(settings.diskBPath))
-        media->LoadDiskB(settings.diskBPath);
+        media->LoadDiskB(settings.diskBPath, settings.diskBEntry);
     if (!settings.tapePath.isEmpty() && QFileInfo::exists(settings.tapePath))
-        media->LoadTape(settings.tapePath);
+        media->LoadTape(settings.tapePath, settings.tapeEntry);
     if (!settings.cartridgePath.isEmpty() && QFileInfo::exists(settings.cartridgePath))
-        media->LoadCartridge(settings.cartridgePath);
+        media->LoadCartridge(settings.cartridgePath, settings.cartridgeEntry);
 
     StartThreads();
 }
@@ -331,6 +332,10 @@ MainWindow::~MainWindow()
     settings.diskBPath     = media->DiskBPath();
     settings.tapePath      = media->TapePath();
     settings.cartridgePath = media->CartridgePath();
+    settings.diskAEntry    = media->DiskAEntry();
+    settings.diskBEntry    = media->DiskBEntry();
+    settings.tapeEntry     = media->TapeEntry();
+    settings.cartridgeEntry = media->CartridgeEntry();
     settings.Save();
     StopThreads();
     delete graphicsInspector;
@@ -552,14 +557,59 @@ void MainWindow::onMenuScreenInspectGraphics()
     graphicsInspector->UpdateGraphics();
 }
 
+QString MainWindow::chooseZipEntry(const QString &zipPath, const QStringList &exts)
+{
+    QStringList entries = ZipMedia::listEntries(zipPath, exts);
+    if (entries.isEmpty())
+    {
+        QMessageBox::warning(this, tr("Load from ZIP"),
+            tr("The archive contains no %1 file.").arg(exts.join("/").toUpper()));
+        return QString();
+    }
+    if (entries.size() == 1)
+        return entries.first();
+    bool ok = false;
+    QString choice = QInputDialog::getItem(this, tr("Choose file from ZIP"),
+        tr("This archive contains several files. Pick one:"),
+        entries, 0, false, &ok);
+    return ok ? choice : QString();
+}
+
+void MainWindow::loadZipMedia(const QString &zipPath)
+{
+    if (!ZipMedia::listEntries(zipPath, {"dsk"}).isEmpty())
+    {
+        QString e = chooseZipEntry(zipPath, {"dsk"});
+        if (!e.isEmpty()) media->LoadDiskA(zipPath, e);
+    }
+    else if (!ZipMedia::listEntries(zipPath, {"cdt", "wav"}).isEmpty())
+    {
+        QString e = chooseZipEntry(zipPath, {"cdt", "wav"});
+        if (!e.isEmpty()) media->LoadTape(zipPath, e);
+    }
+    else if (!ZipMedia::listEntries(zipPath, {"cpr"}).isEmpty())
+    {
+        QString e = chooseZipEntry(zipPath, {"cpr"});
+        if (!e.isEmpty()) media->LoadCartridge(zipPath, e);
+    }
+    else
+    {
+        QMessageBox::warning(this, tr("Load from ZIP"),
+            tr("No loadable media found in %1.").arg(QFileInfo(zipPath).fileName()));
+    }
+}
+
 void MainWindow::onMenuMediaInsertTape()
 {
     QString startDir = !settings.tapeDir.isEmpty() ? settings.tapeDir : Settings::CadenceDir() + "/CDT";
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), startDir, tr("Tape Files (*.cdt *.wav)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load tape"), startDir, tr("Tape Files (*.cdt *.wav *.zip)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty())
     {
         settings.tapeDir = QFileInfo(fileName).absolutePath();
-        media->LoadTape(fileName);
+        QString entry;
+        if (ZipMedia::isZip(fileName) && (entry = chooseZipEntry(fileName, {"cdt", "wav"})).isEmpty())
+            return;
+        media->LoadTape(fileName, entry);
     }
 }
 
@@ -571,11 +621,14 @@ void MainWindow::onMenuScreenSmooth()
 void MainWindow::onMenuMediaInsertDiskA()
 {
     QString startDir = !settings.diskDir.isEmpty() ? settings.diskDir : Settings::CadenceDir() + "/DSK";
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), startDir, tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), startDir, tr("DSK Files (*.dsk *.zip)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty())
     {
         settings.diskDir = QFileInfo(fileName).absolutePath();
-        media->LoadDiskA(fileName);
+        QString entry;
+        if (ZipMedia::isZip(fileName) && (entry = chooseZipEntry(fileName, {"dsk"})).isEmpty())
+            return;
+        media->LoadDiskA(fileName, entry);
     }
 }
 
@@ -691,10 +744,15 @@ void MainWindow::onMenuMediaNewBlankDiskA()
 void MainWindow::onMenuMediaInsertDiskB()
 {
     QString startDir = !settings.diskDir.isEmpty() ? settings.diskDir : Settings::CadenceDir() + "/DSK";
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), startDir, tr("DSK Files (*.dsk)"), nullptr, QFileDialog::DontUseNativeDialog);
-    if (!fileName.isEmpty()) settings.diskDir = QFileInfo(fileName).absolutePath();
-    if (fileName != nullptr)
-        media->LoadDiskB(fileName);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load disc"), startDir, tr("DSK Files (*.dsk *.zip)"), nullptr, QFileDialog::DontUseNativeDialog);
+    if (!fileName.isEmpty())
+    {
+        settings.diskDir = QFileInfo(fileName).absolutePath();
+        QString entry;
+        if (ZipMedia::isZip(fileName) && (entry = chooseZipEntry(fileName, {"dsk"})).isEmpty())
+            return;
+        media->LoadDiskB(fileName, entry);
+    }
 }
 
 void MainWindow::onMenuMediaRemoveTape()
@@ -812,11 +870,14 @@ void MainWindow::onMenuMediaRemoveCartridge()
 void MainWindow::onMenuMediaInsertCartridge()
 {
     QString startDir = !settings.cartridgeDir.isEmpty() ? settings.cartridgeDir : Settings::CadenceDir() + "/CPR";
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), startDir, tr("Cartridge Files (*.cpr *.bin *.CPR *.BIN)"), nullptr, QFileDialog::DontUseNativeDialog);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load Cartridge"), startDir, tr("Cartridge Files (*.cpr *.bin *.zip *.CPR *.BIN *.ZIP)"), nullptr, QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty())
     {
         settings.cartridgeDir = QFileInfo(fileName).absolutePath();
-        media->LoadCartridge(fileName);
+        QString entry;
+        if (ZipMedia::isZip(fileName) && (entry = chooseZipEntry(fileName, {"cpr", "bin"})).isEmpty())
+            return;
+        media->LoadCartridge(fileName, entry);
     }
 }
 
@@ -959,7 +1020,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
         if (!url.isLocalFile())
             continue;
         const QString ext = QFileInfo(url.toLocalFile()).suffix().toLower();
-        if (ext == "dsk" || ext == "cdt" || ext == "wav" || ext == "cpr")
+        if (ext == "dsk" || ext == "cdt" || ext == "wav" || ext == "cpr" || ext == "zip")
         {
             event->acceptProposedAction();
             return;
@@ -983,6 +1044,8 @@ void MainWindow::dropEvent(QDropEvent *event)
             media->LoadTape(path);
         else if (ext == "cpr")
             media->LoadCartridge(path);
+        else if (ext == "zip")
+            loadZipMedia(path);
     }
     event->acceptProposedAction();
 }

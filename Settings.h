@@ -28,6 +28,11 @@ public:
     QString diskBPath;
     QString tapePath;
     QString cartridgePath;
+    // In-archive entry name when the corresponding path is a .zip (else empty).
+    QString diskAEntry;
+    QString diskBEntry;
+    QString tapeEntry;
+    QString cartridgeEntry;
     QString tapeDir;
     QString diskDir;
     QString cartridgeDir;
