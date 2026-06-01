@@ -6,6 +6,9 @@
 #include <QObject>
 #include <QKeyEvent>
 #include <QApplication>
+#ifdef CADENCE_KEYLOG
+#include <cstdio>
+#endif
 
 class KeyPressFilter : public QObject {
 public:
@@ -16,6 +19,17 @@ public:
         if (aEvent->type() == QEvent::KeyPress)
         {
             QKeyEvent *ke = static_cast<QKeyEvent*>(aEvent);
+#ifdef CADENCE_KEYLOG
+            if (!ke->isAutoRepeat()) {
+                FILE *f = fopen("keylog.txt", "a");
+                if (f) {
+                    fprintf(f, "scan=%u vk=%u qt=0x%X text=[%s]\n",
+                            ke->nativeScanCode(), ke->nativeVirtualKey(),
+                            ke->key(), ke->text().toUtf8().constData());
+                    fclose(f);
+                }
+            }
+#endif
             if (!ke->isAutoRepeat())
 #ifdef __APPLE__
                 CPC::keyboard.KeyEvent(ke->nativeVirtualKey(), false);
