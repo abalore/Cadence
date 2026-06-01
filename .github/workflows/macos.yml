@@ -16,15 +16,7 @@ permissions:
 
 jobs:
   macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest   # Apple Silicon
-            arch: arm64
-          - os: macos-13        # Intel
-            arch: x86_64
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest   # Apple Silicon (arm64)
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +37,7 @@ jobs:
           cd build
           APP=cadence.app
           VER=$(grep APP_VERSION ../Cadence.pro | grep -oE '[0-9]+\.[0-9]+[a-z]?' | head -1)
-          DMG="Cadence-${VER}-macOS-${{ matrix.arch }}.dmg"
+          DMG="Cadence-${VER}-macOS-arm64.dmg"
 
           # Capture the PortAudio dylib path before macdeployqt rewrites things.
           PA_SRC=$(otool -L "$APP/Contents/MacOS/cadence" | grep -i portaudio | awk '{print $1}')
@@ -76,7 +68,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cadence-macos-${{ matrix.arch }}
+          name: cadence-macos-arm64
           path: build/${{ env.DMG }}
           if-no-files-found: error
 
